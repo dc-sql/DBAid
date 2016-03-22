@@ -1,0 +1,45 @@
+[LOG]
+# Log retention days. The number of days to keep logs files on the filesystem. Default 3 days.
+LOGKEEPDAY=3
+
+# Log verbose. Write out extended logging stack trace information. Default false.
+LOGVERBOSE=false
+
+[SMTP]
+# Local SMTP server address, e.g. smtp.domain.co.nz.
+SERVER=ews-orbit.datacom.co.nz
+
+# Connect to SMTP server using a secure socket layer protocol. Default false. Default false.
+SSL=true
+
+# Ignore SSL errors. When using EMAILSSL=true, you can choose to ignore SSL certificate errors. Default false.
+IGNORESSL=false
+
+# Send emails as Anonymous. You won't authenticate to the EMAILSERVER. Default true. 
+ANONYMOUS=false
+
+# Attachent byte limit. The maximum size in bytes for an individual email. Default 10000000 (10MB).
+BYTELIMIT=10000000
+
+# Attachment limit. The maximum number of attachments that can be added to an individual email. Default 15.
+ATTLIMIT=15
+
+
+[CONFIGG]
+# Disbale the WMI service load into DBAid. NOTE: Only run the WMI load while on the localhost. Default false. 
+DISABLEWMI=false
+
+# Disable the configuration mark down generation. NOTE: configuration mark down will work remotely or locally. Default false.
+DISABLEMD=false
+
+# Enable dbaid.configg to send configuration markdown emails. Default false.
+EMAIL=true
+
+# Specify the sending address, i.e a spoofed address or the executing service accounts address.
+EMAILFROM=wayne.teutenberg@datacom.co.nz
+
+# Specify the receiving email address for the configuration markdown emails. Seperate multiple emails with semicolon ;
+EMAILTO=wayne.teutenberg@datacom.co.nz
+
+# Specify an email subject if required. Default DBAid Config Genie
+EMAILSUBJECT=DBAid Config Genie DEBUG
