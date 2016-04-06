@@ -22,6 +22,7 @@ BEGIN
 		,[pivot].CAPACITY_CACHE_RETENTION_MONTH AS [capacity_cache_retention_month]
 		,[pivot].DEFAULT_JOB_MAX_MIN AS [default_job_max_min]
 		,[pivot].DEFAULT_JOB_STATE AS [default_job_state]
+		,[pivot].DEFAULT_JOB_ENABLED AS [default_job_enabled]
 		,[pivot].DEFAULT_DB_STATE AS [default_db_state]
 		,[pivot].DEFAULT_ALWAYSON_STATE AS [default_alwayson_state]
 		,[pivot].DEFAULT_ALWAYSON_ROLE AS [default_alwayson_role]
@@ -48,6 +49,7 @@ BEGIN
 						,DEFAULT_CAP_CRIT_PERCENT
 						,DEFAULT_JOB_MAX_MIN
 						,DEFAULT_JOB_STATE
+						,DEFAULT_JOB_ENABLED
 						,DEFAULT_DB_STATE
 						,DEFAULT_ALWAYSON_STATE
 						,DEFAULT_ALWAYSON_ROLE

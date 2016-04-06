@@ -253,6 +253,10 @@ IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'DEFAULT_J
 	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
 		VALUES(N'DEFAULT_JOB_STATE','WARNING',N'Default monitoring job state change alert');
 
+IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'DEFAULT_JOB_ENABLED')
+	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
+		VALUES(N'DEFAULT_JOB_ENABLED',1,N'Default monitoring job alert enabled');
+
 IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'DEFAULT_DB_STATE')
 	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
 		VALUES(N'DEFAULT_DB_STATE','CRITICAL',N'Default monitoring database state change alert');

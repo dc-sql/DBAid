@@ -44,7 +44,7 @@ BEGIN
 			,[J].[name]
 			,(SELECT TOP(1) CAST([value] AS SMALLINT) FROM [dbo].[static_parameters] WHERE [name] = N'DEFAULT_JOB_MAX_MIN') AS [max_exec_time_min]
 			,(SELECT TOP(1) CAST([value] AS NVARCHAR(8)) FROM [dbo].[static_parameters] WHERE [name] = N'DEFAULT_JOB_STATE') AS [change_state_alert]
-			,1 AS [is_enabled]
+			,(SELECT TOP(1) CAST([value] AS BIT) FROM [dbo].[static_parameters] WHERE [name] = N'DEFAULT_JOB_ENABLED') AS [is_enabled]
 		FROM [msdb].[dbo].[sysjobs] [J]
 		WHERE [job_id] NOT IN (SELECT [job_id] FROM [dbo].[config_job]);
 
