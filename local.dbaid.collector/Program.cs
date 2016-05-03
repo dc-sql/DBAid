@@ -144,7 +144,7 @@ namespace local.dbaid.collector
                     instanceTag = Query.Execute(csb.ConnectionString, mssqlInstanceTagProc).Rows[0][0].ToString();
 
                     if (String.IsNullOrEmpty(instanceTag))
-                        instanceTag = css.Name.Replace("\\", "@") + "_" + IPGlobalProperties.GetIPGlobalProperties().DomainName.Replace(".", "_");
+                        instanceTag = css.Name.Replace("\\", "@").Replace("_","~") + "_" + IPGlobalProperties.GetIPGlobalProperties().DomainName.Replace(".", "_");
 
                     // query database for public key.
                     publicKey = Query.Select(csb.ConnectionString, mssqlKeySelect).Rows[0][0].ToString();

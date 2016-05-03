@@ -102,6 +102,9 @@ namespace server.dbaid.extractor
             {
                 Dictionary<string, object> parameters = new Dictionary<string, object>();
                 string servername = Path.GetFileNameWithoutExtension(fileToProcess).Split('_')[0];
+                //if the instance name has an underscore, convert back.
+                servername = servername.Replace("~","_");
+
                 parameters.Add("server_name", servername);
 
                 try /* Read in and decrypt encrypted files */
