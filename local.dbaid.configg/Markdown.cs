@@ -97,7 +97,7 @@ namespace local.dbaid.asbuilt
                                 if (!(String.IsNullOrEmpty(codeblock)))
                                 {
                                     code.Append(Environment.NewLine + "##### " + column.ColumnName + Environment.NewLine);
-                                    code.Append(Environment.NewLine + "```" + Environment.NewLine + codeblock + Environment.NewLine + "```" + Environment.NewLine);
+                                    code.Append(Environment.NewLine + "```xml" + Environment.NewLine + codeblock + Environment.NewLine + "```" + Environment.NewLine);
 
                                     if (colcount == dt.Columns.Count)
                                     {

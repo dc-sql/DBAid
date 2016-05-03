@@ -18,5 +18,5 @@ BEGIN
 		REVERT;
 	END
 
-	SELECT REPLACE(@@SERVERNAME, '\', '@') + N'_' + REPLACE(@domain, '.', '_') AS [instance_tag]
+	SELECT REPLACE(REPLACE(@@SERVERNAME, '\', '@'),'_','~') + N'_' + REPLACE(@domain, '.', '_') AS [instance_tag]
 END
