@@ -10,5 +10,13 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-	SELECT * FROM [info].[databasefile]
+	SELECT [database_name]
+      ,[file_name]
+      ,[type_desc]
+      ,[state_desc]
+      ,[physical_name]
+      ,[max_size_mb]
+      ,[auto_grow]
+      ,[is_read_only] 
+	FROM [info].[databasefile]
 END

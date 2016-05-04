@@ -101,11 +101,19 @@ namespace server.dbaid.extractor
             foreach (string fileToProcess in Directory.GetFiles(workingDirectory, "*" + ext))
             {
                 Dictionary<string, object> parameters = new Dictionary<string, object>();
-                string servername = Path.GetFileNameWithoutExtension(fileToProcess).Split('_')[0];
+                string servername = Path.GetFileNameWithoutExtension(fileToProcess);
                 //if the instance name has an underscore, convert back.
-                servername = servername.Replace("~","_");
-
-                parameters.Add("server_name", servername);
+                if (servername.Substring(0, 1) == "[")
+                {
+                    servername = servername.Substring(1);
+                    servername = servername.Split(']')[0];
+                    parameters.Add("server_name", servername);
+                }
+                else
+                {
+                    servername = servername.Split('_')[0];
+                    parameters.Add("server_name", servername);
+                }
 
                 try /* Read in and decrypt encrypted files */
                 {
