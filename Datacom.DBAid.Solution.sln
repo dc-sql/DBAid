@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.40629.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "local.dbaid.database", "Local.DBAid.Database\local.dbaid.database.sqlproj", "{30BBB9FF-8CB9-44CB-B27E-D722FA8552E4}"
 EndProject
@@ -18,33 +18,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "local.dbaid.configg", "local.dbaid.configg\local.dbaid.configg.csproj", "{65C90572-6278-464C-A1E2-B4087388D85F}"
 EndProject
 Global
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 8
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = https://tfs.codeplex.com/tfs/tfs35
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = Local.DBAid.Collector\\local.dbaid.collector.csproj
-		SccProjectName1 = Local.DBAid.Collector
-		SccLocalPath1 = Local.DBAid.Collector
-		SccProjectUniqueName2 = Local.DBAid.Database\\local.dbaid.database.sqlproj
-		SccProjectName2 = Local.DBAid.Database
-		SccLocalPath2 = Local.DBAid.Database
-		SccProjectUniqueName3 = server.dbaid.keygen\\server.dbaid.keygen.csproj
-		SccProjectName3 = server.dbaid.keygen
-		SccLocalPath3 = server.dbaid.keygen
-		SccProjectUniqueName4 = local.dbaid.checkmk\\local.dbaid.checkmk.csproj
-		SccProjectName4 = local.dbaid.checkmk
-		SccLocalPath4 = local.dbaid.checkmk
-		SccProjectUniqueName5 = server.dbaid.extractor\\server.dbaid.extractor.csproj
-		SccProjectName5 = server.dbaid.extractor
-		SccLocalPath5 = server.dbaid.extractor
-		SccProjectUniqueName6 = dbaid.common\\dbaid.common.csproj
-		SccProjectName6 = dbaid.common
-		SccLocalPath6 = dbaid.common
-		SccProjectUniqueName7 = local.dbaid.configg\\local.dbaid.configg.csproj
-		SccProjectName7 = local.dbaid.configg
-		SccLocalPath7 = local.dbaid.configg
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|x86 = Debug|x86
