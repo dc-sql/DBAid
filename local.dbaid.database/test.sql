@@ -11,6 +11,8 @@ EXEC [health].[running_queries];
 
 EXEC [msdb].[dbo].[sp_start_job] @job_name = '_dbaid_config_genie';
 
+EXEC [audit].[cis_benchmark];
+
 EXEC [dbo].[toggle_audit_service] 1,1,1,1,1,1;
 EXEC [dbo].[toggle_audit_service] 0,0,0,0,0,0;
 
@@ -52,6 +54,8 @@ DISABLE TRIGGER [trg_stop_ddl_modification] ON DATABASE;
 DISABLE TRIGGER [trg_stop_staticparameter_change] ON [dbo].[static_parameters];
 
 EXECUTE AS LOGIN = N'low-priv-acct-admin';
+
+EXEC [dbo].[instance_tag];
 
 EXEC [control].[chart];
 EXEC [control].[check];
