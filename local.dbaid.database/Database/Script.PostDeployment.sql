@@ -665,7 +665,7 @@ BEGIN
 					@flags=2;
 
 			EXEC msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'$(DatabaseName)_backup_user_full',  
-					@enabled=1, @freq_type=4, @freq_interval=1, @freq_subday_type=1, @active_start_time=180000
+					@enabled=1, @freq_type=4, @freq_interval=1, @freq_subday_type=1, @active_start_time=190000
 
 			EXEC msdb.dbo.sp_add_jobserver @job_id=@jobId, @server_name = N'(local)';
 		COMMIT TRANSACTION
@@ -749,7 +749,7 @@ BEGIN
 					@flags=2;
 
 			EXEC msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'$(DatabaseName)_index_optimise_user',  
-					@enabled=1, @freq_type=8, @freq_interval=64, @freq_subday_type=1, @freq_recurrence_factor=1, @active_start_time=0
+					@enabled=1, @freq_type=8, @freq_interval=64, @freq_subday_type=1, @freq_recurrence_factor=1, @active_start_time=02000
 
 			EXEC msdb.dbo.sp_add_jobserver @job_id=@jobId, @server_name = N'(local)';
 		COMMIT TRANSACTION
@@ -777,7 +777,7 @@ BEGIN
 					@flags=2;
 
 			EXEC msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'$(DatabaseName)_index_optimise_system',  
-					@enabled=1, @freq_type=8, @freq_interval=64, @freq_subday_type=1, @freq_recurrence_factor=1, @active_start_time=0
+					@enabled=1, @freq_type=8, @freq_interval=1, @freq_subday_type=1, @freq_recurrence_factor=1, @active_start_time=0
 
 			EXEC msdb.dbo.sp_add_jobserver @job_id=@jobId, @server_name = N'(local)';
 		COMMIT TRANSACTION
@@ -805,7 +805,7 @@ BEGIN
 					@flags=2;
 
 			EXEC msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'$(DatabaseName)_integrity_check_user',  
-					@enabled=1, @freq_type=8, @freq_interval=1, @freq_subday_type=1, @freq_recurrence_factor=1, @active_start_time=0
+					@enabled=1, @freq_type=8, @freq_interval=1, @freq_subday_type=1, @freq_recurrence_factor=1, @active_start_time=40000
 
 			EXEC msdb.dbo.sp_add_jobserver @job_id=@jobId, @server_name = N'(local)';
 		COMMIT TRANSACTION
@@ -833,7 +833,7 @@ BEGIN
 					@flags=2;
 
 			EXEC msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'$(DatabaseName)_integrity_check_system',  
-					@enabled=1, @freq_type=8, @freq_interval=1, @freq_subday_type=1, @freq_recurrence_factor=1, @active_start_time=0
+					@enabled=1, @freq_type=8, @freq_interval=1, @freq_subday_type=1, @freq_recurrence_factor=1, @active_start_time=34000
 
 			EXEC msdb.dbo.sp_add_jobserver @job_id=@jobId, @server_name = N'(local)';
 		COMMIT TRANSACTION

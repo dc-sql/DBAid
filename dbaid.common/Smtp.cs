@@ -27,7 +27,6 @@ namespace dbaid.common
                 }
             };
 
-            //IPHostEntry host = Dns.GetHostEntry(smtp);
             SmtpClient client = new SmtpClient(smtp);
 
             client.EnableSsl = enableSsl;

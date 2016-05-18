@@ -33,7 +33,7 @@ BEGIN
 
 	DECLARE @loginfo_cmd_list TABLE([property] NVARCHAR(200), [value] NVARCHAR(200));
 	INSERT INTO @loginfo_cmd_list([property], [value])
-			EXEC XP_loginconfig 'audit level';
+			EXEC xp_loginconfig 'audit level';
 
 	DECLARE @enumerrorlogs TABLE ([archive] INT, [date] DATETIME, [file_size_byte] BIGINT);
 	INSERT INTO @enumerrorlogs EXEC [master].[dbo].[xp_enumerrorlogs];

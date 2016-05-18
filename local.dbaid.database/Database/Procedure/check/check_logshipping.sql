@@ -40,7 +40,7 @@ BEGIN
 		FROM [msdb].[dbo].[log_shipping_monitor_primary] [L]
 			INNER JOIN [dbo].[config_database] [C]
 					ON [L].[primary_database] = [C].[db_name] COLLATE Database_Default
-		WHERE [C].[is_enabled] = 1
+		WHERE [L].[threshold_alert_enabled] = 1
 			AND DATEDIFF(MINUTE, [L].[last_backup_date_utc], @curdate_utc) > [L].[backup_threshold]
 		UNION ALL
 		SELECT N'database=' + QUOTENAME([L].[secondary_database]) COLLATE Database_Default 
@@ -51,7 +51,7 @@ BEGIN
 		FROM [msdb].[dbo].[log_shipping_monitor_secondary] [L]
 			INNER JOIN [dbo].[config_database] [C]
 					ON [L].[secondary_database] = [C].[db_name] COLLATE Database_Default
-		WHERE [C].[is_enabled] = 1
+		WHERE [L].[threshold_alert_enabled] = 1
 			AND DATEDIFF(MINUTE, [L].[last_restored_date_utc], @curdate_utc) > [L].[restore_threshold]
 		ORDER BY [message];
 
