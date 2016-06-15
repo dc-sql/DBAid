@@ -21,6 +21,9 @@ SET NOCOUNT ON;
 
 	IF @version >= 11 AND SERVERPROPERTY('IsHadrEnabled') IS NOT NULL
 	BEGIN
+
+		EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
 		EXEC [dbo].[sp_executesql] @stmt = N'
 		DECLARE @check TABLE([message] NVARCHAR(4000)
 					,[state] NVARCHAR(8));
@@ -96,6 +99,9 @@ SET NOCOUNT ON;
 
 		SELECT [message], [state] 
 		FROM @check;'
+
+		REVERT;
+		REVERT;
 	END
 	ELSE
 	BEGIN
