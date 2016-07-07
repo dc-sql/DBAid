@@ -4,9 +4,11 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
+CREATE SCHEMA [report];
+GO
 CREATE SCHEMA [log];
 GO
-CREATE SCHEMA [fact];
+CREATE SCHEMA [configg];
 GO
 CREATE SCHEMA [check];
 GO
@@ -14,41 +16,14 @@ CREATE SCHEMA [chart];
 GO
 CREATE SCHEMA [maintenance];
 GO
-CREATE SCHEMA [control];
-GO
-CREATE SCHEMA [info];
-GO
-CREATE SCHEMA [audit];
+CREATE SCHEMA [setting];
 GO
 CREATE SCHEMA [process];
 GO
-CREATE SCHEMA [deprecated];
+CREATE SCHEMA [get];
 GO
-CREATE SCHEMA [health];
-GO
-
-GRANT SELECT ON SCHEMA::[audit] TO [audit] AS [dbo];
+CREATE SCHEMA [set];
 GO
 
-GRANT EXECUTE ON SCHEMA::[log] TO [admin] AS [dbo];
-GO
-GRANT SELECT ON SCHEMA::[info] TO [admin] AS [dbo];
-GO
-GRANT EXECUTE ON SCHEMA::[deprecated] TO [admin] AS [dbo];
-GO
-GRANT EXECUTE ON SCHEMA::[control] TO [admin] AS [dbo];
-GO
-GRANT EXECUTE ON SCHEMA::[fact] TO [admin] AS [dbo];
-GO
-GRANT EXECUTE ON SCHEMA::[maintenance] TO [admin] AS [dbo];
-GO
 
-GRANT EXECUTE ON SCHEMA::[control] TO [monitor] AS [dbo];
-GO
-GRANT EXECUTE ON SCHEMA::[check] TO [monitor] AS [dbo];
-GO
-GRANT EXECUTE ON SCHEMA::[chart] TO [monitor] AS [dbo];
-GO
-GRANT EXECUTE ON SCHEMA::[fact] TO [monitor] AS [dbo];
-GO
 

@@ -18,45 +18,39 @@ Version 3, 29 June 2007
 USE [master]
 GO
 
-IF  EXISTS (SELECT * FROM master.sys.server_triggers WHERE parent_class_desc = 'SERVER' AND name = N'$(DatabaseName)_protect')
-	DROP TRIGGER [$(DatabaseName)_protect] ON ALL SERVER
-GO
-
-IF NOT EXISTS (SELECT 1 FROM sys.messages WHERE message_id=54321)
-	EXEC sp_addmessage @msgnum=54321, @severity=15, @msgtext = N'Database %s dropped by user %s.';
-
 /* Turn on blocking report*/
-EXEC sp_configure 'show advanced options', 1;
-RECONFIGURE WITH OVERRIDE;
-GO
+DECLARE @sao BIT, @bpt INT;
+SELECT @sao = CAST([value_in_use] AS BIT) FROM sys.configurations WHERE [name] = 'show advanced options';
+SELECT @bpt = CAST([value_in_use] AS BIT) FROM sys.configurations WHERE [name] = 'blocked process threshold (s)';
 
-EXEC sp_configure 'blocked process threshold', 60;
-EXEC sp_configure 'show advanced options', 0;
-RECONFIGURE WITH OVERRIDE;
-GO
+IF @sao = 0
+BEGIN
+	EXEC sp_configure 'show advanced options', 1;
+	RECONFIGURE WITH OVERRIDE;
+END
 
-DECLARE @password NVARCHAR(50);
-DECLARE @cmd NVARCHAR(180);
+IF @bpt = 0
+BEGIN
+	EXEC sp_configure 'blocked process threshold', 60;
+END
+
+IF @sao = 0
+BEGIN
+	EXEC sp_configure 'show advanced options', 0;
+	RECONFIGURE WITH OVERRIDE;
+END
+GO
 
 IF NOT EXISTS (SELECT * FROM sys.server_principals WHERE LOWER([type]) IN ('u','s') AND LOWER(name) = LOWER('$(DatabaseName)_sa')) 
 BEGIN
-	SET @password = CAST(NEWID() AS NVARCHAR(128));
-	SET @cmd = 'CREATE LOGIN [$(DatabaseName)_sa] WITH PASSWORD=N''' + @password + ''', DEFAULT_DATABASE=[master], CHECK_EXPIRATION=OFF, CHECK_POLICY=ON;';
-
+	DECLARE @cmd VARCHAR(180);
+	SET @cmd = 'CREATE LOGIN [$(DatabaseName)_sa] WITH PASSWORD=N''' + CAST(NEWID() AS CHAR(38)) + ''', DEFAULT_DATABASE=[master], CHECK_EXPIRATION=OFF, CHECK_POLICY=ON;';
 	EXEC(@cmd);
+	EXEC sp_addsrvrolemember @loginame = N'$(DatabaseName)_sa', @rolename = N'sysadmin';
+	ALTER LOGIN [$(DatabaseName)_sa] DISABLE;
 END
-
-EXEC master..sp_addsrvrolemember @loginame = N'$(DatabaseName)_sa', @rolename = N'sysadmin'
-ALTER LOGIN [$(DatabaseName)_sa] DISABLE;
-GO
-
-USE [$(DatabaseName)]
-GO
-
-IF EXISTS (SELECT * FROM sys.triggers WHERE parent_class = 0 AND name = 'trg_stop_ddl_modification')
-	DISABLE TRIGGER [trg_stop_ddl_modification] ON DATABASE;
 GO
 
 /* set database to _dbaid_sa owner */
-EXEC dbo.sp_changedbowner @loginame = N'$(DatabaseName)_sa'
+EXEC [$(DatabaseName)].dbo.sp_changedbowner @loginame = N'$(DatabaseName)_sa'
 GO

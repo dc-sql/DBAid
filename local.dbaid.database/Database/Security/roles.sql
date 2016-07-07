@@ -4,13 +4,10 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE ROLE [admin];
+CREATE ROLE [collect];
 GO
 
-CREATE ROLE [audit];
-GO
-
-CREATE ROLE [monitor];
+CREATE ROLE [check];
 GO
 
 

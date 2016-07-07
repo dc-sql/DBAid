@@ -41,9 +41,6 @@ BEGIN
 	EXEC @return_code = [msdb].[dbo].[sp_maintplan_delete_log] @plan_id = NULL, @subplan_id = NULL, @oldest_time = @olderthan_date;
 	IF (@return_code <> 0) BEGIN SET @error_count = @error_count + 1; PRINT '[sp_maintplan_delete_log] - failed to purge data.'; END
 
-	DELETE FROM [dbo].[CommandLog] WHERE [StartTime] < DATEADD(DAY, @cmdlog_olderthan_day, GETDATE());
-	IF (@@ERROR <> 0) BEGIN SET @error_count = @error_count + 1; PRINT '[CommandLog] - failed to purge data.'; END
-
 	IF (@error_count <> 0) RETURN 1;
 	ELSE RETURN 0;
 END
