@@ -33,12 +33,11 @@ BEGIN
 		,[pivot].DEFAULT_BACKUP_STATE AS [default_backup_state]
 		,[pivot].DEFAULT_CHECKDB_FREQ AS [default_checkdb_freq]
 		,[pivot].DEFAULT_CHECKDB_STATE AS [default_checkdb_state]
-		,CAST((SELECT *	FROM [deprecated].[tbparameters] FOR XML PATH('row'), ROOT('table')) AS XML) AS [table_tbparameters]
-		,CAST((SELECT *	FROM [dbo].[config_alwayson] FOR XML PATH('row'), ROOT('table')) AS XML) AS [table_config_alwayson]
-		,CAST((SELECT *	FROM [dbo].[config_database] FOR XML PATH('row'), ROOT('table')) AS XML) AS [table_config_database]
-		,CAST((SELECT *	FROM [dbo].[config_job] FOR XML PATH('row'), ROOT('table')) AS XML) AS [table_config_job]
-		,CAST((SELECT *	FROM [dbo].[config_perfcounter] FOR XML PATH('row'), ROOT('table')) AS XML) AS [table_config_perfcounter]
-	FROM (SELECT [name], [value] FROM [dbo].[static_parameters]) AS [source]
+		,CAST((SELECT *	FROM [setting].[check_alwayson] FOR XML PATH('row'), ROOT('table')) AS XML) AS [table_config_alwayson]
+		,CAST((SELECT *	FROM [setting].[check_database] FOR XML PATH('row'), ROOT('table')) AS XML) AS [table_config_database]
+		,CAST((SELECT *	FROM [setting].[check_job] FOR XML PATH('row'), ROOT('table')) AS XML) AS [table_config_job]
+		,CAST((SELECT *	FROM [setting].[chart_perfcounter] FOR XML PATH('row'), ROOT('table')) AS XML) AS [table_config_perfcounter]
+	FROM (SELECT [name], [value] FROM [setting].[static_parameters]) AS [source]
 	PIVOT(
 		MAX([value])
 		FOR [name] IN (GUID

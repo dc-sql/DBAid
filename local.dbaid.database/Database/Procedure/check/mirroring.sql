@@ -24,7 +24,7 @@ BEGIN
 	FROM [master].[sys].[databases] [D]
 		INNER JOIN [master].[sys].[database_mirroring] [M]
 			ON [D].[database_id] = [M].[database_id]
-		INNER JOIN [dbo].[config_database] [C]
+		INNER JOIN [setting].[check_database] [C]
 			ON [D].[database_id] = [C].[database_id]
 	WHERE [C].[is_enabled] = 1
 		AND [M].[mirroring_guid] IS NOT NULL;

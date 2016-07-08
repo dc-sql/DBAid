@@ -58,14 +58,14 @@ BEGIN
 		SELECT
 			[property]
 			,[value]
-		FROM [info].[service]
+		FROM [dbo].[service]
 		WHERE 
 		[hierarchy] LIKE '%ServerNetworkProtocol%' OR [hierarchy] LIKE '%ServerSettingsGeneralFlag%'
 		OR [property] IN ('VERSION','SPLEVEL','IsClustered','IsIntegratedSecurityOnly')
 	UNION
 		SELECT  [name]
 			,[value_in_use]
-		FROM [info].[instance]
+		FROM [sys].[configurations]
 		WHERE [name] IN ('ad hoc distributed queries',
 						'clr enabled','Cross db ownership chaining',
 						'Database Mail XPs',

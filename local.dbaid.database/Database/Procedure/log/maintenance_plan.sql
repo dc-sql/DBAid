@@ -19,7 +19,7 @@ BEGIN
 		
 	IF (@start_datetime IS NULL)
 	BEGIN
-		SELECT @start_datetime=[last_execution_datetime] FROM [dbo].[procedure] WHERE [procedure_id] = @@PROCID;
+		SELECT @start_datetime=[last_execution_datetime] FROM [setting].[procedure_list] WHERE [procedure_id] = @@PROCID;
 		IF @start_datetime IS NULL SET @start_datetime=DATEADD(DAY,-1,GETDATE());
 	END
 
@@ -30,8 +30,8 @@ BEGIN
 
 	BEGIN TRANSACTION
 		SELECT [instance].[guid] AS [instance_guid]
-			,[D].[date1] AS [start_time]
-			,[D].[date2] AS [end_time]
+			,[D1].[date] AS [start_time]
+			,[D2].[date] AS [end_time]
 			,[p].[name] AS [plan_name]
 			,[sj].[name] AS [job_name]
 			,[description].[string] AS [description]
@@ -47,19 +47,20 @@ BEGIN
 				ON [l].[task_detail_id] = [ld].[task_detail_id]
 			LEFT JOIN msdb.dbo.sysjobs [sj]
 				ON [sp].[job_id] = [sj].[job_id]
-			CROSS APPLY [dbo].[instanceguid]() [instance]
-			CROSS APPLY [dbo].[cleanstring]([ld].[line1] + CASE WHEN LEN([ld].[line2]) > 0 THEN ' | ' ELSE '' END 
+			CROSS APPLY [get].[instanceguid]() [instance]
+			CROSS APPLY [get].[cleanstring]([ld].[line1] + CASE WHEN LEN([ld].[line2]) > 0 THEN ' | ' ELSE '' END 
 											+ [ld].[line2] + CASE WHEN LEN([ld].[line3]) > 0 THEN ' | ' ELSE '' END 
 											+ [ld].[line3] + CASE WHEN LEN([ld].[line4]) > 0 THEN ' | ' ELSE '' END 
 											+ [ld].[line4] + CASE WHEN LEN([ld].[line5]) > 0 THEN ' | ' ELSE '' END 
 											+ [ld].[line5]) [description]
-			CROSS APPLY [dbo].[cleanstring]([ld].[error_message]) [error]
-			CROSS APPLY [dbo].[string_date_with_offset]([ld].[start_time], [ld].[end_time]) [D]
+			CROSS APPLY [get].[cleanstring]([ld].[error_message]) [error]
+			CROSS APPLY [get].[string_date_with_offset]([ld].[start_time]) [D1]
+			CROSS APPLY [get].[string_date_with_offset]([ld].[end_time]) [D2]
 		WHERE [ld].[start_time] BETWEEN @start_datetime AND @end_datetime
 		ORDER BY [ld].[start_time], [ld].[end_time];
 
-		IF ((SELECT [value] FROM [dbo].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME() OR @mark_runtime = 1)
-			UPDATE [dbo].[procedure] SET [last_execution_datetime] = @end_datetime WHERE [procedure_id] = @@PROCID;
+		IF ((SELECT [value] FROM [setting].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME() OR @mark_runtime = 1)
+			UPDATE [setting].[procedure_list] SET [last_execution_datetime] = @end_datetime WHERE [procedure_id] = @@PROCID;
 		
 		IF (@@ERROR <> 0)
 		BEGIN

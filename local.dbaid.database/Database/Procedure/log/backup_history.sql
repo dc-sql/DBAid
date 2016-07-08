@@ -37,7 +37,7 @@ BEGIN
 
 	IF (@start_datetime IS NULL)
 	BEGIN
-		SELECT @start_datetime=[last_execution_datetime] FROM [dbo].[procedure] WHERE [procedure_id] = @@PROCID;
+		SELECT @start_datetime=[last_execution_datetime] FROM [setting].[procedure_list] WHERE [procedure_id] = @@PROCID;
 		IF @start_datetime IS NULL SET @start_datetime=DATEADD(DAY,-1,GETDATE());
 	END
 
@@ -88,7 +88,7 @@ BEGIN
 		SET @end_datetime = @report_datetime;
 
 	BEGIN TRANSACTION
-		SELECT (SELECT [guid] FROM [dbo].[instanceguid]()) AS [instance_guid]
+		SELECT (SELECT [guid] FROM [get].[instanceguid]()) AS [instance_guid]
 			,[D].[date1] AS [backup_start_date]
 			,[D].[date2] AS [backup_finish_date]
 			,[O].[database_name]
@@ -105,14 +105,14 @@ BEGIN
 			,[O].[is_password_protected]
 			,[C].[backup_frequency_hours]
 		FROM @output [O]
-			INNER JOIN [dbo].[config_database] [C]
+			INNER JOIN [setting].[check_database] [C]
 				ON [O].[database_id] = [C].[database_id]
-			CROSS APPLY [dbo].[string_date_with_offset]([O].[backup_start_date], [O].[backup_finish_date]) [D]
+			CROSS APPLY [get].[string_date_with_offset]([O].[backup_start_date], [O].[backup_finish_date]) [D]
 		WHERE [backup_start_date] BETWEEN @start_datetime AND @end_datetime
 		ORDER BY [backup_start_date], [backup_finish_date];
 
-		IF ((SELECT [value] FROM [dbo].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME() OR @mark_runtime = 1)
-			UPDATE [dbo].[procedure] SET [last_execution_datetime] = @end_datetime WHERE [procedure_id] = @@PROCID;
+		IF ((SELECT [value] FROM [setting].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME() OR @mark_runtime = 1)
+			UPDATE [setting].[procedure_list] SET [last_execution_datetime] = @end_datetime WHERE [procedure_id] = @@PROCID;
 
 		IF (@@ERROR <> 0)
 		BEGIN

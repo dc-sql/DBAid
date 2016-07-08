@@ -16,8 +16,8 @@ BEGIN
 	DECLARE @dbcheckdb INT;
 	DECLARE @dbnotcheckdb INT;
 
-	SELECT @dbcheckdb=COUNT(*) FROM [dbo].[config_database] WHERE [checkdb_frequency_hours] > 0 AND [is_enabled] = 1
-	SELECT @dbnotcheckdb=COUNT(*) FROM [dbo].[config_database] WHERE [checkdb_frequency_hours] = 0 OR [is_enabled] = 0
+	SELECT @dbcheckdb=COUNT(*) FROM [setting].[check_database] WHERE [checkdb_frequency_hours] > 0 AND [is_enabled] = 1
+	SELECT @dbnotcheckdb=COUNT(*) FROM [setting].[check_database] WHERE [checkdb_frequency_hours] = 0 OR [is_enabled] = 0
 	
 	IF OBJECT_ID('tempdb..#dbccinfo') IS NOT NULL 
 	DROP TABLE #dbccinfo;
@@ -68,7 +68,7 @@ BEGIN
 				  END
 			,[S].[state]
 		FROM [CheckDB] 
-			INNER JOIN [dbo].[config_database] [D]
+			INNER JOIN [setting].[check_database] [D]
 				ON [CheckDB].[DbName] = [D].[db_name] COLLATE Database_Default
 			CROSS APPLY (SELECT CASE WHEN ([CheckDB].[Value] IS NULL OR DATEDIFF(HOUR, [CheckDB].[Value], GETDATE()) > ([D].[checkdb_frequency_hours])) THEN [D].[checkdb_state_alert] ELSE N'OK' END AS [state]) [S]
 		WHERE [D].[checkdb_frequency_hours] > 0

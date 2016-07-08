@@ -52,7 +52,7 @@ BEGIN
 					+ N'; max_threshold_min=' + CAST([C].[max_exec_time_min] AS NVARCHAR(20)) AS [message]
 				,CASE WHEN DATEDIFF(MINUTE,[T].[last_exec_date],GETDATE()) >= [C].[max_exec_time_min] THEN [C].[change_state_alert] ELSE N'OK' END AS [state]
 			FROM @xpresults [X]
-				INNER JOIN [dbo].[config_job] [C]
+				INNER JOIN [setting].[check_job] [C]
 					ON [X].[job_id] = [C].[job_id]
 				CROSS APPLY (SELECT ISNULL(MAX([start_execution_date]),GETDATE()) FROM [msdb].[dbo].[sysjobactivity] WHERE [job_id] = [X].[job_id]) [T]([last_exec_date])
 			WHERE [C].[is_enabled] = 1

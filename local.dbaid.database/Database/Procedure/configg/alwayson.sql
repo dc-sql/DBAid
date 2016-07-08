@@ -39,7 +39,7 @@ BEGIN
 																	,[A].[backup_priority]
 																	,[A].[read_only_routing_url] 
 																FROM [sys].[availability_replicas] [A]
-																	INNER JOIN [dbo].[config_alwayson] [B]
+																	INNER JOIN [setting].[check_alwayson] [B]
 																		ON [A].[group_id] = [B].[ag_id]
 																WHERE [A].[group_id] = [ID].[ag_id]
 																FOR XML PATH(''replica''), ROOT(''table'')) AS [availability_replicas]) [AR]

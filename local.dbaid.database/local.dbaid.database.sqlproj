@@ -98,7 +98,6 @@
     <Folder Include="Database\Procedure\dbo" />
     <Folder Include="Database\Procedure\check" />
     <Folder Include="Database\Table" />
-    <Folder Include="Database\Procedure\process" />
     <Folder Include="Database\Procedure\configg" />
     <Folder Include="Database\Procedure\report" />
     <Folder Include="Database\Procedure\chart" />
@@ -107,6 +106,7 @@
     <Folder Include="Database\Procedure\get" />
     <Folder Include="Database\Procedure\set" />
     <Folder Include="Database\Function\get" />
+    <Folder Include="Database\View" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="Database\Security\roles.sql" />
@@ -127,13 +127,6 @@
     </Build>
     <Build Include="Database\Procedure\check\logshipping.sql" />
     <Build Include="Database\Procedure\check\longrunningjob.sql" />
-    <Build Include="Database\Procedure\process\process_stageauditlogin.sql" />
-    <Build Include="Database\Procedure\process\process_blockqueue.sql" />
-    <Build Include="Database\Procedure\process\process_databasequeue.sql" />
-    <Build Include="Database\Procedure\process\process_deadlockqueue.sql" />
-    <Build Include="Database\Procedure\process\process_loginqueue.sql" />
-    <Build Include="Database\Procedure\process\process_mirrorqueue.sql" />
-    <Build Include="Database\Procedure\process\process_serverqueue.sql" />
     <Build Include="Database\Procedure\configg\instance.sql" />
     <Build Include="Database\Procedure\configg\database.sql" />
     <Build Include="Database\Procedure\check\alwayson.sql">
@@ -196,6 +189,8 @@
     <Build Include="Database\Function\get\cleanstring.sql" />
     <Build Include="Database\Function\get\instanceguid.sql" />
     <Build Include="Database\Function\get\string_date_with_offset.sql" />
+    <Build Include="Database\View\product_version.sql" />
+    <Build Include="Database\Table\setting\check_state.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Database\Script.PostDeployment.sql" />

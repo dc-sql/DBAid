@@ -36,11 +36,11 @@ BEGIN
 								,[retries_attempted] INT
 								,[server] NVARCHAR(128));
 	
-	SELECT @sanitize=CAST([value] AS BIT) FROM [dbo].[static_parameters] WHERE [name]='SANITIZE_DATASET';
+	SELECT @sanitize=CAST([value] AS BIT) FROM [setting].[static_parameters] WHERE [name]='SANITIZE_DATASET';
 	
 	IF (@start_datetime IS NULL)
 	BEGIN
-		SELECT @start_datetime=[last_execution_datetime] FROM [dbo].[procedure] WHERE [procedure_id] = @@PROCID;
+		SELECT @start_datetime=[last_execution_datetime] FROM [setting].[procedure_list] WHERE [procedure_id] = @@PROCID;
 		IF @start_datetime IS NULL SET @start_datetime=DATEADD(DAY,-1,GETDATE());
 	END
 
@@ -85,7 +85,7 @@ BEGIN
 			WHERE [H].[run_status] NOT IN (1, 4)
 		) 
 		SELECT [instance].[guid] AS [instance_guid]
-			,[D].[date1] AS [run_datetime]
+			,[D1].[date] AS [run_datetime]
 			,[job_name]
 			,[step_id]
 			,[step_name]
@@ -93,14 +93,14 @@ BEGIN
 			,[run_status]
 			,[run_duration_sec]
 		FROM [JobHistory] [H]
-			CROSS APPLY [dbo].[instanceguid]() [instance]
-			CROSS APPLY [dbo].[cleanstring]([error_message]) [error]
-			CROSS APPLY [dbo].[string_date_with_offset]([H].[run_datetime], NULL) [D]
+			CROSS APPLY [get].[instanceguid]() [instance]
+			CROSS APPLY [get].[cleanstring]([error_message]) [error]
+			CROSS APPLY [get].[string_date_with_offset]([H].[run_datetime]) [D1]
 		WHERE [run_datetime] BETWEEN @start_datetime AND @end_datetime
 		ORDER BY [H].[run_datetime];
 
-		IF ((SELECT [value] FROM [dbo].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME() OR @mark_runtime = 1)
-			UPDATE [dbo].[procedure] SET [last_execution_datetime] = @end_datetime WHERE [procedure_id] = @@PROCID;
+		IF ((SELECT [value] FROM [setting].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME() OR @mark_runtime = 1)
+			UPDATE [setting].[procedure_list] SET [last_execution_datetime] = @end_datetime WHERE [procedure_id] = @@PROCID;
 
 		IF (@@ERROR <> 0)
 		BEGIN

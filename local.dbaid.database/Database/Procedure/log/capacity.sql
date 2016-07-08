@@ -14,7 +14,7 @@ BEGIN
 	DECLARE @retention_months INT, @check_date CHAR(29);
 
 	SELECT @retention_months = CAST([value] AS TINYINT) 
-	FROM [dbo].[static_parameters] 
+	FROM [setting].[static_parameters] 
 	WHERE [name] = 'CAPACITY_CACHE_RETENTION_MONTH';
 
 	IF (@retention_months > 0 OR @retention_months IS NULL) 
@@ -36,7 +36,7 @@ BEGIN
 		[used_mb] NUMERIC(20,2),
 		[reserved_mb] NUMERIC(20,2));
 
-	SELECT @check_date=[date1] FROM [dbo].[string_date_with_offset](GETDATE(), NULL);
+	SELECT @check_date=[date] FROM [get].[string_date_with_offset](GETDATE());
 	
 	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
 
@@ -76,7 +76,7 @@ BEGIN
 
 	INSERT INTO [$(DatabaseName)].[dbo].[stage_capacity]
 	SELECT 
-		(SELECT [guid] FROM [dbo].[instanceguid]()) AS [instance_guid],
+		(SELECT [guid] FROM [get].[instanceguid]()) AS [instance_guid],
 		[DI].[database_name],
 		[MF].[physical_name],
 		[MF].[name] AS [logical_name],
@@ -96,7 +96,7 @@ BEGIN
 			ON [DR].[drive] = [DI].[drive] COLLATE Database_Default
 
 	SELECT 
-		(SELECT [guid] FROM [dbo].[instanceguid]()) AS [instance_guid],
+		(SELECT [guid] FROM [get].[instanceguid]()) AS [instance_guid],
 		[DI].[database_name],
 		[MF].[physical_name],
 		[MF].[name] AS [logical_name],

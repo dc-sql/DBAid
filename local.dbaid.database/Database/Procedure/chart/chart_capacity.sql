@@ -77,7 +77,7 @@ BEGIN
 			,SUBSTRING([F].[physical_name],1,1) AS [drive]
 			,CAST([F].[size]/128.00 AS NUMERIC(20,2)) AS [size_used_mb]
 			,CAST([F].[size]/128.00 AS NUMERIC(20,2)) AS [size_reserved_mb]
-		FROM [dbo].[config_database] [C]
+		FROM [setting].[check_database] [C]
 			INNER JOIN [sys].[master_files] [F]
 				ON [C].[database_id] = [F].[database_id]
 		WHERE [F].[database_id] NOT IN (SELECT [database_id] FROM @file_info)
@@ -196,7 +196,7 @@ BEGIN
 				ELSE (SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb]))
 				END AS [max]
 			--,MAX([S].[fg_size_available_mb]) AS [fg_size_available_mb]
-		FROM [dbo].[config_database] [C]
+		FROM [setting].[check_database] [C]
 			INNER JOIN [sys].[databases] [DB]
 				ON [C].[database_id] = [DB].[database_id]
 			INNER JOIN @file_info [F]

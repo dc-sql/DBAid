@@ -15,7 +15,7 @@ BEGIN
 
 	SELECT 'EXEC ' + QUOTENAME([schema_name]) + '.' + QUOTENAME([procedure_name]) AS [cmd]
 		,[schema_name] + '_' + [procedure_name] AS [name]
-	FROM [dbo].[procedure]
+	FROM [setting].[procedure_list]
 	WHERE [is_enabled] = 1
 		AND [schema_name] = @schema
 	ORDER BY [procedure_name]

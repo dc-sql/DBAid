@@ -40,7 +40,7 @@ BEGIN
 												FROM [master].[sys].[dm_hadr_availability_group_states] [GS]
 													INNER JOIN [master].[sys].[availability_groups] [AG] 
 														ON [AG].[group_id] = [GS].[group_id]
-													INNER JOIN [dbo].[config_alwayson] [HA] 
+													INNER JOIN [setting].[check_alwayson] [HA] 
 														ON [HA].[ag_id] = [AG].[group_id]
 													INNER JOIN [sys].[dm_hadr_availability_replica_states] [RS] 
 														ON [RS].[group_id] = [AG].[group_id]

@@ -35,7 +35,7 @@ BEGIN
 			,[S].[cntr_type]
 			,[T].[ms_ticks]
 		FROM [sys].[dm_os_performance_counters] [S]
-			INNER JOIN [dbo].[config_perfcounter] [C]
+			INNER JOIN [setting].[chart_perfcounter] [C]
 				ON RTRIM([S].[object_name]) LIKE [C].[object_name] COLLATE DATABASE_DEFAULT
 					AND RTRIM([S].[counter_name]) LIKE ISNULL([C].[counter_name],'%') COLLATE DATABASE_DEFAULT
 					AND RTRIM([S].[instance_name]) LIKE ISNULL([C].[instance_name],'%') COLLATE DATABASE_DEFAULT
@@ -52,7 +52,7 @@ BEGIN
 			,[S].[cntr_type]
 			,[T].[ms_ticks]
 		FROM [sys].[dm_os_performance_counters] [S]
-			INNER JOIN [dbo].[config_perfcounter] [C]
+			INNER JOIN [setting].[chart_perfcounter] [C]
 				ON RTRIM([S].[object_name]) LIKE [C].[object_name] COLLATE DATABASE_DEFAULT
 					AND RTRIM([S].[counter_name]) LIKE ISNULL([C].[counter_name],'%') COLLATE DATABASE_DEFAULT
 					AND RTRIM([S].[instance_name]) LIKE ISNULL([C].[instance_name],'%') COLLATE DATABASE_DEFAULT
@@ -77,7 +77,7 @@ BEGIN
 	FROM @sample1 [S1]
 		INNER JOIN @sample2 [S2]
 			ON [S1].[rownum] = [S2].[rownum]
-		INNER JOIN [dbo].[config_perfcounter] [C]
+		INNER JOIN [setting].[chart_perfcounter] [C]
 			ON RTRIM([S1].[object_name]) LIKE [C].[object_name] COLLATE DATABASE_DEFAULT
 				AND RTRIM([S1].[counter_name]) LIKE ISNULL([C].[counter_name],'%') COLLATE DATABASE_DEFAULT
 				AND RTRIM([S1].[instance_name]) LIKE ISNULL([C].[instance_name],'%') COLLATE DATABASE_DEFAULT

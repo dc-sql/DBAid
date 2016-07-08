@@ -15,4 +15,4 @@ CREATE TABLE [setting].[chart_perfcounter]
 ) 
 GO
 
-CREATE UNIQUE CLUSTERED INDEX [ix_performance_counter_1_2_unique] ON [setting].[performance_counter] ([object_name], [counter_name], [instance_name])
+CREATE UNIQUE CLUSTERED INDEX [ix_performance_counter_1_2_3_unique] ON [setting].[chart_perfcounter] ([object_name], [counter_name], [instance_name])
