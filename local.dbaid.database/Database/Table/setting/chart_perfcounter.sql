@@ -9,9 +9,9 @@ CREATE TABLE [setting].[chart_perfcounter]
 	[object_name] NVARCHAR(128) NULL
 	,[counter_name] NVARCHAR(128) NULL
 	,[instance_name] NVARCHAR(128) NULL
-	,[warning_threshold] NUMERIC(20, 2) NULL
-	,[critical_threshold] NUMERIC(20, 2) NULL, 
-    CONSTRAINT [CK_config_perfcounter_thresholds] CHECK (([warning_threshold] IS NULL AND [critical_threshold] IS NULL) OR ([warning_threshold] IS NOT NULL AND [critical_threshold] IS NOT NULL))
+	,[check_warning_threshold] NUMERIC(20, 2) NULL DEFAULT NULL
+	,[check_critical_threshold] NUMERIC(20, 2) NULL DEFAULT NULL, 
+    CONSTRAINT [CK_config_perfcounter_thresholds] CHECK (([check_warning_threshold] IS NULL AND [check_critical_threshold] IS NULL) OR ([check_warning_threshold] IS NOT NULL AND [check_critical_threshold] IS NOT NULL))
 ) 
 GO
 

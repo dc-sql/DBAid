@@ -27,30 +27,17 @@ VALUES(1, N'CRITICAL', N'Generally raised as a service desk P2'),
 /* Insert static variables */
 MERGE INTO [setting].[static_parameters] AS [Target] 
 USING (VALUES(N'GUID',NEWID(),N'Unique SQL Instance ID, generated during install. This GUID is used to link instance data together, please do not change.')
-	,(N'PROGRAM_NAME','(>^,^)> (SQL Team PS Collector Agent) <(^,^<)',N'This is the program name the central collector will use. Procedure last execute dates will only be updated when an applicaiton connects using this program name.')
-	,(N'AUDIT_EVENT_RETENTION_DAY',7,N'The number of days to keep audit events in the audit.Event table.')
-	,(N'DEFRAG_LOG_RETENTION_DAY',90,N'The number of days to keep index defrag log data.')
-	,(N'DEFAULT_CAP_WARN_PERCENT',20,N'Default capacity warning percentage threshold. This is used when a new database has been setup.')
-	,(N'DEFAULT_CAP_CRIT_PERCENT',10,N'Default capacity critical percentage threshold. This is used when a new database has been setup.')
-	,(N'DEFAULT_JOB_MAX_MIN',120,N'Default job execution warning time threshold. This is used when a new job has been setup.')
-	,(N'DEFAULT_JOB_STATE','WARNING',N'Default monitoring job state change alert')
-	,(N'DEFAULT_JOB_ENABLED',1,N'Default monitoring job alert enabled')
-	,(N'DEFAULT_DB_STATE','CRITICAL',N'Default monitoring database state change alert')
-	,(N'DEFAULT_ALWAYSON_STATE','CRITICAL',N'Default alwayson availablility group state change alert')
-	,(N'DEFAULT_ALWAYSON_ROLE','CRITICAL',N'Default alwayson availablility group role change alert')
-	,(N'NAGIOS_EVENTHISTORY_TIMESPAN_MIN',10,N'The number of minutes to show audit.event data to Nagios. After this number the events are filtered out.')
+	,(N'PROGRAM_NAME','(>^,^)> (DBAid) <(^,^<)',N'This is the program name the collector will use. Procedure last execute dates will only be updated when an applicaiton connects using this program name.')
 	,(N'SANITIZE_DATASET',1,N'This specifies if log data should be sanitized before being written out. This will hide sensitive data, such as account and Network info')
 	,(N'PUBLIC_ENCRYPTION_KEY',N'$(PublicKey)',N'Public key generated in collection server.')
-	,(N'DEFAULT_BACKUP_FREQ',26,N'Default backup frequency in hours.')
-	,(N'DEFAULT_CHECKDB_FREQ',170,N'Default checkdb frequency in hours.')
-	,(N'DEFAULT_CHECKDB_STATE',N'WARNING',N'Default monitoring checkdb state change alert')
-	,(N'DEFAULT_BACKUP_STATE',N'WARNING',N'Default monitoring backup state change alert')
-	,(N'CAPACITY_CACHE_RETENTION_MONTH',3,N'Number of months to retain capacity cache data in log.capacity')
+	,(N'CAPACITY_CACHE_RETENTION_MONTH',3,N'Number of months to retain capacity cache data in dbo.capacity')
 ) AS [Source] ([name],[value],[description])  
 ON [Target].[name] = [Source].[name] 
+WHEN MATCHED THEN
+	UPDATE SET [Target].[description] = [Source].[description]
 WHEN NOT MATCHED BY TARGET THEN  
-INSERT ([name],[value],[description]) 
-VALUES ([Source].[name],[Source].[value],[Source].[description]);
+	INSERT ([name],[value],[description]) 
+	VALUES ([Source].[name],[Source].[value],[Source].[description]);
 GO
 
 /* General perf counters */
@@ -89,4 +76,7 @@ GO
 EXEC [dbo].[dbaid_inventory];
 GO
 
+/* set database to _dbaid_sa owner */
+EXEC [$(DatabaseName)].dbo.sp_changedbowner @loginame = N'$(DatabaseName)_sa'
+GO
 

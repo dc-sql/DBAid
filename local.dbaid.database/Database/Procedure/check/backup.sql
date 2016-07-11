@@ -15,7 +15,7 @@ SET NOCOUNT ON;
 
 	DECLARE @to_backup INT, @not_backup INT, @major_version INT, @cluster NVARCHAR(128);
 
-	SELECT @major_version = [major] FROM [get].[product_version];
+	SELECT @major_version = [major] FROM [get].[product_version]();
 
 	IF @major_version >= 11
 		EXEC sp_executesql N'SELECT @out=[cluster_name] FROM [sys].[dm_hadr_cluster]', N'@out NVARCHAR(128) OUTPUT', @out = @cluster;
@@ -56,7 +56,7 @@ SET NOCOUNT ON;
 			FROM Backups [B]
 				INNER JOIN [setting].[check_database] [D]
 					ON [B].[database_id] = [D].[database_id]
-				CROSS APPLY (SELECT CASE WHEN ([B].[backup_finish_date] IS NULL OR DATEDIFF(HOUR, [B].[backup_finish_date], GETDATE()) > ([D].[check_backup_since_hour])) THEN [D].[backup_state_alert] ELSE N''OK'' END AS [state]) [S]
+				CROSS APPLY (SELECT CASE WHEN ([B].[backup_finish_date] IS NULL OR DATEDIFF(HOUR, [B].[backup_finish_date], GETDATE()) > ([D].[check_backup_since_hour])) THEN [D].[check_backup_state] ELSE N''OK'' END AS [state]) [S]
 			WHERE [B].[row] = 1
 				AND [D].[check_backup_since_hour] > 0
 				AND LOWER([D].[db_name]) NOT IN (N''tempdb'')
@@ -95,7 +95,7 @@ SET NOCOUNT ON;
 		FROM Backups [B]
 			INNER JOIN [setting].[check_database] [D]
 				ON [B].[database_id] = [D].[database_id]
-			CROSS APPLY (SELECT CASE WHEN ([B].[backup_finish_date] IS NULL OR DATEDIFF(HOUR, [B].[backup_finish_date], GETDATE()) > ([D].[check_backup_since_hour])) THEN [D].[backup_state_alert] ELSE N'OK' END AS [state]) [S]
+			CROSS APPLY (SELECT CASE WHEN ([B].[backup_finish_date] IS NULL OR DATEDIFF(HOUR, [B].[backup_finish_date], GETDATE()) > ([D].[check_backup_since_hour])) THEN [D].[check_backup_state] ELSE N'OK' END AS [state]) [S]
 		WHERE [B].[row] = 1
 			AND [D].[check_backup_since_hour] > 0
 			AND LOWER([D].[db_name]) NOT IN (N'tempdb')

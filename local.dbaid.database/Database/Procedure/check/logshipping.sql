@@ -23,20 +23,20 @@ BEGIN
 	FROM [msdb].[dbo].[log_shipping_monitor_primary] [L]
 		INNER JOIN [setting].[check_database] [C]
 				ON [L].[primary_database] = [C].[db_name] COLLATE Database_Default
-	WHERE [C].[is_enabled] = 1
+	WHERE [C].[check_logshipping_enabled] = 1
 
 	SELECT @secondarycount = COUNT(*)
 	FROM [msdb].[dbo].[log_shipping_monitor_secondary] [L]
 		INNER JOIN [setting].[check_database] [C]
 				ON [L].[secondary_database] = [C].[db_name] COLLATE Database_Default
-	WHERE [C].[is_enabled] = 1
+	WHERE [C].[check_logshipping_enabled] = 1
 
 	INSERT INTO @check
 		SELECT N'database=' 
 			+ QUOTENAME([L].[primary_database]) COLLATE Database_Default 
 			+ N'; role=PRIMARY; last_backup_minago=' 
 			+ CAST(DATEDIFF(MINUTE, [L].[last_backup_date_utc], @curdate_utc) AS NVARCHAR(10)) AS [message]
-			,CASE WHEN DATEDIFF(MINUTE, [L].[last_backup_date_utc], @curdate_utc) > [L].[backup_threshold]  THEN [C].[change_state_alert] ELSE N'OK' END AS [state]
+			,CASE WHEN DATEDIFF(MINUTE, [L].[last_backup_date_utc], @curdate_utc) > [L].[backup_threshold]  THEN [C].[check_logshipping_state] ELSE N'OK' END AS [state]
 		FROM [msdb].[dbo].[log_shipping_monitor_primary] [L]
 			INNER JOIN [setting].[check_database] [C]
 					ON [L].[primary_database] = [C].[db_name] COLLATE Database_Default
@@ -47,7 +47,7 @@ BEGIN
 			+ N'; role=SECONDARY; primary_source=' + QUOTENAME([L].[primary_server]) 
 			+ N'.' + QUOTENAME([L].[primary_database])
 			+ N'; last_restore_minago=' + CAST(DATEDIFF(MINUTE, [L].[last_restored_date_utc], @curdate_utc) AS NVARCHAR(10)) AS [message]
-			,CASE WHEN DATEDIFF(MINUTE, [L].[last_restored_date_utc], @curdate_utc) > [L].[restore_threshold] THEN [C].[change_state_alert] ELSE N'OK' END AS [state]
+			,CASE WHEN DATEDIFF(MINUTE, [L].[last_restored_date_utc], @curdate_utc) > [L].[restore_threshold] THEN [C].[check_logshipping_state] ELSE N'OK' END AS [state]
 		FROM [msdb].[dbo].[log_shipping_monitor_secondary] [L]
 			INNER JOIN [setting].[check_database] [C]
 					ON [L].[secondary_database] = [C].[db_name] COLLATE Database_Default

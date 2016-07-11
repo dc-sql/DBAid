@@ -43,12 +43,12 @@ BEGIN
 					WHEN 2 THEN N'RETRY'
 					WHEN 3 THEN N'CANCEL'
 					ELSE N'UNKNOWN' END AS [message]
-			,CASE WHEN [J].[run_status] IN (0) THEN [C].[change_state_alert] ELSE 'OK' END AS [state]
+			,CASE WHEN [J].[run_status] IN (0) THEN [C].[check_job_state] ELSE 'OK' END AS [state]
 		FROM [jobset] [J]
 			INNER JOIN [setting].[check_job] [C]
 				ON [J].[job_id] = [C].[job_id]
 		WHERE [J].[row] = 1
-			AND [C].[is_enabled] = 1
+			AND [C].[check_job_enabled] = 1
 			AND [J].[run_status] = 0;
 
 	IF (SELECT COUNT(*) FROM @check) < 1

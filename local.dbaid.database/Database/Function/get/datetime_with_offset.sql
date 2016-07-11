@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE FUNCTION [get].[string_date_with_offset]  
+CREATE FUNCTION [get].[datetime_with_offset]  
 (
 	@date DATETIME = NULL
 )

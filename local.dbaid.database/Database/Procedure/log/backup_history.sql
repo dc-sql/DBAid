@@ -107,7 +107,7 @@ BEGIN
 		FROM @output [O]
 			INNER JOIN [setting].[check_database] [C]
 				ON [O].[database_id] = [C].[database_id]
-			CROSS APPLY [get].[string_date_with_offset]([O].[backup_start_date], [O].[backup_finish_date]) [D]
+			CROSS APPLY [get].[datetime_with_offset]([O].[backup_start_date], [O].[backup_finish_date]) [D]
 		WHERE [backup_start_date] BETWEEN @start_datetime AND @end_datetime
 		ORDER BY [backup_start_date], [backup_finish_date];
 

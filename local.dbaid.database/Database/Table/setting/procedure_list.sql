@@ -10,5 +10,5 @@ CREATE TABLE [setting].[procedure_list]
 	[schema_name] NVARCHAR(128) NOT NULL, 
     [procedure_name] NVARCHAR(128) NOT NULL, 
     [is_enabled] BIT NOT NULL DEFAULT 1, 
-    [last_execution_datetime] DATETIME NULL 
+    [last_execution_datetime] DATETIME NULL DEFAULT NULL 
 )

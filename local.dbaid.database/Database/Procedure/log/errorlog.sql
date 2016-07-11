@@ -83,7 +83,7 @@ BEGIN
 			INNER JOIN [master].[sys].[messages] [M]
 				ON [M].[language_id] = CAST(SERVERPROPERTY('LCID') AS INT)
 					AND CAST(SUBSTRING([A].[message],8,CHARINDEX(',',[A].[message])-8) AS INT) = [M].[message_id]
-			CROSS APPLY [get].[string_date_with_offset]([A].[log_date]) [D1]
+			CROSS APPLY [get].[datetime_with_offset]([A].[log_date]) [D1]
 		WHERE [A].[message] LIKE 'Error:%Severity:%State:%'
 		ORDER BY [A].[log_date], [A].[source];
 
@@ -103,7 +103,7 @@ BEGIN
 			,CASE WHEN @sanitize=0 THEN [message].[string] ELSE SUBSTRING([message].[string], CHARINDEX(' found ', [message].[string]), LEN([message].[string])) END AS [message]
 		FROM #__Errorlog [E]
 			CROSS APPLY [get].[cleanstring]([E].[message]) [message]
-			CROSS APPLY [get].[string_date_with_offset]([E].[log_date], NULL) [D]
+			CROSS APPLY [get].[datetime_with_offset]([E].[log_date], NULL) [D]
 		WHERE [message] LIKE '%found % errors and repaired % errors%'
 			AND [message] NOT LIKE '%found 0 errors and repaired 0 errors%' 
 		ORDER BY [log_date];

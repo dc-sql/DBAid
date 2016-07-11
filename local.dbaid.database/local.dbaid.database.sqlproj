@@ -19,7 +19,7 @@
     <PageVerify>CHECKSUM</PageVerify>
     <QuotedIdentifier>True</QuotedIdentifier>
     <AnsiNulls>True</AnsiNulls>
-    <ServiceBrokerOption>EnableBroker</ServiceBrokerOption>
+    <ServiceBrokerOption>DisableBroker</ServiceBrokerOption>
     <GenerateSqlClrDdl>False</GenerateSqlClrDdl>
     <TargetDatabase>local.dbaid.database</TargetDatabase>
     <DacApplicationName>_dbaid</DacApplicationName>
@@ -106,7 +106,6 @@
     <Folder Include="Database\Procedure\get" />
     <Folder Include="Database\Procedure\set" />
     <Folder Include="Database\Function\get" />
-    <Folder Include="Database\View" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="Database\Security\roles.sql" />
@@ -170,9 +169,6 @@
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>
     <Build Include="Database\Procedure\chart\chart_perfcounter.sql" />
-    <Build Include="Database\Procedure\dbo\dbaid_inventory.sql">
-      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
-    </Build>
     <Build Include="Database\Table\setting\check_alwayson.sql" />
     <Build Include="Database\Table\setting\check_database.sql" />
     <Build Include="Database\Table\setting\check_job.sql" />
@@ -188,9 +184,12 @@
     <Build Include="Database\Procedure\set\service_property.sql" />
     <Build Include="Database\Function\get\cleanstring.sql" />
     <Build Include="Database\Function\get\instanceguid.sql" />
-    <Build Include="Database\Function\get\string_date_with_offset.sql" />
-    <Build Include="Database\View\product_version.sql" />
+    <Build Include="Database\Function\get\datetime_with_offset.sql" />
     <Build Include="Database\Table\setting\check_state.sql" />
+    <Build Include="Database\Function\get\product_version.sql" />
+    <Build Include="Database\Procedure\set\dbaid_inventory.sql">
+      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
+    </Build>
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Database\Script.PostDeployment.sql" />
@@ -224,7 +223,8 @@
     </ArtifactReference>
   </ItemGroup>
   <PropertyGroup>
-    <PostBuildEvent>Powershell -ExecutionPolicy UnRestricted -File "$(ProjectDir)$(OutputPath)PostBuild.ps1"</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <OutputPath>bin\Release\</OutputPath>

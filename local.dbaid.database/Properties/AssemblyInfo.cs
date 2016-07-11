@@ -7,7 +7,7 @@
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Datacom")]
-[assembly: AssemblyProduct("SQL Team Monitoring")]
+[assembly: AssemblyProduct("DBAid")]
 [assembly: AssemblyCopyright("Datacom")]
 [assembly: AssemblyTrademark("Datacom")]
 [assembly: AssemblyCulture("")]
@@ -19,4 +19,4 @@
 //      Build Number
 //      Revision
 //
-[assembly: AssemblyVersion("1.0.*")]
+[assembly: AssemblyVersion("2.0.*")]

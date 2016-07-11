@@ -36,7 +36,7 @@ BEGIN
 		[used_mb] NUMERIC(20,2),
 		[reserved_mb] NUMERIC(20,2));
 
-	SELECT @check_date=[date] FROM [get].[string_date_with_offset](GETDATE());
+	SELECT @check_date=[date] FROM [get].[datetime_with_offset](GETDATE());
 	
 	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
 

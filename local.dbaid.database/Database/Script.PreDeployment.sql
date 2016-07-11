@@ -51,6 +51,4 @@ BEGIN
 END
 GO
 
-/* set database to _dbaid_sa owner */
-EXEC [$(DatabaseName)].dbo.sp_changedbowner @loginame = N'$(DatabaseName)_sa'
-GO
+

@@ -16,8 +16,8 @@ BEGIN
 	DECLARE @dbcheckdb INT;
 	DECLARE @dbnotcheckdb INT;
 
-	SELECT @dbcheckdb=COUNT(*) FROM [setting].[check_database] WHERE [checkdb_frequency_hours] > 0 AND [is_enabled] = 1
-	SELECT @dbnotcheckdb=COUNT(*) FROM [setting].[check_database] WHERE [checkdb_frequency_hours] = 0 OR [is_enabled] = 0
+	SELECT @dbcheckdb=COUNT(*) FROM [setting].[check_database] WHERE [check_integrity_since_hour] > 0;
+	SELECT @dbnotcheckdb=COUNT(*) FROM [setting].[check_database] WHERE [check_integrity_since_hour] = 0;
 	
 	IF OBJECT_ID('tempdb..#dbccinfo') IS NOT NULL 
 	DROP TABLE #dbccinfo;
@@ -64,16 +64,15 @@ BEGIN
 				+ N'; checkdb_missed=' 
 				+ CASE
 					WHEN REPLACE(CONVERT(NVARCHAR(20), [CheckDB].[Value], 120), N' ', N'T') = '1900-01-01T00:00:00.' THEN 'ALL'
-					ELSE CAST(CAST(DATEDIFF(HOUR, [CheckDB].[Value], GETDATE()) / [D].[checkdb_frequency_hours] AS INT) AS VARCHAR(5))
+					ELSE CAST(CAST(DATEDIFF(HOUR, [CheckDB].[Value], GETDATE()) / [D].[check_integrity_since_hour] AS INT) AS VARCHAR(5))
 				  END
 			,[S].[state]
 		FROM [CheckDB] 
 			INNER JOIN [setting].[check_database] [D]
 				ON [CheckDB].[DbName] = [D].[db_name] COLLATE Database_Default
-			CROSS APPLY (SELECT CASE WHEN ([CheckDB].[Value] IS NULL OR DATEDIFF(HOUR, [CheckDB].[Value], GETDATE()) > ([D].[checkdb_frequency_hours])) THEN [D].[checkdb_state_alert] ELSE N'OK' END AS [state]) [S]
-		WHERE [D].[checkdb_frequency_hours] > 0
+			CROSS APPLY (SELECT CASE WHEN ([CheckDB].[Value] IS NULL OR DATEDIFF(HOUR, [CheckDB].[Value], GETDATE()) > ([D].[check_integrity_since_hour])) THEN [D].[check_integrity_state] ELSE N'OK' END AS [state]) [S]
+		WHERE [D].[check_integrity_since_hour] > 0
 			AND [S].[state] NOT IN (N'OK')
-			AND [D].[is_enabled] = 1
 		ORDER BY [CheckDB].[DbName]
 
 		IF (SELECT COUNT(*) FROM @check) < 1

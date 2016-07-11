@@ -95,7 +95,7 @@ BEGIN
 		FROM [JobHistory] [H]
 			CROSS APPLY [get].[instanceguid]() [instance]
 			CROSS APPLY [get].[cleanstring]([error_message]) [error]
-			CROSS APPLY [get].[string_date_with_offset]([H].[run_datetime]) [D1]
+			CROSS APPLY [get].[datetime_with_offset]([H].[run_datetime]) [D1]
 		WHERE [run_datetime] BETWEEN @start_datetime AND @end_datetime
 		ORDER BY [H].[run_datetime];
 

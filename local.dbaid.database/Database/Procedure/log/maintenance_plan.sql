@@ -54,8 +54,8 @@ BEGIN
 											+ [ld].[line4] + CASE WHEN LEN([ld].[line5]) > 0 THEN ' | ' ELSE '' END 
 											+ [ld].[line5]) [description]
 			CROSS APPLY [get].[cleanstring]([ld].[error_message]) [error]
-			CROSS APPLY [get].[string_date_with_offset]([ld].[start_time]) [D1]
-			CROSS APPLY [get].[string_date_with_offset]([ld].[end_time]) [D2]
+			CROSS APPLY [get].[datetime_with_offset]([ld].[start_time]) [D1]
+			CROSS APPLY [get].[datetime_with_offset]([ld].[end_time]) [D2]
 		WHERE [ld].[start_time] BETWEEN @start_datetime AND @end_datetime
 		ORDER BY [ld].[start_time], [ld].[end_time];
 
