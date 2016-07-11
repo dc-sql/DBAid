@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [dbo].[foreachdb]
+CREATE PROCEDURE [dbo].[foreach_db]
 (
 	@cmd NVARCHAR(MAX)
 )
@@ -40,6 +40,7 @@ BEGIN
 		BEGIN
 			BEGIN TRY
 				SET @sql = REPLACE(@cmd, '?', @db);
+				FETCH NEXT FROM db_curse INTO @db;
 				EXEC sp_executesql @sql;
 			END TRY
 			BEGIN CATCH
@@ -47,8 +48,6 @@ BEGIN
 				CONTINUE;
 			END CATCH
 		END
-
-		FETCH NEXT FROM db_curse INTO @db;
 	END
 
 	CLOSE db_curse;

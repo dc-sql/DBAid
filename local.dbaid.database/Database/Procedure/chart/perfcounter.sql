@@ -59,8 +59,8 @@ BEGIN
 			CROSS APPLY (SELECT [ms_ticks] FROM sys.dm_os_sys_info) [T](ms_ticks);
 
 	SELECT CAST([X].[calc_value] AS NUMERIC(20,2)) AS [val]
-		,CAST([C].[warning_threshold] AS NUMERIC(20,2)) AS [warn]
-		,CAST([C].[critical_threshold] AS NUMERIC(20,2)) AS [crit]
+		,CAST([C].[check_warning_threshold] AS NUMERIC(20,2)) AS [warn]
+		,CAST([C].[check_critical_threshold] AS NUMERIC(20,2)) AS [crit]
 		,N'''' 
 		+ REPLACE(REPLACE(LOWER(RTRIM([S1].[object_name])),N'SQLServer:',N''),N' ','_')
 		+ N'_' 
@@ -70,9 +70,9 @@ BEGIN
 		+ CAST([X].[calc_value] AS NVARCHAR(20))
 		+ ISNULL([U].[uom], N'')
 		+ N';'
-		+ ISNULL(CAST([C].[warning_threshold] AS NVARCHAR(20)),N'')
+		+ ISNULL(CAST([C].[check_warning_threshold] AS NVARCHAR(20)),N'')
 		+ N';'
-		+ ISNULL(CAST([C].[critical_threshold] AS NVARCHAR(20)),N'')
+		+ ISNULL(CAST([C].[check_critical_threshold] AS NVARCHAR(20)),N'')
 		+ N';;' COLLATE Database_Default AS [pnp]
 	FROM @sample1 [S1]
 		INNER JOIN @sample2 [S2]

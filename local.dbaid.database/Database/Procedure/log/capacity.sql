@@ -5,13 +5,13 @@ Version 3, 29 June 2007
 */
 
 CREATE PROCEDURE [log].[capacity]
-WITH ENCRYPTION
+WITH ENCRYPTION, EXECUTE AS 'dbo'
 AS
 
 BEGIN
 	SET NOCOUNT ON;
 
-	DECLARE @retention_months INT, @check_date CHAR(29);
+	DECLARE @retention_months INT, @check_date DATETIME;
 
 	SELECT @retention_months = CAST([value] AS TINYINT) 
 	FROM [setting].[static_parameters] 
@@ -36,9 +36,7 @@ BEGIN
 		[used_mb] NUMERIC(20,2),
 		[reserved_mb] NUMERIC(20,2));
 
-	SELECT @check_date=[date] FROM [get].[datetime_with_offset](GETDATE());
-	
-	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+	SET @check_date=GETDATE();
 
 	INSERT INTO @fixeddrives
 		EXEC xp_fixeddrives;
@@ -55,7 +53,7 @@ BEGIN
 		AND [hierarchy] LIKE N'%Win32_Volume%'
 
 		INSERT INTO @file_info
-			EXEC [dbo].[foreachdb] 'USE [?]; 
+			EXEC [dbo].[foreach_db] 'USE [?]; 
 				SELECT DB_NAME() AS [database_name]
 					,[FG].[name] AS [filegroup_name]
 					,[FG].[is_read_only]
@@ -69,14 +67,11 @@ BEGIN
 						ON [M].[data_space_id] = [FG].[data_space_id]
 				WHERE [M].[type] IN (0,1)'; 
 
-	REVERT;
-	REVERT;
+	DELETE FROM [dbo].[capacity] WHERE CAST(LEFT([check_date], 23) AS DATETIME) < DATEADD(MONTH, @retention_months, GETDATE());
 
-	DELETE FROM [dbo].[stage_capacity] WHERE CAST(LEFT([check_date], 23) AS DATETIME) < DATEADD(MONTH, @retention_months, GETDATE());
-
-	INSERT INTO [$(DatabaseName)].[dbo].[stage_capacity]
+	INSERT INTO [dbo].[capacity]
 	SELECT 
-		(SELECT [guid] FROM [get].[instanceguid]()) AS [instance_guid],
+		(SELECT [guid] FROM [dbo].[instance_guid]()) AS [instance_guid],
 		[DI].[database_name],
 		[MF].[physical_name],
 		[MF].[name] AS [logical_name],
@@ -96,7 +91,7 @@ BEGIN
 			ON [DR].[drive] = [DI].[drive] COLLATE Database_Default
 
 	SELECT 
-		(SELECT [guid] FROM [get].[instanceguid]()) AS [instance_guid],
+		(SELECT [guid] FROM [dbo].[instance_guid]()) AS [instance_guid],
 		[DI].[database_name],
 		[MF].[physical_name],
 		[MF].[name] AS [logical_name],
@@ -106,7 +101,7 @@ BEGIN
 		[DR].[drive],
 		[DR].[free_mb],
 		[DR].[capacity_mb],
-		@check_date AS [check_date]
+		[D].[date] AS [check_date]
 	FROM [master].[sys].[master_files] [MF]
 		INNER JOIN @file_info [DI] 
 			ON DB_ID([DI].[database_name]) = [MF].database_id 
@@ -114,4 +109,5 @@ BEGIN
 				AND [DI].[file_name] = [MF].[name]
 		INNER JOIN @drive_info [DR] 
 			ON [DR].[drive] = [DI].[drive] COLLATE Database_Default
+		CROSS APPLY (SELECT [date] FROM [dbo].[datetime_with_offset](@check_date)) [D]
 END

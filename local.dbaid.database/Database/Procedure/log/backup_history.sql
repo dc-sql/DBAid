@@ -7,10 +7,9 @@ Version 3, 29 June 2007
 CREATE PROCEDURE [log].[backup_history]
 (
 	@start_datetime DATETIME = NULL,
-	@end_datetime DATETIME = NULL,
-	@mark_runtime BIT = 0
+	@end_datetime DATETIME = NULL
 )
-WITH ENCRYPTION
+WITH ENCRYPTION, EXECUTE AS 'dbo'
 AS
 BEGIN
 	SET NOCOUNT ON;
@@ -87,37 +86,30 @@ BEGIN
 	IF (@end_datetime IS NULL)
 		SET @end_datetime = @report_datetime;
 
-	BEGIN TRANSACTION
-		SELECT (SELECT [guid] FROM [get].[instanceguid]()) AS [instance_guid]
-			,[D].[date1] AS [backup_start_date]
-			,[D].[date2] AS [backup_finish_date]
-			,[O].[database_name]
-			,[O].[backup_type]
-			,[O].[is_copy_only]
-			,[O].[software_name]
-			,[O].[user_name]
-			,[O].[physical_device_name]
-			,[O].[backup_size_mb]
-			,[O].[compressed_backup_size_mb]
-			,[O].[compression_ratio]
-			,[O].[encryptor_type]
-			,[O].[encryptor_thumbprint]
-			,[O].[is_password_protected]
-			,[C].[backup_frequency_hours]
-		FROM @output [O]
-			INNER JOIN [setting].[check_database] [C]
-				ON [O].[database_id] = [C].[database_id]
-			CROSS APPLY [get].[datetime_with_offset]([O].[backup_start_date], [O].[backup_finish_date]) [D]
-		WHERE [backup_start_date] BETWEEN @start_datetime AND @end_datetime
-		ORDER BY [backup_start_date], [backup_finish_date];
+	SELECT (SELECT [guid] FROM [dbo].[instance_guid]()) AS [instance_guid]
+		,[D1].[date] AS [backup_start_date]
+		,[D2].[date] AS [backup_finish_date]
+		,[O].[database_name]
+		,[O].[backup_type]
+		,[O].[is_copy_only]
+		,[O].[software_name]
+		,[O].[user_name]
+		,[O].[physical_device_name]
+		,[O].[backup_size_mb]
+		,[O].[compressed_backup_size_mb]
+		,[O].[compression_ratio]
+		,[O].[encryptor_type]
+		,[O].[encryptor_thumbprint]
+		,[O].[is_password_protected]
+		,[C].[check_backup_since_hour]
+	FROM @output [O]
+		INNER JOIN [setting].[check_database] [C]
+			ON [O].[database_id] = [C].[database_id]
+		CROSS APPLY [dbo].[datetime_with_offset]([O].[backup_start_date]) [D1]
+		CROSS APPLY [dbo].[datetime_with_offset]([O].[backup_finish_date]) [D2]
+	WHERE [backup_start_date] BETWEEN @start_datetime AND @end_datetime
+	ORDER BY [backup_start_date], [backup_finish_date];
 
-		IF ((SELECT [value] FROM [setting].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME() OR @mark_runtime = 1)
-			UPDATE [setting].[procedure_list] SET [last_execution_datetime] = @end_datetime WHERE [procedure_id] = @@PROCID;
-
-		IF (@@ERROR <> 0)
-		BEGIN
-			ROLLBACK TRANSACTION;
-			RETURN 1;
-		END
-	COMMIT TRANSACTION;
+	IF (SELECT [value] FROM [setting].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME()
+		UPDATE [setting].[procedure_list] SET [last_execution_datetime] = @end_datetime WHERE [procedure_id] = @@PROCID;
 END;

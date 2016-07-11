@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [configg].[serverobject]
+CREATE PROCEDURE [configg].[server_object]
 WITH ENCRYPTION
 AS
 BEGIN 

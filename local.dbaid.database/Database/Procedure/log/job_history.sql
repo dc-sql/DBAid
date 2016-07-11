@@ -7,10 +7,9 @@ Version 3, 29 June 2007
 CREATE PROCEDURE [log].[job_history]
 (
 	@start_datetime DATETIME = NULL,
-	@end_datetime DATETIME = NULL,
-	@mark_runtime BIT = 0
+	@end_datetime DATETIME = NULL
 )
-WITH ENCRYPTION
+WITH ENCRYPTION, EXECUTE AS 'dbo'
 AS
 BEGIN
 	SET NOCOUNT ON;
@@ -93,13 +92,13 @@ BEGIN
 			,[run_status]
 			,[run_duration_sec]
 		FROM [JobHistory] [H]
-			CROSS APPLY [get].[instanceguid]() [instance]
-			CROSS APPLY [get].[cleanstring]([error_message]) [error]
-			CROSS APPLY [get].[datetime_with_offset]([H].[run_datetime]) [D1]
+			CROSS APPLY [dbo].[instance_guid]() [instance]
+			CROSS APPLY [dbo].[clean_string]([error_message]) [error]
+			CROSS APPLY [dbo].[datetime_with_offset]([H].[run_datetime]) [D1]
 		WHERE [run_datetime] BETWEEN @start_datetime AND @end_datetime
 		ORDER BY [H].[run_datetime];
 
-		IF ((SELECT [value] FROM [setting].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME() OR @mark_runtime = 1)
+		IF ((SELECT [value] FROM [setting].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME())
 			UPDATE [setting].[procedure_list] SET [last_execution_datetime] = @end_datetime WHERE [procedure_id] = @@PROCID;
 
 		IF (@@ERROR <> 0)

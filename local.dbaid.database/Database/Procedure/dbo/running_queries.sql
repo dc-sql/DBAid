@@ -4,11 +4,10 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [report].[running_queries]
+CREATE PROCEDURE [dbo].[running_queries]
 WITH ENCRYPTION
 AS
 BEGIN
-
 	SELECT
 		[request].[session_id],
 		[request].[request_id] AS [session_request_id],

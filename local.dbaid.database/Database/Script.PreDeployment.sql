@@ -51,4 +51,6 @@ BEGIN
 END
 GO
 
+USE [$(DatabaseName)]
+GO
 

@@ -10,5 +10,5 @@
 	[drive] CHAR(1),
 	[free_mb] NUMERIC(20,2),
 	[capacity_mb] NUMERIC(20,2),
-	[check_date]  NVARCHAR(29)
+	[check_date]  DATETIME
 )

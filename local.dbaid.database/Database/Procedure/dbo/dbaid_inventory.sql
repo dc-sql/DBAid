@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [set].[dbaid_inventory]
+CREATE PROCEDURE [dbo].[dbaid_inventory]
 WITH ENCRYPTION
 AS
 BEGIN
@@ -86,7 +86,7 @@ BEGIN
 						AND [RS].[replica_id] = [RCS].[replica_id]) AS [Source]
 			ON [Target].[availability_group_name] = [Source].[availability_group_name]
 			WHEN MATCHED THEN
-				UPDATE [Target].[availability_group_id] = [Source].[availability_group_id]
+				UPDATE SET [Target].[availability_group_id] = [Source].[availability_group_id]
 			WHEN NOT MATCHED BY TARGET THEN
 				INSERT ([availability_group_id],
 						[availability_group_name],

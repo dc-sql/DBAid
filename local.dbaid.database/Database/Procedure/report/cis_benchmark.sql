@@ -5,7 +5,7 @@ Version 3, 29 June 2007
 */
 
 CREATE PROCEDURE [report].[cis_benchmark]
-WITH ENCRYPTION
+WITH ENCRYPTION, EXECUTE AS 'dbo'
 AS
 BEGIN
 	SET NOCOUNT ON;
@@ -42,10 +42,8 @@ BEGIN
 		DROP TABLE #__guest;		
 	CREATE TABLE #__guest (id INT, [name] NVARCHAR(128), [permission_name] NVARCHAR(128))
 
-	EXEC foreachdb N'USE [?]; 
-					INSERT INTO #__guest 
-						SELECT 
-							DB_ID() AS DBName, 
+	EXEC [dbo].[foreach_db] N'USE [?]; INSERT INTO #__guest 
+						SELECT DB_ID() AS DBName, 
 							[dpr].[name], 
 							[dpe].[permission_name] 
 						FROM [sys].[database_permissions] [dpe] 

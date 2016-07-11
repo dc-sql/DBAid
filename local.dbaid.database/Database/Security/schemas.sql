@@ -4,26 +4,17 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE SCHEMA [report];
-GO
-CREATE SCHEMA [log];
-GO
-CREATE SCHEMA [configg];
+CREATE SCHEMA [chart];
 GO
 CREATE SCHEMA [check];
 GO
-CREATE SCHEMA [chart];
+CREATE SCHEMA [configg];
 GO
-CREATE SCHEMA [maintenance];
+CREATE SCHEMA [log];
+GO
+CREATE SCHEMA [report];
 GO
 CREATE SCHEMA [setting];
 GO
-CREATE SCHEMA [process];
-GO
-CREATE SCHEMA [get];
-GO
-CREATE SCHEMA [set];
-GO
-
 
 

@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE [get].[instance_tag]
+﻿CREATE PROCEDURE [dbo].[instance_tag]
 WITH ENCRYPTION
 AS
 BEGIN

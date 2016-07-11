@@ -49,7 +49,7 @@ BEGIN
 		EXEC(@cmd);
 
 	INSERT INTO @file_info
-		EXEC [dbo].[foreachdb] 'USE [?]; 
+		EXEC [dbo].[foreach_db] 'USE [?]; 
 			SELECT DB_ID() AS [database_id]
 				,ISNULL([FG].[data_space_id],0)
 				,[FG].[name]
@@ -186,10 +186,10 @@ BEGIN
 				END AS [data_space]
 			,SUM([F].[size_used_mb]) AS [used]
 			,CASE WHEN [F].[filegroup_is_readonly] = 1 OR [DB].[is_read_only] = 1 OR [DB].[state] != 0 THEN NULL 
-				ELSE (SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb]))-((SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb])) * (CAST([C].[capacity_warning_percent_free] AS NUMERIC(5,2))/100.00))
+				ELSE (SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb]))-((SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb])) * (CAST([C].[check_capacity_warning_percent_free] AS NUMERIC(5,2))/100.00))
 				END AS [warning]
 			,CASE WHEN [F].[filegroup_is_readonly] = 1 OR [DB].[is_read_only] = 1 OR [DB].[state] != 0 THEN NULL 
-				ELSE (SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb]))-((SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb])) * (CAST([C].[capacity_critical_percent_free] AS NUMERIC(5,2))/100.00))
+				ELSE (SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb]))-((SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb])) * (CAST([C].[check_capacity_critical_percent_free] AS NUMERIC(5,2))/100.00))
 				END AS [critical]
 			,SUM([F].[size_reserved_mb]) AS [reserved]
 			,CASE WHEN [F].[filegroup_is_readonly] = 1 OR [DB].[is_read_only] = 1 THEN SUM([F].[size_reserved_mb])
@@ -222,8 +222,8 @@ BEGIN
 			,[F].[filegroup_name]
 			,[F].[filegroup_is_readonly]
 			,[F].[file_type]
-			,[C].[capacity_critical_percent_free]
-			,[C].[capacity_warning_percent_free]
+			,[C].[check_capacity_critical_percent_free]
+			,[C].[check_capacity_warning_percent_free]
 	)
 	SELECT CAST([used] AS NUMERIC(20,2)) AS [val]
 		,CAST([warning] AS NUMERIC(20,2)) AS [warn]

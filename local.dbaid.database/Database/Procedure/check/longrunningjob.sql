@@ -5,7 +5,7 @@ Version 3, 29 June 2007
 */
 
 CREATE PROCEDURE [check].[longrunningjob]
-WITH ENCRYPTION
+WITH ENCRYPTION, EXECUTE AS 'dbo'
 AS
 BEGIN
 	SET NOCOUNT ON;
@@ -49,15 +49,15 @@ BEGIN
 						WHEN 7 THEN N'FINISHING'
 						ELSE N'UNKNOWN' END
 					+ N'; run_duration_min=' + CAST(DATEDIFF(MINUTE,[T].[last_exec_date],GETDATE()) AS NVARCHAR(20)) 
-					+ N'; max_threshold_min=' + CAST([C].[max_exec_time_min] AS NVARCHAR(20)) AS [message]
-				,CASE WHEN DATEDIFF(MINUTE,[T].[last_exec_date],GETDATE()) >= [C].[max_exec_time_min] THEN [C].[change_state_alert] ELSE N'OK' END AS [state]
+					+ N'; max_threshold_min=' + CAST([C].[max_job_runtime_minute] AS NVARCHAR(20)) AS [message]
+				,CASE WHEN DATEDIFF(MINUTE,[T].[last_exec_date],GETDATE()) >= [C].[max_job_runtime_minute] THEN [C].[check_longrunning_state] ELSE N'OK' END AS [state]
 			FROM @xpresults [X]
 				INNER JOIN [setting].[check_job] [C]
 					ON [X].[job_id] = [C].[job_id]
 				CROSS APPLY (SELECT ISNULL(MAX([start_execution_date]),GETDATE()) FROM [msdb].[dbo].[sysjobactivity] WHERE [job_id] = [X].[job_id]) [T]([last_exec_date])
-			WHERE [C].[is_enabled] = 1
+			WHERE [C].[check_longrunning_enabled] = 1
 				AND ISNULL([X].[running],0) = 1
-				AND DATEDIFF(MINUTE,[T].[last_exec_date],GETDATE()) > [C].[max_exec_time_min];
+				AND DATEDIFF(MINUTE,[T].[last_exec_date],GETDATE()) > [C].[max_job_runtime_minute];
 	END 
 
 	IF (SELECT COUNT(*) FROM @check) < 1

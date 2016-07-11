@@ -19,18 +19,29 @@ Post-Deployment Script Template
 USE [$(DatabaseName)];
 GO
 
-INSERT INTO [setting].[check_state] 
-VALUES(1, N'CRITICAL', N'Generally raised as a service desk P2'),
+MERGE INTO [setting].[check_state] AS [Target]
+USING(VALUES(1, N'CRITICAL', N'Generally raised as a service desk P2'),
 (2, N'WARNING', N'Generally raised as a service desk P3'),
-(3, N'OK', N'Default state for all green, everything is OK');
+(3, N'OK', N'Default state for all green, everything is OK')) AS [Source] ([state_id],[state_name],[state_desc])
+ON [Target].[state_id] = [Source].[state_id]
+WHEN MATCHED THEN
+	UPDATE SET [Target].[state_name] = [Source].[state_name],
+		[Target].[state_desc] = [Source].[state_desc]
+WHEN NOT MATCHED BY TARGET THEN
+	INSERT ([state_id],
+			[state_name],
+			[state_desc]) 
+	VALUES ([Source].[state_id],
+			[Source].[state_name],
+			[Source].[state_desc]);
 
 /* Insert static variables */
 MERGE INTO [setting].[static_parameters] AS [Target] 
-USING (VALUES(N'GUID',NEWID(),N'Unique SQL Instance ID, generated during install. This GUID is used to link instance data together, please do not change.')
-	,(N'PROGRAM_NAME','(>^,^)> (DBAid) <(^,^<)',N'This is the program name the collector will use. Procedure last execute dates will only be updated when an applicaiton connects using this program name.')
-	,(N'SANITIZE_DATASET',1,N'This specifies if log data should be sanitized before being written out. This will hide sensitive data, such as account and Network info')
-	,(N'PUBLIC_ENCRYPTION_KEY',N'$(PublicKey)',N'Public key generated in collection server.')
-	,(N'CAPACITY_CACHE_RETENTION_MONTH',3,N'Number of months to retain capacity cache data in dbo.capacity')
+USING (SELECT N'GUID',CAST(NEWID() AS VARCHAR(38)),N'Unique SQL Instance ID, generated during install. This GUID is used to link instance data together, please do not change.'
+	UNION SELECT N'PROGRAM_NAME','(>^,^)> (DBAid) <(^,^<)',N'This is the program name the collector will use. Procedure last execute dates will only be updated when an applicaiton connects using this program name.'
+	UNION SELECT N'SANITIZE_DATASET','1',N'This specifies if log data should be sanitized before being written out. This will hide sensitive data, such as account and Network info'
+	UNION SELECT N'PUBLIC_ENCRYPTION_KEY',N'$(PublicKey)',N'Public key generated in collection server.'
+	UNION SELECT N'CAPACITY_CACHE_RETENTION_MONTH','3',N'Number of months to retain capacity cache data in dbo.capacity'
 ) AS [Source] ([name],[value],[description])  
 ON [Target].[name] = [Source].[name] 
 WHEN MATCHED THEN
@@ -66,10 +77,15 @@ USING (VALUES(N'%:Broker Activation', N'Tasks Running', N'_Total')
 ) AS [Source] ([object_name],[counter_name],[instance_name])  
 ON [Target].[object_name] = [Source].[object_name] 
 	AND [Target].[counter_name] = [Source].[counter_name] 
-	AND [Target].[instance_name] = [Source].[instance_name] 
+	AND ([Target].[instance_name] = [Source].[instance_name]
+		OR ([Target].[instance_name] IS NULL AND [Source].[instance_name] IS NULL))
 WHEN NOT MATCHED BY TARGET THEN  
-INSERT ([object_name],[counter_name],[instance_name]) 
-VALUES ([Source].[object_name],[Source].[counter_name],[Source].[instance_name]);
+	INSERT ([object_name],
+			[counter_name],
+			[instance_name]) 
+	VALUES ([Source].[object_name],
+			[Source].[counter_name],
+			[Source].[instance_name]);
 GO
 
 /* execute dbaid inventory */

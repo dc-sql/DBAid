@@ -5,15 +5,13 @@ Version 3, 29 June 2007
 */
 
 CREATE PROCEDURE [check].[mirroring]
-WITH ENCRYPTION
+WITH ENCRYPTION, EXECUTE AS 'dbo'
 AS
 BEGIN
 	SET NOCOUNT ON;
 
 	DECLARE @check TABLE([message] NVARCHAR(4000)
 						,[state] NVARCHAR(8));
-
-	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
 
 	INSERT INTO @check
 	SELECT N'database=' + QUOTENAME([D].[name]) COLLATE Database_Default
@@ -28,9 +26,6 @@ BEGIN
 			ON [D].[database_id] = [C].[database_id]
 	WHERE [C].[check_mirror_enabled] = 1
 		AND [M].[mirroring_guid] IS NOT NULL;
-
-	REVERT;
-	REVERT;
 
 	IF (SELECT COUNT(*) FROM @check) < 1
 		INSERT INTO @check VALUES(N'Mirroring is currently not configured.',N'NA');

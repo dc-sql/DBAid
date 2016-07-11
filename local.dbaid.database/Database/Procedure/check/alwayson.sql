@@ -5,7 +5,7 @@ Version 3, 29 June 2007
 */
 
 CREATE PROCEDURE [check].[alwayson]
-WITH ENCRYPTION
+WITH ENCRYPTION, EXECUTE AS 'dbo'
 AS
 BEGIN
 	SET NOCOUNT ON;
@@ -15,9 +15,6 @@ BEGIN
 
 	IF SERVERPROPERTY('IsHadrEnabled') IS NOT NULL
 	BEGIN
-
-		EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
-
 		INSERT INTO @check
 			EXEC [dbo].[sp_executesql] @stmt = N'SELECT 
 													N''ag='' 
@@ -45,9 +42,6 @@ BEGIN
 													INNER JOIN [sys].[dm_hadr_availability_replica_states] [RS] 
 														ON [RS].[group_id] = [AG].[group_id]
 															AND [RS].[is_local] = 1';
-		
-		REVERT;
-		REVERT;
 		
 		IF (SELECT COUNT(*) FROM @check) = 0
 		BEGIN

@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [configg].[alwayson]
+CREATE PROCEDURE [configg].[always_on]
 WITH ENCRYPTION
 AS
 BEGIN

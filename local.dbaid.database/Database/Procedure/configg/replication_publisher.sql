@@ -51,7 +51,7 @@ BEGIN
 								,[articles] XML
 								,[subscribers] XML);
 
-	INSERT INTO @db_publication EXEC [dbo].[foreachdb]  N'SELECT ''?'' FROM [?].[INFORMATION_SCHEMA].[TABLES] [T] INNER JOIN [sys].[databases] [D] ON ''?'' = [D].[name] WHERE [TABLE_NAME]=''syspublications''  AND [D].[is_distributor]=0';
+	INSERT INTO @db_publication EXEC [dbo].[foreach_db]  N'SELECT ''?'' FROM [?].[INFORMATION_SCHEMA].[TABLES] [T] INNER JOIN [sys].[databases] [D] ON ''?'' = [D].[name] WHERE [TABLE_NAME]=''syspublications''  AND [D].[is_distributor]=0';
 
 	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
 

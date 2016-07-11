@@ -94,7 +94,6 @@
     <Folder Include="Database\Function" />
     <Folder Include="Database\Procedure" />
     <Folder Include="Database\Procedure\log" />
-    <Folder Include="Database\Procedure\Maintenance" />
     <Folder Include="Database\Procedure\dbo" />
     <Folder Include="Database\Procedure\check" />
     <Folder Include="Database\Table" />
@@ -103,9 +102,7 @@
     <Folder Include="Database\Procedure\chart" />
     <Folder Include="Database\Table\setting" />
     <Folder Include="Database\Table\dbo" />
-    <Folder Include="Database\Procedure\get" />
-    <Folder Include="Database\Procedure\set" />
-    <Folder Include="Database\Function\get" />
+    <Folder Include="Database\Function\dbo" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="Database\Security\roles.sql" />
@@ -113,8 +110,7 @@
     <Build Include="Database\Procedure\log\job_history.sql" />
     <Build Include="Database\Procedure\log\backup_history.sql" />
     <Build Include="Database\Procedure\log\errorlog.sql" />
-    <Build Include="Database\Procedure\log\maintenance_plan.sql" />
-    <Build Include="Database\Procedure\dbo\foreachdb.sql">
+    <Build Include="Database\Procedure\dbo\foreach_db.sql">
       <SuppressTSqlWarnings>
       </SuppressTSqlWarnings>
       <QuotedIdentifier>ProjectDefault</QuotedIdentifier>
@@ -133,10 +129,10 @@
     </Build>
     <Build Include="Database\Procedure\configg\service.sql" />
     <Build Include="Database\Procedure\configg\db_file.sql" />
-    <Build Include="Database\Procedure\configg\serverobject.sql" />
+    <Build Include="Database\Procedure\configg\server_object.sql" />
     <Build Include="Database\Procedure\configg\security.sql" />
-    <Build Include="Database\Procedure\configg\alwayson.sql" />
-    <Build Include="Database\Procedure\configg\maintenanceplan.sql" />
+    <Build Include="Database\Procedure\configg\always_on.sql" />
+    <Build Include="Database\Procedure\configg\maintenance_plan.sql" />
     <Build Include="Database\Procedure\configg\db_mail.sql" />
     <Build Include="Database\Procedure\configg\replication_publisher.sql">
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
@@ -148,13 +144,12 @@
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>
     <Build Include="Database\Procedure\configg\dbaid_config.sql" />
-    <Build Include="Database\Procedure\configg\agentjob.sql" />
+    <Build Include="Database\Procedure\configg\agent_job.sql" />
     <Build Include="Database\Procedure\configg\resource_governor.sql" />
     <Build Include="Database\Procedure\check\backup.sql" />
     <Build Include="Database\Procedure\check\checkdb.sql">
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>
-    <Build Include="Database\Procedure\Maintenance\maintenance_cleanup_history.sql" />
     <Build Include="Database\Procedure\log\capacity.sql">
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>
@@ -164,11 +159,10 @@
     <None Include="Database\Security\permissions.sql">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <Build Include="Database\Procedure\report\running_queries.sql" />
-    <Build Include="Database\Procedure\chart\chart_capacity.sql">
+    <Build Include="Database\Procedure\chart\capacity.sql">
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>
-    <Build Include="Database\Procedure\chart\chart_perfcounter.sql" />
+    <Build Include="Database\Procedure\chart\perfcounter.sql" />
     <Build Include="Database\Table\setting\check_alwayson.sql" />
     <Build Include="Database\Table\setting\check_database.sql" />
     <Build Include="Database\Table\setting\check_job.sql" />
@@ -177,19 +171,21 @@
     <Build Include="Database\Table\dbo\dbo_service.sql" />
     <Build Include="Database\Table\dbo\dbo_capacity.sql" />
     <Build Include="Database\Table\setting\procedure_list.sql" />
-    <Build Include="Database\Procedure\get\procedure_list.sql" />
-    <Build Include="Database\Procedure\get\instance_tag.sql">
-      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
-    </Build>
-    <Build Include="Database\Procedure\set\service_property.sql" />
-    <Build Include="Database\Function\get\cleanstring.sql" />
-    <Build Include="Database\Function\get\instanceguid.sql" />
-    <Build Include="Database\Function\get\datetime_with_offset.sql" />
+    <Build Include="Database\Function\dbo\clean_string.sql" />
+    <Build Include="Database\Function\dbo\instance_guid.sql" />
+    <Build Include="Database\Function\dbo\datetime_with_offset.sql" />
     <Build Include="Database\Table\setting\check_state.sql" />
-    <Build Include="Database\Function\get\product_version.sql" />
-    <Build Include="Database\Procedure\set\dbaid_inventory.sql">
+    <Build Include="Database\Function\dbo\product_version.sql" />
+    <Build Include="Database\Procedure\dbo\cleanup_history.sql" />
+    <Build Include="Database\Procedure\dbo\dbaid_inventory.sql">
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>
+    <Build Include="Database\Procedure\dbo\service_property.sql" />
+    <Build Include="Database\Procedure\dbo\instance_tag.sql">
+      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
+    </Build>
+    <Build Include="Database\Procedure\dbo\procedure_list.sql" />
+    <Build Include="Database\Procedure\dbo\running_queries.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Database\Script.PostDeployment.sql" />

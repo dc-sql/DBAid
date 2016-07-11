@@ -7,10 +7,9 @@ Version 3, 29 June 2007
 CREATE PROCEDURE [log].[errorlog]
 (
 	@start_datetime DATETIME = NULL,
-	@end_datetime DATETIME = NULL,
-	@mark_runtime BIT = 0
+	@end_datetime DATETIME = NULL
 )
-WITH ENCRYPTION
+WITH ENCRYPTION, EXECUTE AS 'dbo'
 AS
 BEGIN
 	SET NOCOUNT ON;
@@ -83,32 +82,32 @@ BEGIN
 			INNER JOIN [master].[sys].[messages] [M]
 				ON [M].[language_id] = CAST(SERVERPROPERTY('LCID') AS INT)
 					AND CAST(SUBSTRING([A].[message],8,CHARINDEX(',',[A].[message])-8) AS INT) = [M].[message_id]
-			CROSS APPLY [get].[datetime_with_offset]([A].[log_date]) [D1]
+			CROSS APPLY [dbo].[datetime_with_offset]([A].[log_date]) [D1]
 		WHERE [A].[message] LIKE 'Error:%Severity:%State:%'
 		ORDER BY [A].[log_date], [A].[source];
 
 	BEGIN TRANSACTION
-		SELECT (SELECT [guid] FROM [get].[instanceguid]()) AS [instance_guid]
+		SELECT (SELECT [guid] FROM [dbo].[instance_guid]()) AS [instance_guid]
 			,[E].[log_date]
 			,[E].[source]
 			,[E].[message_header]
 			,[message].[string] AS [message]
 		FROM #__SeverityError [E]
-			CROSS APPLY [get].[cleanstring]([E].[message]) [message]
+			CROSS APPLY [dbo].[clean_string]([E].[message]) [message]
 		UNION ALL
-		SELECT (SELECT [guid] FROM [get].[instanceguid]()) AS [instance_guid]
+		SELECT (SELECT [guid] FROM [dbo].[instance_guid]()) AS [instance_guid]
 			,[D].[date1] COLLATE database_default AS [log_date]
 			,[E].[source]
 			,N'Error: dbcc'
 			,CASE WHEN @sanitize=0 THEN [message].[string] ELSE SUBSTRING([message].[string], CHARINDEX(' found ', [message].[string]), LEN([message].[string])) END AS [message]
 		FROM #__Errorlog [E]
-			CROSS APPLY [get].[cleanstring]([E].[message]) [message]
-			CROSS APPLY [get].[datetime_with_offset]([E].[log_date], NULL) [D]
+			CROSS APPLY [dbo].[clean_string]([E].[message]) [message]
+			CROSS APPLY [dbo].[datetime_with_offset]([E].[log_date], NULL) [D]
 		WHERE [message] LIKE '%found % errors and repaired % errors%'
 			AND [message] NOT LIKE '%found 0 errors and repaired 0 errors%' 
 		ORDER BY [log_date];
 
-		IF ((SELECT [value] FROM [setting].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME() OR @mark_runtime = 1)
+		IF ((SELECT [value] FROM [setting].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME())
 			UPDATE [setting].[procedure_list] SET [last_execution_datetime] = @end_datetime WHERE [procedure_id] = @@PROCID;
 
 		IF (@@ERROR <> 0)

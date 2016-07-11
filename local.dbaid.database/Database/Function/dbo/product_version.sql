@@ -1,5 +1,6 @@
-﻿CREATE FUNCTION [get].[product_version]()
+﻿CREATE FUNCTION [dbo].[product_version]()
 RETURNS TABLE
+WITH ENCRYPTION
 RETURN(
 	SELECT [product_version], [service_pack], [major], [minor], [build], [patch]
 	FROM (SELECT SUBSTRING(SUBSTRING(@@VERSION, 0, CHARINDEX('-', @@VERSION)), 0, CHARINDEX('(', @@VERSION)) AS [product_version]
@@ -12,12 +13,12 @@ RETURN(
 		WHEN 4 THEN 'patch' END AS [build_name]
 	FROM (SELECT string.split.value('(./text())[1]', 'NVARCHAR(10)'), ROW_NUMBER() OVER(ORDER BY string.split)
 	FROM (SELECT x = CONVERT(XML, '<a>' + REPLACE(CAST(SERVERPROPERTY('ProductVersion') AS NVARCHAR(128)), '.', '</a><a>') + '</a>').query('.')) AS xmlstr 
-	CROSS APPLY x.nodes('a') AS string(split)) AS [build]([number], [position])
+		CROSS APPLY x.nodes('a') AS string(split)) AS [build]([number], [position])
 	) AS [SourceTable]
 	PIVOT
 	(
-	MIN([SourceTable].[build_number])
-	FOR [SourceTable].[build_name] IN ([major], [minor], [build], [patch])
+		MIN([SourceTable].[build_number])
+		FOR [SourceTable].[build_name] IN ([major], [minor], [build], [patch])
 	) AS [PivotTable]
 )
 

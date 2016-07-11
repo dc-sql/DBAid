@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [maintenance].[cleanup_history]
+CREATE PROCEDURE [dbo].[cleanup_history]
 	@job_olderthan_day INT = 92,
 	@backup_olderthan_day INT = 92,
 	@cmdlog_olderthan_day INT = 92,
