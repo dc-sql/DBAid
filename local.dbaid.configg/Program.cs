@@ -12,67 +12,44 @@ namespace local.dbaid.asbuilt
 {
     class Program
     {
-        private const string mssqlControlFact = "[control].[fact]";
+        private const string mssqlControlFact = "EXEC [dbo].[procedure_list] @schema = N'configg'";
         private const string mssqlInsertService = "[dbo].[insert_service]";
         private const string mssqlAppSelect = "SELECT [value] FROM [dbo].[static_parameters] WHERE UPPER([name]) = N'PROGRAM_NAME'";
-        private const string logID = "DBAid-ConfigG-";
+        private const string logID = "DBAidConfigG";
 
         static void Main(string[] args)
         {
-            Log.licenseHeader();
-
-            if (Array.IndexOf(args, @"/?") >= 0)
+            if (Array.IndexOf(args, @"?") >= 0)
             {
-                Console.WriteLine("See https://dbaid.codeplex.com/documentation for more details");
-
+                Log.licenseHeader();
                 return;
             }
 
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            string logFile = Path.Combine(baseDirectory, logID + DateTime.Now.ToString("yyyyMMdd") + ".log");
+            string logFile = Path.Combine(baseDirectory, logID + "_" + DateTime.Now.ToString("yyyyMMdd") + ".log");
+            string saveFile = String.Empty;
+            var csb = new SqlConnectionStringBuilder();
 
-            Log.message(LogEntryType.INFO, "DBaidAsBuilt", "Process Started", logFile);
-
-            Arguments flag = new Arguments(args);
-
-            string server = flag.ContainsFlag("-server") ? flag.GetValue("-server") : String.Empty;
-            string database = flag.ContainsFlag("-db") ? flag.GetValue("-db") : "_dbaid";
-            bool disableWmi = flag.ContainsFlag("-disablewmi") ? bool.Parse(flag.GetValue("-disablewmi")) : false;
-            bool disableMd = flag.ContainsFlag("-disablemd") ? bool.Parse(flag.GetValue("-disablemd")) : false;
-            bool logVerbose = flag.ContainsFlag("-logverbose") ? bool.Parse(flag.GetValue("-logverbose")) : false;
-            string emailSmtp = flag.ContainsFlag("-emailsmtp") ? flag.GetValue("-emailsmtp") : String.Empty;
-            string[] emailTo = flag.ContainsFlag("-emailto") ? flag.GetValue("-emailto").Split(new char[] {';'}) : new string[0];
-            string emailFrom = flag.ContainsFlag("-emailfrom") ? flag.GetValue("-emailfrom") : String.Empty;
-            string emailSubject = flag.ContainsFlag("-emailsubject") ? flag.GetValue("-emailsubject") : String.Empty;
-            long emailAttachmentByteLimit = flag.ContainsFlag("-emailbytelimit") ? long.Parse(flag.GetValue("-emailbytelimit")) : 10000000;
-            int emailAttachmentCountLimit = flag.ContainsFlag("-emailattlimit") ? int.Parse(flag.GetValue("-emailattlimit")) : 15;
-            bool emailEnableSsl = flag.ContainsFlag("-emailssl") ? bool.Parse(flag.GetValue("-emailssl")) : false;
-            bool emailIgnoreSslError = flag.ContainsFlag("-emailignoresslerror") ? bool.Parse(flag.GetValue("-emailignoresslerror")) : false;
-            bool emailAnonymous = flag.ContainsFlag("-emailanonymous") ? bool.Parse(flag.GetValue("-emailanonymous")) : true;
-
-            if (String.IsNullOrEmpty(server))
+            if (String.IsNullOrEmpty(args[0]))
             {
-                Log.message(LogEntryType.WARNING, "DBaidAsBuilt", "No -server specified. Exiting program...", logFile);
+                Log.message(LogEntryType.WARNING, logID, "No -server specified. Exiting program...", logFile);
                 return;
             }
 
-            string host = String.Empty;
-            string instance = String.Empty;
-
-            if (server.Contains("\\"))
+            try
             {
-                host = server.Split(new char[] { '\\' }, 2)[0];
-                instance = server.Split(new char[] { '\\' }, 2)[1];
+                csb.ConnectionString = args[0];
             }
-            else
-                host = server;
+            catch
+            {
+                Log.message(LogEntryType.WARNING, logID, "Failed to set connectionsting. Exiting program...", logFile);
+                return;
+            }
 
-            string file = Path.Combine(baseDirectory, server.Replace(@"\", "@").ToLower() + "_asbuilt.md");
-            var csb = new SqlConnectionStringBuilder();
+            Log.message(LogEntryType.INFO, logID, "Process Started", logFile);
+
+            saveFile = Path.Combine(baseDirectory, csb.DataSource.Replace(@"\", "@").ToLower() + "_asbuilt.md");
             csb.ApplicationName = logID + Guid.NewGuid().ToString();
-            csb.DataSource = server;
-            csb.InitialCatalog = database;
-            csb.IntegratedSecurity = true;
 
             try
             {
@@ -81,7 +58,7 @@ namespace local.dbaid.asbuilt
             }
             catch (Exception ex)
             {
-                Log.message(LogEntryType.WARNING, "DBaidAsBuilt", ex.Message + (logVerbose ? " - " + ex.StackTrace : ""), logFile);
+                Log.message(LogEntryType.WARNING, logID, ex.Message + (logVerbose ? " - " + ex.StackTrace : ""), logFile);
             }
 
             try
@@ -90,7 +67,7 @@ namespace local.dbaid.asbuilt
             }
             catch (ApplicationException ex)
             {
-                Log.message(LogEntryType.ERROR, "DBaidAsBuilt", ex.Message + (logVerbose ? " - " + ex.StackTrace : ""), logFile);
+                Log.message(LogEntryType.ERROR, logID, ex.Message + (logVerbose ? " - " + ex.StackTrace : ""), logFile);
                 Console.Write(ex);
                 return;
             }
@@ -110,7 +87,7 @@ namespace local.dbaid.asbuilt
                     Query.Execute(csb.ConnectionString, mssqlInsertService, parameters);
                 }
 
-                Log.message(LogEntryType.INFO, "DBaidAsBuilt", "Loaded WMI HostInfo.", logFile);
+                Log.message(LogEntryType.INFO, logID, "Loaded WMI HostInfo.", logFile);
 
                 foreach (Wmi.PropertyValue prop in Wmi.getServiceInfo(host, instance))
                 {
@@ -123,7 +100,7 @@ namespace local.dbaid.asbuilt
                     Query.Execute(csb.ConnectionString, mssqlInsertService, parameters);
                 }
 
-                Log.message(LogEntryType.INFO, "DBaidAsBuilt", "Loaded WMI ServiceInfo.", logFile);
+                Log.message(LogEntryType.INFO, logID, "Loaded WMI ServiceInfo.", logFile);
 
                 foreach (Wmi.PropertyValue prop in Wmi.getDriveInfo(host))
                 {
@@ -136,7 +113,7 @@ namespace local.dbaid.asbuilt
                     Query.Execute(csb.ConnectionString, mssqlInsertService, parameters);
                 }
 
-                Log.message(LogEntryType.INFO, "DBaidAsBuilt", "Loaded WMI DriveInfo.", logFile);
+                Log.message(LogEntryType.INFO, logID, "Loaded WMI DriveInfo.", logFile);
             }
 
             if (!disableMd)
@@ -149,12 +126,12 @@ namespace local.dbaid.asbuilt
                         outfile.Write("## Contents" + Environment.NewLine);
                         outfile.Write(Markdown.getMarkdown(csb.ConnectionString, mssqlControlFact));
 
-                        Log.message(LogEntryType.INFO, "DBaidAsBuilt", "Generated AsBuilt for [" + csb.DataSource + "]", logFile);
+                        Log.message(LogEntryType.INFO, logID, "Generated AsBuilt for [" + csb.DataSource + "]", logFile);
                         
                     }
                     catch (Exception ex)
                     {
-                        Log.message(LogEntryType.ERROR, "DBaidAsBuilt", ex.Message + (logVerbose ? " - " + ex.StackTrace : ""), logFile);
+                        Log.message(LogEntryType.ERROR, logID, ex.Message + (logVerbose ? " - " + ex.StackTrace : ""), logFile);
                         throw ex;
                     }
                 }
@@ -164,21 +141,21 @@ namespace local.dbaid.asbuilt
                     try
                     {
                         Smtp.send(emailSmtp, emailFrom, emailTo, emailSubject, "", new []{ file }, emailAttachmentByteLimit, emailAttachmentCountLimit, emailEnableSsl, emailIgnoreSslError, emailAnonymous);
-                        Log.message(LogEntryType.INFO, "DBaidAsBuilt", "Email sent to \"" + String.Join("; ", emailTo) + "\"", logFile);
+                        Log.message(LogEntryType.INFO, logID, "Email sent to \"" + String.Join("; ", emailTo) + "\"", logFile);
                     }
                     catch (Exception ex)
                     {
-                        Log.message(LogEntryType.ERROR, "DBaidAsBuilt", ex.Message + (logVerbose ? " - " + ex.StackTrace : ""), logFile);
+                        Log.message(LogEntryType.ERROR, logID, ex.Message + (logVerbose ? " - " + ex.StackTrace : ""), logFile);
                         throw ex;
                     }
                 }
                 else
                 {
-                    Log.message(LogEntryType.INFO, "DBaidAsBuilt", "Emailing of config not enabled or configured.", logFile);
+                    Log.message(LogEntryType.INFO, logID, "Emailing of config not enabled or configured.", logFile);
                 }
             }
 
-            Log.message(LogEntryType.INFO, "DBaidAsBuilt", "Process Completed", logFile);
+            Log.message(LogEntryType.INFO, logID, "Process Completed", logFile);
 
             //System.Threading.Thread.Sleep(10000);
         }

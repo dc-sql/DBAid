@@ -79,16 +79,6 @@ namespace local.dbaid.collector
                 logVerbose = bool.Parse(ConfigurationManager.AppSettings["logVerbose"]);
                 fileRententionDays = byte.Parse(ConfigurationManager.AppSettings["ProcessedFileRetentionDays"]);
 
-                emailSmtp = ConfigurationManager.AppSettings["EmailSmtp"];
-                emailTo = ConfigurationManager.AppSettings["EmailTo"].Split(';');
-                emailFrom = ConfigurationManager.AppSettings["EmailFrom"];
-                emailSubject = ConfigurationManager.AppSettings["EmailSubject"];
-                emailAttachmentByteLimit = long.Parse(ConfigurationManager.AppSettings["EmailAttachmentByteLimit"]);
-                emailAttachmentCountLimit = int.Parse(ConfigurationManager.AppSettings["EmailAttachmentCountLimit"]);
-                emailEnableSsl = bool.Parse(ConfigurationManager.AppSettings["EmailEnableSsl"]);
-                emailIgnoreSslError = bool.Parse(ConfigurationManager.AppSettings["EmailIgnoreSslError"]);
-                emailAnonymous = bool.Parse(ConfigurationManager.AppSettings["EmailAnonymous"]);
-
                 if (!Directory.Exists(workingDirectory))
                 {
                     Directory.CreateDirectory(workingDirectory);

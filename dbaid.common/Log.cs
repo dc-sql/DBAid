@@ -16,25 +16,25 @@ namespace dbaid.common
         {
             string[] license = new string[]
             {
-                @" |----------------------------------------------------------|",
-                @" |     _____       _______       _____ ____  __  __         |",
-                @" |    |  __ \   /\|__   __|/\   / ____/ __ \|  \/  |        |",
-                @" |    | |  | | /  \  | |  /  \ | |   | |  | | \  / |        |",
-                @" |    | |  | |/ /\ \ | | / /\ \| |   | |  | | |\/| |        |",
-                @" |    | |__| / ____ \| |/ ____ \ |___| |__| | |  | |        |",
-                @" |    |_____/_/    \_\_/_/    \_\_____\____/|_|  |_|        |",             
-                @" |                                                          |",
-                @" | GNU General Public License version 3 (GPLv3)             |",
-                @" | https://dbaid.codeplex.com                               |",
-                @" | Maintained by: Datacom SQL Team, Wellington, New Zealand |",
-                @" |----------------------------------------------------------|",
-                @"                                                             ",
+                @" |----------------------------------------------------|",
+                @" |    _____       _______       _____ ____  __  __    |",
+                @" |   |  __ \   /\|__   __|/\   / ____/ __ \|  \/  |   |",
+                @" |   | |  | | /  \  | |  /  \ | |   | |  | | \  / |   |",
+                @" |   | |  | |/ /\ \ | | / /\ \| |   | |  | | |\/| |   |",
+                @" |   | |__| / ____ \| |/ ____ \ |___| |__| | |  | |   |",
+                @" |   |_____/_/    \_\_/_/    \_\_____\____/|_|  |_|   |",             
+                @" |                                                    |",
+                @" | GNU General Public License version 3 (GPLv3)       |",
+                @" | https://github.com/dc-sql/DBAid                    |",
+                @" |----------------------------------------------------|",
             };
 
             foreach (string line in license)
             {
                 Console.WriteLine(line);
             }
+
+            Console.WriteLine();
         }
 
         public static void message(LogEntryType type, string source, string message, string logFile)
