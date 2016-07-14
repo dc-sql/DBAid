@@ -29,24 +29,10 @@ BEGIN
 								[file_id] INT,
 								[size_available_mb] NUMERIC(20,2),
 								[disk_available_mb] NUMERIC(20,2));
-	
-	-- Sometimes dm_os_volume_stats doesn't return disk volume information due to wonky permissions in the OS. Using xp_fixeddrives for now.
-	/* IF EXISTS (SELECT * FROM sys.system_objects WHERE [name] = N'dm_os_volume_stats')
-	BEGIN
-		SET @cmd = N'SELECT DISTINCT SUBSTRING([V].[volume_mount_point],1,1) AS [drive]
-						,CAST([V].[available_bytes]/1024.00/1024.00 AS NUMERIC(20,2)) AS [available_mb] 
-					 FROM sys.master_files [F]
-					  CROSS APPLY sys.dm_os_volume_stats([F].[database_id], [F].[file_id]) [V]';
-	END
-	ELSE
-	BEGIN */
-		SET @cmd = N'EXEC xp_fixeddrives';
-	--END
 
-	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
-
+	/* Sometimes dm_os_volume_stats doesn't return disk volume information due to wonky permissions in the OS. Using xp_fixeddrives for now. */
 	INSERT INTO @drive_info
-		EXEC(@cmd);
+		EXEC(N'EXEC xp_fixeddrives');
 
 	INSERT INTO @file_info
 		EXEC [dbo].[foreach_db] 'USE [?]; 
@@ -63,9 +49,6 @@ BEGIN
 				LEFT JOIN [sys].[filegroups] [FG]
 					ON [M].[data_space_id] = [FG].[data_space_id]
 			WHERE [M].[type] IN (0,1)'; 
-	
-	REVERT;
-	REVERT;
 
 	INSERT INTO @file_info
 		SELECT [F].[database_id]
@@ -179,18 +162,17 @@ BEGIN
 	;WITH Dataset
 	AS
 	(
-		SELECT [C].[database_id]
-			,[C].[db_name]
+		SELECT [C].[db_name]
 			,CASE WHEN [F].[filegroup_name] IS NULL THEN [F].[file_type]
 				ELSE [F].[file_type] + '_' + [F].[filegroup_name]
 				END AS [data_space]
 			,SUM([F].[size_used_mb]) AS [used]
 			,CASE WHEN [F].[filegroup_is_readonly] = 1 OR [DB].[is_read_only] = 1 OR [DB].[state] != 0 THEN NULL 
 				ELSE (SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb]))-((SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb])) * (CAST([C].[check_capacity_warning_percent_free] AS NUMERIC(5,2))/100.00))
-				END AS [warning]
+				END AS [used_warning]
 			,CASE WHEN [F].[filegroup_is_readonly] = 1 OR [DB].[is_read_only] = 1 OR [DB].[state] != 0 THEN NULL 
 				ELSE (SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb]))-((SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb])) * (CAST([C].[check_capacity_critical_percent_free] AS NUMERIC(5,2))/100.00))
-				END AS [critical]
+				END AS [used_critical]
 			,SUM([F].[size_reserved_mb]) AS [reserved]
 			,CASE WHEN [F].[filegroup_is_readonly] = 1 OR [DB].[is_read_only] = 1 THEN SUM([F].[size_reserved_mb])
 				ELSE (SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb]))
@@ -214,8 +196,7 @@ BEGIN
 									,[FI].[filegroup_id]
 									,[FI].[file_type]
 									,[FI].[drive]) [A]) [S]([fg_size_available_mb])
-		GROUP BY [C].[database_id]
-			,[C].[db_name]
+		GROUP BY [C].[db_name]
 			,[DB].[is_read_only]
 			,[DB].[state]
 			,[F].[filegroup_name]
@@ -224,28 +205,13 @@ BEGIN
 			,[C].[check_capacity_critical_percent_free]
 			,[C].[check_capacity_warning_percent_free]
 	)
-	SELECT CAST([used] AS NUMERIC(20,2)) AS [val]
-		,CAST([warning] AS NUMERIC(20,2)) AS [warn]
-		,CAST([critical] AS NUMERIC(20,2)) AS [crit]
-		,N''''
-		+ REPLACE([db_name],N' ',N'_')
-		+ N'_'
-		+ REPLACE([data_space],N' ',N'_')
-		+ N'_used''='
-		+ CAST([used] AS VARCHAR(20))
-		+ N';'
-		+ ISNULL(CAST([warning] AS VARCHAR(20)),'')
-		+ N';'
-		+ ISNULL(CAST([critical] AS VARCHAR(20)),'')
-		+ N';0;'
-		+ CAST([max] AS VARCHAR(20))
-		+ N'|'''
-		+ REPLACE([db_name],N' ',N'_')
-		+ N'_'
-		+ REPLACE([data_space],N' ',N'_')
-		+ N'_reserved''='
-		+ CAST([reserved] AS VARCHAR(20))
-		+ N';;;;' AS [pnp]
+	SELECT [db_name] + N'_' + [data_space] AS [data_space]
+		,[used]
+		,[reserved]
+		,[max]
+		,[used_warning]
+		,[used_critical]
+		,'MB' AS [unit]
 	FROM Dataset
-	ORDER BY [database_id], [data_space];
+	ORDER BY [db_name], [data_space];
 END;

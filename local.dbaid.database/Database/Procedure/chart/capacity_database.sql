@@ -37,11 +37,13 @@ BEGIN
 	FROM [sys].[master_files] [F]
 	WHERE [F].[database_id] NOT IN (SELECT [database_id] FROM @file_info);
 
-	SELECT DB_NAME([P1].[database_id]) AS [db_name],
-		[P1].[rows_size_used_mb],
-		[P2].[rows_size_reserved_mb],
-		[P1].[log_size_used_mb],
-		[P2].[log_size_reserved_mb]
+	SELECT DB_NAME([P1].[database_id]) AS [data_space]
+		,[P1].[rows_size_used_mb] + [P1].[log_size_used_mb] AS [used]
+		,[P2].[rows_size_reserved_mb] + [P2].[log_size_reserved_mb] AS [reserved]
+		,NULL AS [max]
+		,NULL AS [used_warning]
+		,NULL AS [used_critical]
+		,'MB' AS [unit]
 	FROM
 	(SELECT [database_id],
 		[P].[log] AS [log_size_used_mb], 
