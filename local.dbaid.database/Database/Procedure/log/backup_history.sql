@@ -86,7 +86,7 @@ BEGIN
 	IF (@end_datetime IS NULL)
 		SET @end_datetime = @report_datetime;
 
-	SELECT (SELECT [guid] FROM [dbo].[instance_guid]()) AS [instance_guid]
+	SELECT [I].[guid] AS [instance_guid]
 		,[D1].[date] AS [backup_start_date]
 		,[D2].[date] AS [backup_finish_date]
 		,[O].[database_name]
@@ -105,8 +105,9 @@ BEGIN
 	FROM @output [O]
 		INNER JOIN [setting].[check_database] [C]
 			ON [O].[database_id] = [C].[database_id]
-		CROSS APPLY [dbo].[datetime_with_offset]([O].[backup_start_date]) [D1]
-		CROSS APPLY [dbo].[datetime_with_offset]([O].[backup_finish_date]) [D2]
+		CROSS APPLY [dbo].[get_datetime_with_offset]([O].[backup_start_date]) [D1]
+		CROSS APPLY [dbo].[get_datetime_with_offset]([O].[backup_finish_date]) [D2]
+		CROSS APPLY [dbo].[get_instance_guid]() [I]
 	WHERE [backup_start_date] BETWEEN @start_datetime AND @end_datetime
 	ORDER BY [backup_start_date], [backup_finish_date];
 

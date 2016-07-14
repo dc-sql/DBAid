@@ -1,15 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Data;
-using System.Data.SqlClient;
 using System.Data.SqlTypes;
 using System.Management;
-using System.Text.RegularExpressions;
-using System.Configuration;
-using System.Diagnostics;
 
-namespace local.dbaid.asbuilt
+namespace dbaid.configg
 {
     class Wmi
     {

@@ -3,7 +3,7 @@
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with the SQLCLR assembly.
-[assembly: AssemblyTitle("Datacom SQL Team")]
+[assembly: AssemblyTitle("Datacom DBAid")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Datacom")]

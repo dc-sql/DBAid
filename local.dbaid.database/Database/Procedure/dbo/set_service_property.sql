@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [dbo].[service_property]
+CREATE PROCEDURE [dbo].[set_service_property]
 (
 	@hierarchy NVARCHAR(260),
 	@property NVARCHAR(128),

@@ -26,12 +26,13 @@
     <EnableFullTextSearch>False</EnableFullTextSearch>
     <AllowSnapshotIsolation>False</AllowSnapshotIsolation>
     <ReadCommittedSnapshot>False</ReadCommittedSnapshot>
+    <DacVersion>2.0.0.0</DacVersion>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <Name>local.dbaid.database</Name>
+    <Name>dbaid.database</Name>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectVersion>4.1</ProjectVersion>
     <ProjectGuid>{30bbb9ff-8cb9-44cb-b27e-d722fa8552e4}</ProjectGuid>
@@ -39,8 +40,8 @@
     <OutputType>Database</OutputType>
     <RootPath>
     </RootPath>
-    <RootNamespace>_dbaid</RootNamespace>
-    <AssemblyName>_dbaid</AssemblyName>
+    <RootNamespace>dbaid.database</RootNamespace>
+    <AssemblyName>dbaid.database</AssemblyName>
     <ModelCollation>1033,CI</ModelCollation>
     <DefaultFileStructure>BySchemaAndSchemaType</DefaultFileStructure>
     <DeployToDatabase>True</DeployToDatabase>
@@ -150,16 +151,13 @@
     <Build Include="Database\Procedure\check\checkdb.sql">
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>
-    <Build Include="Database\Procedure\log\capacity.sql">
-      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
-    </Build>
     <Build Include="Database\Procedure\configg\logshipping_primary.sql" />
     <Build Include="Database\Procedure\configg\logshipping_secondary.sql" />
     <Build Include="Database\Procedure\report\cis_benchmark.sql" />
     <None Include="Database\Security\permissions.sql">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <Build Include="Database\Procedure\chart\capacity.sql">
+    <Build Include="Database\Procedure\chart\capacity_filegroup.sql">
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>
     <Build Include="Database\Procedure\chart\perfcounter.sql" />
@@ -171,21 +169,22 @@
     <Build Include="Database\Table\dbo\dbo_service.sql" />
     <Build Include="Database\Table\dbo\dbo_capacity.sql" />
     <Build Include="Database\Table\setting\procedure_list.sql" />
-    <Build Include="Database\Function\dbo\clean_string.sql" />
-    <Build Include="Database\Function\dbo\instance_guid.sql" />
-    <Build Include="Database\Function\dbo\datetime_with_offset.sql" />
+    <Build Include="Database\Function\dbo\get_clean_string.sql" />
+    <Build Include="Database\Function\dbo\get_instance_guid.sql" />
+    <Build Include="Database\Function\dbo\get_datetime_with_offset.sql" />
     <Build Include="Database\Table\setting\check_state.sql" />
-    <Build Include="Database\Function\dbo\product_version.sql" />
+    <Build Include="Database\Function\dbo\get_product_version.sql" />
     <Build Include="Database\Procedure\dbo\cleanup_history.sql" />
     <Build Include="Database\Procedure\dbo\dbaid_inventory.sql">
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>
-    <Build Include="Database\Procedure\dbo\service_property.sql" />
-    <Build Include="Database\Procedure\dbo\instance_tag.sql">
+    <Build Include="Database\Procedure\dbo\set_service_property.sql" />
+    <Build Include="Database\Function\dbo\get_static_parameter.sql" />
+    <Build Include="Database\Function\dbo\get_procedure_list.sql" />
+    <Build Include="Database\Function\dbo\get_instance_tag.sql" />
+    <Build Include="Database\Procedure\chart\capacity_database.sql">
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>
-    <Build Include="Database\Procedure\dbo\procedure_list.sql" />
-    <Build Include="Database\Procedure\dbo\running_queries.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Database\Script.PostDeployment.sql" />

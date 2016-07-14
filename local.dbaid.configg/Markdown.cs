@@ -6,7 +6,7 @@ using System.Xml;
 using System.Text;
 using dbaid.common;
 
-namespace local.dbaid.asbuilt
+namespace dbaid.configg
 {
 
 

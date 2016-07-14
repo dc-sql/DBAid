@@ -82,38 +82,32 @@ BEGIN
 			INNER JOIN [master].[sys].[messages] [M]
 				ON [M].[language_id] = CAST(SERVERPROPERTY('LCID') AS INT)
 					AND CAST(SUBSTRING([A].[message],8,CHARINDEX(',',[A].[message])-8) AS INT) = [M].[message_id]
-			CROSS APPLY [dbo].[datetime_with_offset]([A].[log_date]) [D1]
+			CROSS APPLY [dbo].[get_datetime_with_offset]([A].[log_date]) [D1]
 		WHERE [A].[message] LIKE 'Error:%Severity:%State:%'
 		ORDER BY [A].[log_date], [A].[source];
 
-	BEGIN TRANSACTION
-		SELECT (SELECT [guid] FROM [dbo].[instance_guid]()) AS [instance_guid]
+		SELECT [I].[guid] AS [instance_guid]
 			,[E].[log_date]
 			,[E].[source]
 			,[E].[message_header]
 			,[message].[string] AS [message]
 		FROM #__SeverityError [E]
-			CROSS APPLY [dbo].[clean_string]([E].[message]) [message]
+			CROSS APPLY [dbo].[get_clean_string]([E].[message]) [message]
+			CROSS APPLY [dbo].[get_instance_guid]() [I]
 		UNION ALL
-		SELECT (SELECT [guid] FROM [dbo].[instance_guid]()) AS [instance_guid]
+		SELECT [I].[guid] AS [instance_guid]
 			,[D].[date1] COLLATE database_default AS [log_date]
 			,[E].[source]
 			,N'Error: dbcc'
 			,CASE WHEN @sanitize=0 THEN [message].[string] ELSE SUBSTRING([message].[string], CHARINDEX(' found ', [message].[string]), LEN([message].[string])) END AS [message]
 		FROM #__Errorlog [E]
-			CROSS APPLY [dbo].[clean_string]([E].[message]) [message]
-			CROSS APPLY [dbo].[datetime_with_offset]([E].[log_date], NULL) [D]
+			CROSS APPLY [dbo].[get_clean_string]([E].[message]) [message]
+			CROSS APPLY [dbo].[get_datetime_with_offset]([E].[log_date], NULL) [D]
+			CROSS APPLY [dbo].[get_instance_guid]() [I]
 		WHERE [message] LIKE '%found % errors and repaired % errors%'
 			AND [message] NOT LIKE '%found 0 errors and repaired 0 errors%' 
 		ORDER BY [log_date];
 
 		IF ((SELECT [value] FROM [setting].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME())
 			UPDATE [setting].[procedure_list] SET [last_execution_datetime] = @end_datetime WHERE [procedure_id] = @@PROCID;
-
-		IF (@@ERROR <> 0)
-		BEGIN
-			ROLLBACK TRANSACTION;
-			RETURN 1;
-		END
-	COMMIT TRANSACTION;
 END;

@@ -15,7 +15,7 @@ SET NOCOUNT ON;
 
 	DECLARE @to_backup INT, @not_backup INT, @major_version INT, @cluster NVARCHAR(128);
 
-	SELECT @major_version = [major] FROM [dbo].[product_version]();
+	SELECT @major_version = [major] FROM [dbo].[get_product_version]();
 
 	IF @major_version >= 11
 		EXEC sp_executesql N'SELECT @out=[cluster_name] FROM [sys].[dm_hadr_cluster]', N'@out NVARCHAR(128) OUTPUT', @out = @cluster;

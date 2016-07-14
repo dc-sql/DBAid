@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [chart].[capacity] 
+CREATE PROCEDURE [chart].[capacity_filegroup] 
 WITH ENCRYPTION
 AS
 BEGIN
@@ -195,7 +195,6 @@ BEGIN
 			,CASE WHEN [F].[filegroup_is_readonly] = 1 OR [DB].[is_read_only] = 1 THEN SUM([F].[size_reserved_mb])
 				ELSE (SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb]))
 				END AS [max]
-			--,MAX([S].[fg_size_available_mb]) AS [fg_size_available_mb]
 		FROM [setting].[check_database] [C]
 			INNER JOIN [sys].[databases] [DB]
 				ON [C].[database_id] = [DB].[database_id]

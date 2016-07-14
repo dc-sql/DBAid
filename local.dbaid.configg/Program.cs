@@ -8,57 +8,46 @@ using System.Configuration;
 using System.Xml;
 using dbaid.common;
 
-namespace local.dbaid.asbuilt
+namespace dbaid.configg
 {
     class Program
     {
-        private const string mssqlControlFact = "EXEC [dbo].[procedure_list] @schema = N'configg'";
-        private const string mssqlInsertService = "[dbo].[insert_service]";
-        private const string mssqlAppSelect = "SELECT [value] FROM [dbo].[static_parameters] WHERE UPPER([name]) = N'PROGRAM_NAME'";
-        private const string logID = "DBAidConfigG";
+        private const string _getProcedureList = "SELECT [dbo].[get_procedure_list](N'configg')";
+        private const string _getProgramName = "SELECT [value] FROM [dbo].[get_static_parameter]('PROGRAM_NAME')";
+        private const string _getInstanceTag = "SELECT [instance_tag] FROM [dbo].[get_instance_tag]()";
+        private const string _setServiceProperty = "[dbo].[set_service_property]";
+        
+        private const string _logID = "DBAidConfigG";
 
         static void Main(string[] args)
         {
-            if (Array.IndexOf(args, @"?") >= 0)
+            bool loadServiceTable = bool.Parse(ConfigurationManager.AppSettings["UpdateDboServiceTable"]);
+            bool generateConfigReport = bool.Parse(ConfigurationManager.AppSettings["GenerateConfiggReport"]);
+            bool logVerbose = bool.Parse(ConfigurationManager.AppSettings["LogVerbose"]);
+            int logRententionDays = int.Parse(ConfigurationManager.AppSettings["LogRetentionDays"]);
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            string logFile = Path.Combine(baseDirectory, _logID + "_" + DateTime.Now.ToString("yyyyMMdd") + ".log");
+            string saveFile = String.Empty;
+            var csb = new SqlConnectionStringBuilder(args[0]);
+
+            if (Array.IndexOf(args, "?") >= 0 || String.IsNullOrEmpty(csb.ConnectionString))
             {
                 Log.licenseHeader();
                 return;
             }
 
-            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            string logFile = Path.Combine(baseDirectory, logID + "_" + DateTime.Now.ToString("yyyyMMdd") + ".log");
-            string saveFile = String.Empty;
-            var csb = new SqlConnectionStringBuilder();
-
-            if (String.IsNullOrEmpty(args[0]))
-            {
-                Log.message(LogEntryType.WARNING, logID, "No -server specified. Exiting program...", logFile);
-                return;
-            }
-
-            try
-            {
-                csb.ConnectionString = args[0];
-            }
-            catch
-            {
-                Log.message(LogEntryType.WARNING, logID, "Failed to set connectionsting. Exiting program...", logFile);
-                return;
-            }
-
-            Log.message(LogEntryType.INFO, logID, "Process Started", logFile);
-
             saveFile = Path.Combine(baseDirectory, csb.DataSource.Replace(@"\", "@").ToLower() + "_asbuilt.md");
-            csb.ApplicationName = logID + Guid.NewGuid().ToString();
+            csb.ApplicationName = _logID + Guid.NewGuid().ToString();
+            Log.message(LogEntryType.INFO, _logID, "Process Started", logFile);
 
             try
             {
-                //clean up log files older than 3 days
-                FileIo.delete(Path.GetDirectoryName(logFile), "*.log", DateTime.Now.AddDays(-3));
+                //clean up log files older than logRetentionDays
+                FileIo.delete(Path.GetDirectoryName(logFile), "*.log", DateTime.Now.AddDays(-logRententionDays));
             }
             catch (Exception ex)
             {
-                Log.message(LogEntryType.WARNING, logID, ex.Message + (logVerbose ? " - " + ex.StackTrace : ""), logFile);
+                Log.message(LogEntryType.WARNING, _logID, ex.Message + (logVerbose ? " - " + ex.StackTrace : ""), logFile);
             }
 
             try
@@ -67,12 +56,12 @@ namespace local.dbaid.asbuilt
             }
             catch (ApplicationException ex)
             {
-                Log.message(LogEntryType.ERROR, logID, ex.Message + (logVerbose ? " - " + ex.StackTrace : ""), logFile);
+                Log.message(LogEntryType.ERROR, _logID, ex.Message + (logVerbose ? " - " + ex.StackTrace : ""), logFile);
                 Console.Write(ex);
                 return;
             }
 
-            if (!disableWmi)
+            if (loadServiceTable)
             {
                 var parameters = new Dictionary<string, object>();
 
@@ -87,7 +76,7 @@ namespace local.dbaid.asbuilt
                     Query.Execute(csb.ConnectionString, mssqlInsertService, parameters);
                 }
 
-                Log.message(LogEntryType.INFO, logID, "Loaded WMI HostInfo.", logFile);
+                Log.message(LogEntryType.INFO, _logID, "Loaded WMI HostInfo.", logFile);
 
                 foreach (Wmi.PropertyValue prop in Wmi.getServiceInfo(host, instance))
                 {
@@ -100,7 +89,7 @@ namespace local.dbaid.asbuilt
                     Query.Execute(csb.ConnectionString, mssqlInsertService, parameters);
                 }
 
-                Log.message(LogEntryType.INFO, logID, "Loaded WMI ServiceInfo.", logFile);
+                Log.message(LogEntryType.INFO, _logID, "Loaded WMI ServiceInfo.", logFile);
 
                 foreach (Wmi.PropertyValue prop in Wmi.getDriveInfo(host))
                 {
@@ -113,12 +102,12 @@ namespace local.dbaid.asbuilt
                     Query.Execute(csb.ConnectionString, mssqlInsertService, parameters);
                 }
 
-                Log.message(LogEntryType.INFO, logID, "Loaded WMI DriveInfo.", logFile);
+                Log.message(LogEntryType.INFO, _logID, "Loaded WMI DriveInfo.", logFile);
             }
 
-            if (!disableMd)
+            if (generateConfigReport)
             {
-                using (StreamWriter outfile = new StreamWriter(file))
+                using (StreamWriter outfile = new StreamWriter(saveFile))
                 {
                     try
                     {
@@ -126,12 +115,12 @@ namespace local.dbaid.asbuilt
                         outfile.Write("## Contents" + Environment.NewLine);
                         outfile.Write(Markdown.getMarkdown(csb.ConnectionString, mssqlControlFact));
 
-                        Log.message(LogEntryType.INFO, logID, "Generated AsBuilt for [" + csb.DataSource + "]", logFile);
+                        Log.message(LogEntryType.INFO, _logID, "Generated AsBuilt for [" + csb.DataSource + "]", logFile);
                         
                     }
                     catch (Exception ex)
                     {
-                        Log.message(LogEntryType.ERROR, logID, ex.Message + (logVerbose ? " - " + ex.StackTrace : ""), logFile);
+                        Log.message(LogEntryType.ERROR, _logID, ex.Message + (logVerbose ? " - " + ex.StackTrace : ""), logFile);
                         throw ex;
                     }
                 }
@@ -141,21 +130,21 @@ namespace local.dbaid.asbuilt
                     try
                     {
                         Smtp.send(emailSmtp, emailFrom, emailTo, emailSubject, "", new []{ file }, emailAttachmentByteLimit, emailAttachmentCountLimit, emailEnableSsl, emailIgnoreSslError, emailAnonymous);
-                        Log.message(LogEntryType.INFO, logID, "Email sent to \"" + String.Join("; ", emailTo) + "\"", logFile);
+                        Log.message(LogEntryType.INFO, _logID, "Email sent to \"" + String.Join("; ", emailTo) + "\"", logFile);
                     }
                     catch (Exception ex)
                     {
-                        Log.message(LogEntryType.ERROR, logID, ex.Message + (logVerbose ? " - " + ex.StackTrace : ""), logFile);
+                        Log.message(LogEntryType.ERROR, _logID, ex.Message + (logVerbose ? " - " + ex.StackTrace : ""), logFile);
                         throw ex;
                     }
                 }
                 else
                 {
-                    Log.message(LogEntryType.INFO, logID, "Emailing of config not enabled or configured.", logFile);
+                    Log.message(LogEntryType.INFO, _logID, "Emailing of config not enabled or configured.", logFile);
                 }
             }
 
-            Log.message(LogEntryType.INFO, logID, "Process Completed", logFile);
+            Log.message(LogEntryType.INFO, _logID, "Process Completed", logFile);
 
             //System.Threading.Thread.Sleep(10000);
         }

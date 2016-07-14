@@ -1,6 +1,5 @@
 ﻿CREATE TABLE [dbo].[capacity]
 (
-	[instance_guid] NVARCHAR(36),
 	[database_name] NVARCHAR(128),
 	[physical_name] NVARCHAR(260),
 	[logical_name] NVARCHAR(128),

@@ -1,22 +1,19 @@
-﻿CREATE PROCEDURE [dbo].[instance_tag]
-WITH ENCRYPTION
-AS
+﻿CREATE FUNCTION [dbo].[get_instance_tag]()
+RETURNS @returntable TABLE
+(
+	[instance_tag] NVARCHAR(256)
+)
+WITH ENCRYPTION, EXECUTE AS 'dbo'
 BEGIN
-	SET NOCOUNT ON;
-
 	DECLARE @domain NVARCHAR(128);
 
 	SELECT @domain = CAST([value] AS NVARCHAR(128)) FROM [dbo].[service] WHERE [property] = N'Domain';
 
 	IF (@domain IS NULL)
-	BEGIN
-		EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
-
 		EXEC [master].[dbo].[xp_regread] @rootkey='HKEY_LOCAL_MACHINE', @key='SYSTEM\ControlSet001\Services\Tcpip\Parameters\',@value_name='Domain',@value=@domain OUTPUT;
-		
-		REVERT;
-		REVERT;
-	END
 
+	INSERT @returntable
 	SELECT QUOTENAME(REPLACE(@@SERVERNAME, '\', '@')) + N'_' + REPLACE(@domain, '.', '_') AS [instance_tag]
+
+	RETURN
 END

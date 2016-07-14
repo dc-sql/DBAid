@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE FUNCTION [dbo].[instance_guid]()
+CREATE FUNCTION [dbo].[get_instance_guid]()
 RETURNS TABLE
 WITH ENCRYPTION
 RETURN(
