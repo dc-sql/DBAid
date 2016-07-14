@@ -169,10 +169,10 @@ BEGIN
 			,SUM([F].[size_used_mb]) AS [used]
 			,CASE WHEN [F].[filegroup_is_readonly] = 1 OR [DB].[is_read_only] = 1 OR [DB].[state] != 0 THEN NULL 
 				ELSE (SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb]))-((SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb])) * (CAST([C].[check_capacity_warning_percent_free] AS NUMERIC(5,2))/100.00))
-				END AS [used_warning]
+				END AS [used_warn]
 			,CASE WHEN [F].[filegroup_is_readonly] = 1 OR [DB].[is_read_only] = 1 OR [DB].[state] != 0 THEN NULL 
 				ELSE (SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb]))-((SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb])) * (CAST([C].[check_capacity_critical_percent_free] AS NUMERIC(5,2))/100.00))
-				END AS [used_critical]
+				END AS [used_crit]
 			,SUM([F].[size_reserved_mb]) AS [reserved]
 			,CASE WHEN [F].[filegroup_is_readonly] = 1 OR [DB].[is_read_only] = 1 THEN SUM([F].[size_reserved_mb])
 				ELSE (SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb]))
@@ -209,9 +209,9 @@ BEGIN
 		,[used]
 		,[reserved]
 		,[max]
-		,[used_warning]
-		,[used_critical]
-		,'MB' AS [unit]
+		,[used_warn]
+		,[used_crit]
+		,'MB' AS [uom]
 	FROM Dataset
 	ORDER BY [db_name], [data_space];
 END;
