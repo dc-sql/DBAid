@@ -35,9 +35,9 @@ BEGIN
 		,[retries_attempted] INT
 		,[server] NVARCHAR(128));
 	
-	SELECT @sanitize=CAST([value] AS BIT) 
-	FROM [setting].[static_parameters] 
-	WHERE [name]='SANITIZE_DATASET';
+	IF ((SELECT [value] FROM [setting].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME())
+		SELECT @sanitize=CAST([value] AS BIT) FROM [setting].[static_parameters] WHERE [name]='SANITIZE_DATASET';
+	ELSE SET @sanitize = 0;
 	
 	IF (@start_datetime IS NULL)
 	BEGIN

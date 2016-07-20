@@ -99,7 +99,7 @@ BEGIN
 		,REPLACE(REPLACE(REPLACE((SELECT [permission].[state_desc] + ' ' + [permission].[permission_name] + CASE WHEN [permission].[permission_name] = 'IMPERSONATE' THEN ' ' + QUOTENAME(SUSER_NAME([permission].[grantor_principal_id])) ELSE '' END AS [data()]
 									FROM [sys].[server_permissions] [permission]
 									WHERE [permission].[grantee_principal_id] = [login].[principal_id] FOR XML PATH('A')),'</A><A>',', '),'<A>',''),'</A>','') AS [server_permissions]
-		,CAST((SELECT [db_name] AS [@database],[user_name] AS [@user],[role_name] AS [@role] FROM @database_roles WHERE [user_sid]=[database_role].[user_sid] ORDER BY [db_name],[user_name],[role_name] FOR XML PATH('row'), ROOT('table')) AS XML) AS [database_roles]
+		,CAST((SELECT [db_name] AS [@database],[user_name] AS [@user],[role_name] AS [@role] FROM @database_roles WHERE [user_sid]=[login].[sid] ORDER BY [db_name],[user_name],[role_name] FOR XML PATH('row'), ROOT('table')) AS XML) AS [database_roles]
 		,[sql_login].[is_policy_checked] AS [is_sql_login_policy_checked]
 		,[sql_login].[is_expiration_checked] AS [is_sql_login_expiration_checked]
 		,LOGINPROPERTY([login].[name], 'IsLocked') AS [login_locked]
@@ -108,16 +108,11 @@ BEGIN
 		,LOGINPROPERTY([login].[name], 'IsMustChange') AS [must_change_password]
 		,LOGINPROPERTY([login].[name], 'PasswordLastSetTime') AS [login_last_password_change]
 		,LOGINPROPERTY([login].[name], 'BadPasswordCount') AS [failed_login_attempts]
-		,CASE WHEN [login].[type] ='S' THEN PWDCOMPARE('',[sql_login].[password_hash]) ELSE NULL END AS [password_is_blank]
-		,CASE WHEN [login].[type] ='S' THEN PWDCOMPARE([login].[name],[sql_login].[password_hash]) ELSE NULL END AS [password_is_username]
-		,CASE WHEN [login].[type] ='S' THEN PWDCOMPARE(REVERSE([login].[name]),[sql_login].[password_hash]) ELSE NULL END AS [password_is_username_reverse]
 	FROM sys.server_principals [login]
 		LEFT JOIN sys.sql_logins [sql_login]
 			ON [login].[sid] = [sql_login].[sid]
 		LEFT JOIN @invalid_logins [invalid]
 			ON [invalid].[user_sid] = [login].[sid]
-		FULL OUTER JOIN (SELECT [user_sid] FROM @database_roles GROUP BY [user_sid]) [database_role]
-			ON [login].[sid] = [database_role].[user_sid]
 	WHERE ([login].[type] NOT IN ('R') OR [login].[name] IS NULL)
 	ORDER BY [login].[name];
 END

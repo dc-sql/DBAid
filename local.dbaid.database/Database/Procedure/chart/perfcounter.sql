@@ -73,10 +73,10 @@ BEGIN
 		INNER JOIN @sample2 [S2]
 			ON [S1].[rownum] = [S2].[rownum]
 		INNER JOIN [setting].[chart_perfcounter] [C]
-				ON [S].[object_name] LIKE [C].[object_name] COLLATE Latin1_General_CI_AS
-				AND ([S].[counter_name] LIKE [C].[counter_name] COLLATE Latin1_General_CI_AS 
+				ON [S1].[object_name] LIKE [C].[object_name] COLLATE Latin1_General_CI_AS
+				AND ([S1].[counter_name] LIKE [C].[counter_name] COLLATE Latin1_General_CI_AS 
 					OR ISNULL([C].[counter_name],'') = '')
-				AND ([S].[instance_name] LIKE [C].[instance_name] COLLATE Latin1_General_CI_AS 
+				AND ([S1].[instance_name] LIKE [C].[instance_name] COLLATE Latin1_General_CI_AS 
 					OR ISNULL([C].[instance_name],'') = '')
 		LEFT JOIN @sample1 [S1BASE]
 			ON [S1].[cntr_type] IN (537003264, 1073874176)

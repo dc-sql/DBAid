@@ -99,7 +99,7 @@
     <Folder Include="Database\Procedure\check" />
     <Folder Include="Database\Table" />
     <Folder Include="Database\Procedure\configg" />
-    <Folder Include="Database\Procedure\report" />
+    <Folder Include="Database\Procedure\audit" />
     <Folder Include="Database\Procedure\chart" />
     <Folder Include="Database\Table\setting" />
     <Folder Include="Database\Table\dbo" />
@@ -153,7 +153,7 @@
     </Build>
     <Build Include="Database\Procedure\configg\logshipping_primary.sql" />
     <Build Include="Database\Procedure\configg\logshipping_secondary.sql" />
-    <Build Include="Database\Procedure\report\cis_benchmark.sql" />
+    <Build Include="Database\Procedure\audit\cis_benchmark.sql" />
     <None Include="Database\Security\permissions.sql">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -185,6 +185,7 @@
     <Build Include="Database\Procedure\chart\capacity_database.sql">
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>
+    <Build Include="Database\Procedure\audit\sql_password.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Database\Script.PostDeployment.sql" />

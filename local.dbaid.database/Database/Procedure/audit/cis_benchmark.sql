@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [report].[cis_benchmark]
+CREATE PROCEDURE [audit].[cis_benchmark]
 WITH ENCRYPTION, EXECUTE AS 'dbo'
 AS
 BEGIN

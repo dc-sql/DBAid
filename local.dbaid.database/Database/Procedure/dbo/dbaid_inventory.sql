@@ -18,7 +18,7 @@ BEGIN
 			,OBJECT_NAME([O].[object_id]) AS [procedure_name]
 		FROM [sys].[objects] [O]
 		WHERE [type] = 'P' 
-		AND OBJECT_SCHEMA_NAME([object_id]) IN (N'log',N'report',N'check',N'chart',N'configg')) AS [Source]
+		AND OBJECT_SCHEMA_NAME([object_id]) IN (N'log',N'check',N'chart',N'configg')) AS [Source]
 	ON [Target].[schema_name] = [Source].[schema_name]
 		AND [Target].[procedure_name] = [Source].[procedure_name]
 	WHEN MATCHED THEN 
