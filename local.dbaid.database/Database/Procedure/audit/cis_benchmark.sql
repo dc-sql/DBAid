@@ -58,7 +58,7 @@ BEGIN
 			,[value]
 		FROM [dbo].[service]
 		WHERE 
-		[hierarchy] LIKE '%ServerNetworkProtocol%' OR [hierarchy] LIKE '%ServerSettingsGeneralFlag%'
+		[class_object] LIKE '%ServerNetworkProtocol%' OR [class_object] LIKE '%ServerSettingsGeneralFlag%'
 		OR [property] IN ('VERSION','SPLEVEL','IsClustered','IsIntegratedSecurityOnly')
 	UNION
 		SELECT  [name]

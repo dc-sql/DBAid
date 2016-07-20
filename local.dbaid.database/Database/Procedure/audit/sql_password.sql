@@ -32,6 +32,19 @@ BEGIN
 	;WITH Numbers 
 	AS
 	(
+		SELECT 0 AS [num]
+		UNION ALL
+		SELECT [num] + 1 AS [num]
+		FROM [Numbers]
+		WHERE [num] < 9
+	)
+	INSERT INTO @password([password]) 
+	SELECT 'password' + RIGHT('00' + CAST([num] AS VARCHAR(2)), 2)
+	FROM Numbers
+
+	;WITH Numbers 
+	AS
+	(
 		SELECT 1990 AS [num]
 		UNION ALL
 		SELECT [num] + 1 AS [num]

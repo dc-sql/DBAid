@@ -13,22 +13,35 @@ namespace dbaid.configg
     class Program
     {
         private const string _getProcedureList = "SELECT [dbo].[get_procedure_list](N'configg')";
-        private const string _getProgramName = "SELECT [value] FROM [dbo].[get_static_parameter]('PROGRAM_NAME')";
         private const string _getInstanceTag = "SELECT [instance_tag] FROM [dbo].[get_instance_tag]()";
         private const string _setServiceProperty = "[dbo].[set_service_property]";
-        
         private const string _logID = "DBAidConfigG";
+
+        private static readonly string[] _wmiQuery = { "SELECT DisplayName,BinaryPath,Description,HostName,ServiceName,StartMode,StartName FROM SqlService WHERE DisplayName LIKE '%?%'",
+        "SELECT InstanceName,ProtocolDisplayName,Enabled FROM ServerNetworkProtocol WHERE InstanceName LIKE '%?%'",
+        "SELECT InstanceName,PropertyName,PropertyStrVal FROM ServerNetworkProtocolProperty WHERE IPAddressName = 'IPAll' AND InstanceName LIKE '%?%'",
+        "SELECT ServiceName,PropertyName,PropertyNumValue,PropertyStrValue FROM SqlServiceAdvancedProperty WHERE ServiceName LIKE '%?%'",
+        "SELECT InstanceName,FlagName,FlagValue FROM ServerSettingsGeneralFlag WHERE InstanceName LIKE '%?%'",
+        "SELECT * FROM Win32_OperatingSystem",
+        "SELECT Caption FROM Win32_TimeZone",
+        "SELECT * FROM win32_processor",
+        "SELECT Domain, Manufacturer, Model, PrimaryOwnerName, TotalPhysicalMemory FROM Win32_computerSystem",
+        "SELECT ServiceName, Caption, DHCPEnabled, DNSDomain, IPAddress, MACAddress FROM Win32_NetworkAdapterConfiguration WHERE IPEnabled = 'TRUE'",
+        "SELECT DriveLetter, Label, DeviceID, DriveType, FileSystem, Capacity, BlockSize, Compressed, IndexingEnabled FROM Win32_Volume WHERE SystemVolume <> 'TRUE' AND DriveType <> 4 AND DriveType <> 5"};
 
         static void Main(string[] args)
         {
-            bool loadServiceTable = bool.Parse(ConfigurationManager.AppSettings["UpdateDboServiceTable"]);
+            var csb = new SqlConnectionStringBuilder(args[0]);
+            bool loadServiceTable = bool.Parse(ConfigurationManager.AppSettings["LoadServiceTable"]);
             bool generateConfigReport = bool.Parse(ConfigurationManager.AppSettings["GenerateConfiggReport"]);
             bool logVerbose = bool.Parse(ConfigurationManager.AppSettings["LogVerbose"]);
-            int logRententionDays = int.Parse(ConfigurationManager.AppSettings["LogRetentionDays"]);
+            uint logRententionDays = uint.Parse(ConfigurationManager.AppSettings["LogRetentionDays"]);
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
             string logFile = Path.Combine(baseDirectory, _logID + "_" + DateTime.Now.ToString("yyyyMMdd") + ".log");
             string saveFile = String.Empty;
-            var csb = new SqlConnectionStringBuilder(args[0]);
+            string sqlHost = csb.DataSource.Split('\\')[0];
+            string sqlInstance = csb.DataSource.Split('\\').Length > 1 ? csb.DataSource.Split('\\')[1] : String.Empty;
+            int test = csb.DataSource.Split('\\').Length;
 
             if (Array.IndexOf(args, "?") >= 0 || String.IsNullOrEmpty(csb.ConnectionString))
             {
@@ -36,9 +49,9 @@ namespace dbaid.configg
                 return;
             }
 
-            saveFile = Path.Combine(baseDirectory, csb.DataSource.Replace(@"\", "@").ToLower() + "_asbuilt.md");
-            csb.ApplicationName = _logID + Guid.NewGuid().ToString();
             Log.message(LogEntryType.INFO, _logID, "Process Started", logFile);
+            csb.ApplicationName = _logID + Guid.NewGuid().ToString();
+            saveFile = Path.Combine(baseDirectory, csb.DataSource.Replace(@"\", "@").ToLower() + "_asbuilt.md");
 
             try
             {
@@ -50,59 +63,21 @@ namespace dbaid.configg
                 Log.message(LogEntryType.WARNING, _logID, ex.Message + (logVerbose ? " - " + ex.StackTrace : ""), logFile);
             }
 
-            try
-            {
-                csb.ApplicationName = Query.Select(csb.ConnectionString, mssqlAppSelect).Rows[0][0].ToString();
-            }
-            catch (ApplicationException ex)
-            {
-                Log.message(LogEntryType.ERROR, _logID, ex.Message + (logVerbose ? " - " + ex.StackTrace : ""), logFile);
-                Console.Write(ex);
-                return;
-            }
-
             if (loadServiceTable)
             {
                 var parameters = new Dictionary<string, object>();
 
-                foreach (Wmi.PropertyValue prop in Wmi.getHostInfo(host))
+                foreach (Wmi.PropertyValue prop in Wmi.getWmiData(sqlHost, sqlInstance, _wmiQuery))
                 {
                     parameters.Clear();
-
-                    parameters.Add("hierarchy", prop.Path);
+                    parameters.Add("class_object", prop.Path);
                     parameters.Add("property", prop.Property.Value);
                     parameters.Add("value", prop.Value);
 
-                    Query.Execute(csb.ConnectionString, mssqlInsertService, parameters);
+                    Query.Execute(csb.ConnectionString, _setServiceProperty, parameters);
                 }
 
-                Log.message(LogEntryType.INFO, _logID, "Loaded WMI HostInfo.", logFile);
-
-                foreach (Wmi.PropertyValue prop in Wmi.getServiceInfo(host, instance))
-                {
-                    parameters.Clear();
-
-                    parameters.Add("hierarchy", prop.Path);
-                    parameters.Add("property", prop.Property.Value);
-                    parameters.Add("value", prop.Value);
-
-                    Query.Execute(csb.ConnectionString, mssqlInsertService, parameters);
-                }
-
-                Log.message(LogEntryType.INFO, _logID, "Loaded WMI ServiceInfo.", logFile);
-
-                foreach (Wmi.PropertyValue prop in Wmi.getDriveInfo(host))
-                {
-                    parameters.Clear();
-
-                    parameters.Add("hierarchy", prop.Path);
-                    parameters.Add("property", prop.Property.Value);
-                    parameters.Add("value", prop.Value);
-
-                    Query.Execute(csb.ConnectionString, mssqlInsertService, parameters);
-                }
-
-                Log.message(LogEntryType.INFO, _logID, "Loaded WMI DriveInfo.", logFile);
+                Log.message(LogEntryType.INFO, _logID, "Loaded WMI data.", logFile);
             }
 
             if (generateConfigReport)
@@ -113,7 +88,7 @@ namespace dbaid.configg
                     {
                         outfile.Write("# As-Built Document - " + csb.DataSource + Environment.NewLine + "---" + Environment.NewLine);
                         outfile.Write("## Contents" + Environment.NewLine);
-                        outfile.Write(Markdown.getMarkdown(csb.ConnectionString, mssqlControlFact));
+                        outfile.Write(Markdown.getMarkdown(csb.ConnectionString, _getProcedureList));
 
                         Log.message(LogEntryType.INFO, _logID, "Generated AsBuilt for [" + csb.DataSource + "]", logFile);
                         
@@ -124,29 +99,13 @@ namespace dbaid.configg
                         throw ex;
                     }
                 }
-
-                if (!String.IsNullOrEmpty(emailSmtp))
-                {
-                    try
-                    {
-                        Smtp.send(emailSmtp, emailFrom, emailTo, emailSubject, "", new []{ file }, emailAttachmentByteLimit, emailAttachmentCountLimit, emailEnableSsl, emailIgnoreSslError, emailAnonymous);
-                        Log.message(LogEntryType.INFO, _logID, "Email sent to \"" + String.Join("; ", emailTo) + "\"", logFile);
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.message(LogEntryType.ERROR, _logID, ex.Message + (logVerbose ? " - " + ex.StackTrace : ""), logFile);
-                        throw ex;
-                    }
-                }
-                else
-                {
-                    Log.message(LogEntryType.INFO, _logID, "Emailing of config not enabled or configured.", logFile);
-                }
             }
 
             Log.message(LogEntryType.INFO, _logID, "Process Completed", logFile);
 
-            //System.Threading.Thread.Sleep(10000);
+#if (DEBUG)
+            Console.ReadKey();
+#endif
         }
     }
 }

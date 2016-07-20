@@ -220,6 +220,9 @@
       <Private>False</Private>
     </ArtifactReference>
   </ItemGroup>
+  <ItemGroup>
+    <RefactorLog Include="dbaid.database.refactorlog" />
+  </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>
     </PostBuildEvent>

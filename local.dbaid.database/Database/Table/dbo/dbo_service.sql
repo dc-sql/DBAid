@@ -5,7 +5,7 @@ Version 3, 29 June 2007
 */
 
 CREATE TABLE [dbo].[service](
-	[hierarchy] [nvarchar](260) NULL,
+	[class_object] [nvarchar](260) NULL,
 	[property] [nvarchar](128) NULL,
 	[value] [sql_variant] NULL, 
     [lastseen] DATETIME NOT NULL DEFAULT GETDATE()
