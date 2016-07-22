@@ -29,10 +29,9 @@ namespace local.dbaid.collector
         {
             Log.licenseHeader();
 
-            if (Array.IndexOf(args, @"/?") >= 0)
+            if (Array.IndexOf(args, "?") >= 0 || String.IsNullOrEmpty(csb.ConnectionString))
             {
-                Console.WriteLine("See https://dbaid.codeplex.com/documentation for more details");
-
+                Log.licenseHeader();
                 return;
             }
 

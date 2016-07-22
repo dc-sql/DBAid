@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>dbaid.configg</RootNamespace>
     <AssemblyName>dbaid.configg</AssemblyName>
-    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SccProjectName>%24/dbaid/local.dbaid.configg</SccProjectName>
     <SccLocalPath>.</SccLocalPath>

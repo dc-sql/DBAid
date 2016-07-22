@@ -16,7 +16,7 @@ namespace dbaid.common
         {
             string[] license = new string[]
             {
-                @" |----------------------------------------------------|",
+                @"  ____________________________________________________ ",
                 @" |    _____       _______       _____ ____  __  __    |",
                 @" |   |  __ \   /\|__   __|/\   / ____/ __ \|  \/  |   |",
                 @" |   | |  | | /  \  | |  /  \ | |   | |  | | \  / |   |",
@@ -26,7 +26,7 @@ namespace dbaid.common
                 @" |                                                    |",
                 @" | GNU General Public License version 3 (GPLv3)       |",
                 @" | https://github.com/dc-sql/DBAid                    |",
-                @" |----------------------------------------------------|",
+                @" |____________________________________________________|",
             };
 
             foreach (string line in license)
@@ -34,6 +34,13 @@ namespace dbaid.common
                 Console.WriteLine(line);
             }
 
+            Console.WriteLine();
+        }
+
+        public static void helpArgConnectionString()
+        {
+            Console.WriteLine("Connection-string argument example:");
+            Console.WriteLine("program.exe \"Server=localhost;Database=_dbaid;Trusted_Connection=True;\"");
             Console.WriteLine();
         }
 

@@ -66,7 +66,7 @@ namespace dbaid.configg
             return nsList;
         }
 
-        public static IEnumerable getWmiData(string host, string instance, string[] wmiQuery)
+        public static IEnumerable getWmiData(string host, string instance, string[] wmiQueryList)
         {
             var PropertyValueCollection = new ArrayList();
            // string service = String.Empty;
@@ -79,7 +79,7 @@ namespace dbaid.configg
             {
                 foreach (string ns in GetSqlWmiNameSpaces(host))
                 {
-                    foreach (string query in wmiQuery)
+                    foreach (string query in wmiQueryList)
                     {
                         string root = String.Empty;
 
@@ -102,7 +102,7 @@ namespace dbaid.configg
 
                                     foreach (PropertyData prop in obj.Properties)
                                     {
-                                        if (prop.Value != null)
+                                        if (prop.Value != null && !prop.Type.Equals(CimType.Object) && !prop.Type.Equals(CimType.Reference))
                                         {
                                             if (prop.Value.GetType().Equals(typeof(string[])))
                                             {

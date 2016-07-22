@@ -1,15 +1,13 @@
 ﻿using System;
 using System.IO;
 using System.Data;
-using System.Configuration;
 using System.Xml;
 using System.Text;
 using dbaid.common;
+using System.Data.SqlTypes;
 
 namespace dbaid.configg
 {
-
-
     class Markdown
     {
 
@@ -17,12 +15,14 @@ namespace dbaid.configg
         {
             StringBuilder md = new StringBuilder();
 
-            foreach (DataRow dr in Query.Execute(connectionString, query).Rows)
+            /* Generate index */
+            foreach (DataRow dr in Query.Select(connectionString, query).Rows)
             {
                 md.Append("- [" + dr[0].ToString()+"](#" +dr[0].ToString().Replace("].[","").Replace("[","").Replace("]","")+")" + Environment.NewLine);
             }
 
-            foreach (DataRow dr in Query.Execute(connectionString, query).Rows)
+            /* Generate dataset */
+            foreach (DataRow dr in Query.Select(connectionString, query).Rows)
             {
                 md.Append(Environment.NewLine + "## " + dr[0].ToString() + Environment.NewLine);
                 md.Append(formatMarkdown(Query.Execute(connectionString, dr[0].ToString())));
@@ -31,281 +31,98 @@ namespace dbaid.configg
             return md.ToString();
         }
 
+        private static bool isXml(string xml)
+        {
+            DataSet ds = new DataSet();
+
+            if (!string.IsNullOrEmpty(xml) && xml.TrimStart().StartsWith("<") && xml.TrimEnd().EndsWith(">"))
+            {
+                try
+                {
+                    ds.ReadXml(new StringReader(xml), XmlReadMode.Auto);
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+            else
+            { 
+                return false;
+            }
+        }
+
+        private static int[] tblColumnLengths(DataTable dt)
+        {
+            int[] colLens = new int[dt.Columns.Count];
+
+            for (int col = 0; col < dt.Columns.Count; col++)
+            {
+                if (dt.Columns[col].ColumnName.Length > colLens[col])
+                    colLens[col] = dt.Columns[col].ColumnName.Length;
+
+                foreach (DataRow row in dt.Rows)
+                {
+                    if (row[col].ToString().Length > colLens[col])
+                        colLens[col] = row[col].ToString().Length;
+                }
+            }
+
+            return colLens;
+        }
+
+
         private static StringBuilder formatMarkdown(DataTable dt)
         {
             StringBuilder mdata = new StringBuilder();
+            int[] colLens = tblColumnLengths(dt);
 
-            bool hasxml = false;
-            int[] colmax = new int[dt.Columns.Count];
-            int[] rowmax = new int[dt.Columns.Count];
-
-            foreach (DataRow datarow in dt.Rows)
+            for (int row = 0; row < dt.Rows.Count; row++)
             {
-                int colcount = 1;
-                int counth = 0;
-                int countr = 0;
-
                 //get max data lengths
-                foreach (DataColumn columnM in dt.Columns)
+                for (int col = 0; col < dt.Columns.Count; col++)
                 {
-                    if (columnM.ColumnName.Length > counth)
+                    if (row == 0) /* if row is index 0 then write column headers */
                     {
-                        counth = columnM.ColumnName.Length;
-                    }
-
-                    try
-                    {
-                        XmlDocument xml = new XmlDocument();
-                        xml.LoadXml(datarow[columnM].ToString());
-                        if (xml.InnerXml.Length > 0)
+                        if (isXml(dt.Rows[row][col].ToString())) /* if column is XML then parse XML into DataTable */
                         {
-                            hasxml = true;
+                            DataSet dsXml = new DataSet();
+                            dsXml.ReadXml(new StringReader(dt.Rows[row][col].ToString()), XmlReadMode.Auto);
+
+                            foreach (DataTable dtXml in dsXml.Tables)
+                            {
+                                int[] colLensXml = tblColumnLengths(dtXml);
+
+                                for (int rowXml = 0; rowXml < dtXml.Rows.Count; rowXml++)
+                                {
+                                    for (int colXml = 0; colXml < dtXml.Columns.Count; colXml++)
+                                    {
+                                        if (rowXml == 0) /* if XML dt row is index 0 then write column headers */
+                                        {
+                                            mdata.Append(Environment.NewLine);
+                                            mdata.Append("|" + dtXml.Columns[col].ColumnName.ToString().PadRight(colLens[col]) + "|");
+                                            mdata.Append(Environment.NewLine);
+                                            mdata.Append("|" + "".PadRight(colLens[col], '-').Insert(colLens[col], "|") + "".PadRight(colLens[col], '-').Insert(colLens[col], "|"));
+                                            mdata.Append(Environment.NewLine);
+                                        }
+                                    }
+                                }
+                            }
                         }
-                        continue;
-                    }
-                    catch
-                    { }
-
-                    if (datarow[columnM].ToString().Length > countr)
-                    {
-                        countr = datarow[columnM].ToString().Length;
-                    }
-                }
-
-                if (dt.Columns.Count > 3 || hasxml == true)
-                {
-                    StringBuilder code = new StringBuilder();
-
-                    foreach (DataColumn column in dt.Columns)
-                    {                       
-                        if (colcount == 1)
+                        else /* Write out normal DataTable header column */
                         {
                             mdata.Append(Environment.NewLine);
-                            mdata.Append("|" + column.ToString().PadRight(counth).Insert(counth, "|") + datarow[column].ToString().PadRight(countr).Insert(countr, "|") + Environment.NewLine);
-                            mdata.Append("|" + "".PadRight(counth, '-').Insert(counth, "|") + "".PadRight(countr, '-').Insert(countr, "|") + Environment.NewLine);
-                        }
-                        else
-                        {
-                            try
-                            {
-                                string codeblock;
-                                codeblock = "";
-
-                                XmlDocument xml = new XmlDocument();
-                                xml.LoadXml(datarow[column].ToString());
-                                codeblock = Markdown.formatXML(xml, 2);
-                                if (!(String.IsNullOrEmpty(codeblock)))
-                                {
-                                    code.Append(Environment.NewLine + "##### " + column.ColumnName + Environment.NewLine);
-                                    code.Append(Environment.NewLine + "```xml" + Environment.NewLine + codeblock + Environment.NewLine + "```" + Environment.NewLine);
-
-                                    if (colcount == dt.Columns.Count)
-                                    {
-                                        mdata.Append(code);
-                                    }
-                                    colcount++;
-                                    continue;
-                                }
-                            }
-                            catch
-                            { }
-                        }
-                        if (colcount == dt.Columns.Count && hasxml == true)
-                        {
-                            mdata.Append("|" + column.ToString().PadRight(counth).Insert(counth, "|") + datarow[column].ToString().PadRight(countr).Insert(countr, "|") + Environment.NewLine);
-                            mdata.Append(code);
-                            code.Length = 0;
-                        }
-                        else if (dt.Columns.Count > 3 | hasxml == true && colcount > 1)
-                        {
-                            mdata.Append("|" + column.ToString().PadRight(counth).Insert(counth, "|") + datarow[column].ToString().PadRight(countr).Insert(countr, "|") + Environment.NewLine);
-                        }
-                        colcount++;
-                    }
-                }
-
-                if (dt.Columns.Count < 4 && hasxml == false)
-                {
-                    mdata.Length = 0;
-                    mdata.Append(Environment.NewLine);
-                    int ir;
-                    int ic;
-
-                    //find lengths
-                    for (ir = 0; ir < dt.Rows.Count; ir++)
-                    {
-                        for (ic = 0; ic < dt.Columns.Count; ic++)
-                        {
-                            if (ir == 0)
-                            {
-                                if (dt.Columns[ic].ToString().Length > colmax[ic])
-                                {
-                                    colmax[ic] = dt.Columns[ic].ToString().Length;
-                                }
-
-                            }
-                            else
-                            {
-                                if (dt.Rows[ir][ic].ToString().Length > rowmax[ic])
-                                {
-                                    rowmax[ic] = dt.Rows[ir][ic].ToString().Length;
-                                }
-                            }
-                        }
-                    }
-
-                    //Build header###############################
-                    for (ic = 0; ic < dt.Columns.Count; ic++)
-                    {
-                        //build header with col size
-                        if (colmax[ic] > rowmax[ic])
-                        {
-                            if (ic == 0)
-                            {
-                                mdata.Append("|" + dt.Columns[ic].ToString().PadRight(colmax[ic] + 1).Insert(colmax[ic] + 1, "|"));
-                                if (ic == dt.Columns.Count - 1)
-                                {
-                                    mdata.Append(Environment.NewLine);
-                                }
-                            }
-
-                            else
-                            {
-                                mdata.Append(dt.Columns[ic].ToString().PadRight(colmax[ic] + 1).Insert(colmax[ic] + 1, "|"));
-                            }
-                            if (ic == dt.Columns.Count - 1)
-                            {
-                                mdata.Append(Environment.NewLine);
-                            }
-                        }
-                        //build header with row size
-                        else if (colmax[ic] < rowmax[ic])
-                        {
-                            if (ic == 0)
-                            {
-                                mdata.Append("|" + dt.Columns[ic].ToString().PadRight(rowmax[ic] + 1).Insert(rowmax[ic] + 1, "|"));
-                                if (ic == dt.Columns.Count - 1)
-                                {
-                                    mdata.Append(Environment.NewLine);
-                                }
-                            }
-                            else
-                            {
-                                mdata.Append(dt.Columns[ic].ToString().PadRight(rowmax[ic] + 1).Insert(rowmax[ic] + 1, "|"));
-                                if (ic == dt.Columns.Count - 1)
-                                {
-                                    mdata.Append(Environment.NewLine);
-                                }
-                            }
-                        }
-                    }
-
-                    //Build header devide###############################
-                    for (ic = 0; ic < dt.Columns.Count; ic++)
-                    {
-                        //build header with col size
-                        if (colmax[ic] > rowmax[ic])
-                        {
-                            if (ic == 0)
-                            {
-                                mdata.Append("|" + "".PadRight(colmax[ic] + 1, '-').Insert(colmax[ic] + 1, "|"));
-                            }
-
-                            else
-                            {
-                                mdata.Append("".PadRight(colmax[ic] + 1, '-').Insert(colmax[ic] + 1, "|"));
-                            }
-                            if (ic == dt.Columns.Count - 1)
-                            {
-                                mdata.Append(Environment.NewLine);
-                            }
-                        }
-                        //build header with row size
-                        else if (colmax[ic] < rowmax[ic])
-                        {
-                            if (ic == 0)
-                            {
-                                mdata.Append("|" + "".PadRight(rowmax[ic] + 1, '-').Insert(rowmax[ic] + 1, "|"));
-                                if (ic == dt.Columns.Count - 1)
-                                {
-                                    mdata.Append(Environment.NewLine);
-                                }
-                            }
-                            else
-                            {
-                                mdata.Append("".PadRight(rowmax[ic] + 1, '-').Insert(rowmax[ic] + 1, "|"));
-                                if (ic == dt.Columns.Count - 1)
-                                {
-                                    mdata.Append(Environment.NewLine);
-                                }
-                            }
-                        }
-                    }
-
-                    //Build data###############################
-                    for (ir = 0; ir < dt.Rows.Count; ir++)
-                    {
-                        for (ic = 0; ic < dt.Columns.Count; ic++)
-                        {
-                            //build row with col size
-                            if (colmax[ic] > rowmax[ic])
-                            {
-
-                                if (ic == 0)
-                                {
-                                    mdata.Append("|" + dt.Rows[ir][ic].ToString().PadRight(colmax[ic] + 1).Insert(colmax[ic] + 1, "|"));
-                                    if (ic == dt.Columns.Count - 1)
-                                    {
-                                        mdata.Append(Environment.NewLine);
-                                    }
-                                }
-                                else
-                                {
-                                    mdata.Append(dt.Rows[ir][ic].ToString().PadRight(colmax[ic] + 1).Insert(colmax[ic] + 1, "|"));
-                                    if (ic == dt.Columns.Count - 1)
-                                    {
-                                        mdata.Append(Environment.NewLine);
-                                    }
-                                }
-                            }
-                            //build row with row size
-                            if (colmax[ic] < rowmax[ic])
-                            {
-                                if (ic == 0)
-                                {
-                                    mdata.Append("|" + dt.Rows[ir][ic].ToString().PadRight(rowmax[ic] + 1).Insert(rowmax[ic] + 1, "|"));
-                                    if (ic == dt.Columns.Count - 1)
-                                    {
-                                        mdata.Append(Environment.NewLine);
-                                    }
-                                }
-                                else
-                                {
-                                    mdata.Append(dt.Rows[ir][ic].ToString().PadRight(rowmax[ic] + 1).Insert(rowmax[ic] + 1, "|"));
-                                    if (ic == dt.Columns.Count - 1)
-                                    {
-                                        mdata.Append(Environment.NewLine);
-                                    }
-                                }
-                            }
+                            mdata.Append("|" + dt.Columns[col].ColumnName.ToString().PadRight(colLens[col]) + "|");
+                            mdata.Append(Environment.NewLine);
+                            mdata.Append("|" + "".PadRight(colLens[col], '-').Insert(colLens[col], "|") + "".PadRight(colLens[col], '-').Insert(colLens[col], "|"));
+                            mdata.Append(Environment.NewLine);
                         }
                     }
                 }
             } 
 
             return mdata;
-        }
-
-        private static string formatXML(XmlDocument xml, int indent) 
-        { 
-            StringWriter stringwriter = new StringWriter();
-            XmlTextWriter xmlwriter = new XmlTextWriter(stringwriter);
-            xmlwriter.Formatting = Formatting.Indented; 
-            xmlwriter.Indentation = indent; 
-            xml.WriteContentTo(xmlwriter);
-            xmlwriter.Flush();
-            stringwriter.Flush();
-            return stringwriter.ToString();
         }
     }
 }
