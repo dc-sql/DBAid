@@ -56,6 +56,7 @@ SET NOCOUNT ON;
 				,[D].[database_id]
 				,[B].[backup_finish_date]
 				,[B].[type]
+				,[D].[create_date]
 			FROM [sys].[databases] [D]
 				LEFT JOIN [msdb].[dbo].[backupset] [B]
 					ON [D].[name] = [B].[database_name]
@@ -88,6 +89,7 @@ SET NOCOUNT ON;
 			CROSS APPLY (SELECT CASE WHEN ([B].[backup_finish_date] IS NULL OR DATEDIFF(HOUR, [B].[backup_finish_date], GETDATE()) > ([D].[backup_frequency_hours])) THEN [D].[backup_state_alert] ELSE N''OK'' END AS [state]) [S]
 		WHERE [B].[row] = 1
 			AND [D].[backup_frequency_hours] > 0
+			AND DATEDIFF(HOUR, [B].[create_date], GETDATE()) > [D].[backup_frequency_hours]
 			AND LOWER([D].[db_name]) NOT IN (N''tempdb'')
 			AND ISNULL([table].[automated_backup_preference],0) = 0
 			AND ISNULL([table].[Role],1) = 1
@@ -115,6 +117,7 @@ SET NOCOUNT ON;
 				,[D].[database_id]
 				,[B].[backup_finish_date]
 				,[B].[type]
+				,[D].[create_date]
 			FROM [sys].[databases] [D]
 				LEFT JOIN [msdb].[dbo].[backupset] [B]
 					ON [D].[name] = [B].[database_name]
@@ -137,6 +140,7 @@ SET NOCOUNT ON;
 			CROSS APPLY (SELECT CASE WHEN ([B].[backup_finish_date] IS NULL OR DATEDIFF(HOUR, [B].[backup_finish_date], GETDATE()) > ([D].[backup_frequency_hours])) THEN [D].[backup_state_alert] ELSE N'OK' END AS [state]) [S]
 		WHERE [B].[row] = 1
 			AND [D].[backup_frequency_hours] > 0
+			AND DATEDIFF(HOUR, [B].[create_date], GETDATE()) > [D].[backup_frequency_hours]
 			AND LOWER([D].[db_name]) NOT IN (N'tempdb')
 			AND [S].[state] NOT IN (N'OK')
 		ORDER BY [D].[db_name]

@@ -70,8 +70,11 @@ BEGIN
 		FROM [CheckDB] 
 			INNER JOIN [dbo].[config_database] [D]
 				ON [CheckDB].[DbName] = [D].[db_name] COLLATE Database_Default
+			INNER JOIN [master].[sys].[databases] [SD] 
+				ON [CheckDB].[DbName] = [SD].[name] COLLATE Database_Default
 			CROSS APPLY (SELECT CASE WHEN ([CheckDB].[Value] IS NULL OR DATEDIFF(HOUR, [CheckDB].[Value], GETDATE()) > ([D].[checkdb_frequency_hours])) THEN [D].[checkdb_state_alert] ELSE N'OK' END AS [state]) [S]
 		WHERE [D].[checkdb_frequency_hours] > 0
+			AND DATEDIFF(HOUR, [SD].[create_date], GETDATE()) > [D].[checkdb_frequency_hours]
 			AND [S].[state] NOT IN (N'OK')
 			AND [D].[is_enabled] = 1
 		ORDER BY [CheckDB].[DbName]
