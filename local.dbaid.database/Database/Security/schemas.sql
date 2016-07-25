@@ -16,5 +16,9 @@ CREATE SCHEMA [log];
 GO
 CREATE SCHEMA [setting];
 GO
+CREATE SCHEMA [get];
+GO
+CREATE SCHEMA [set];
+GO
 
 

@@ -19,40 +19,24 @@ Post-Deployment Script Template
 USE [$(DatabaseName)];
 GO
 
-MERGE INTO [setting].[check_state] AS [Target]
-USING(VALUES(1, N'CRITICAL', N'Generally raised as a service desk P2'),
-(2, N'WARNING', N'Generally raised as a service desk P3'),
-(3, N'OK', N'Default state for all green, everything is OK')) AS [Source] ([state_id],[state_name],[state_desc])
-ON [Target].[state_id] = [Source].[state_id]
-WHEN MATCHED THEN
-	UPDATE SET [Target].[state_name] = [Source].[state_name],
-		[Target].[state_desc] = [Source].[state_desc]
-WHEN NOT MATCHED BY TARGET THEN
-	INSERT ([state_id],
-			[state_name],
-			[state_desc]) 
-	VALUES ([Source].[state_id],
-			[Source].[state_name],
-			[Source].[state_desc]);
-
 /* Insert static variables */
 MERGE INTO [setting].[static_parameters] AS [Target] 
-USING (SELECT N'GUID',CAST(NEWID() AS VARCHAR(38)),N'Unique SQL Instance ID, generated during install. This GUID is used to link instance data together, please do not change.'
-	UNION SELECT N'PROGRAM_NAME','(>^,^)> (DBAid) <(^,^<)',N'This is the program name the collector will use. Procedure last execute dates will only be updated when an applicaiton connects using this program name.'
-	UNION SELECT N'SANITIZE_DATASET','1',N'This specifies if log data should be sanitized before being written out. This will hide sensitive data, such as account and Network info'
-	UNION SELECT N'PUBLIC_ENCRYPTION_KEY',N'$(PublicKey)',N'Public key generated in collection server.'
-	UNION SELECT N'CAPACITY_CACHE_RETENTION_MONTH','3',N'Number of months to retain capacity cache data in dbo.capacity'
-) AS [Source] ([name],[value],[description])  
-ON [Target].[name] = [Source].[name] 
-WHEN MATCHED THEN
-	UPDATE SET [Target].[description] = [Source].[description]
+USING (SELECT N'GUID', NEWID()
+	UNION SELECT N'PROGRAM_NAME','_dbaid application - Datacom'
+	UNION SELECT N'SANITIZE_DATASET',1
+	UNION SELECT N'PUBLIC_ENCRYPTION_KEY',N'$(PublicKey)'
+	UNION SELECT N'CAPACITY_CACHE_RETENTION_MONTH',3
+) AS [Source] ([key],[value])  
+ON [Target].[key] = [Source].[key] 
 WHEN NOT MATCHED BY TARGET THEN  
-	INSERT ([name],[value],[description]) 
-	VALUES ([Source].[name],[Source].[value],[Source].[description]);
+	INSERT ([key],[value]) 
+	VALUES ([Source].[key],[Source].[value]);
 GO
 
+
+
 /* General perf counters */
-MERGE INTO [setting].[chart_perfcounter] AS [Target] 
+MERGE INTO [setting].[performance_counter] AS [Target] 
 USING (VALUES(N'%:Broker Activation', N'Tasks Running', N'_Total')
 	,(N'%:Broker Activation',N'Tasks Started/sec',N'_Total')
 	,(N'%:Broker Statistics',N'Activation Errors Total',NULL)

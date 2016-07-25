@@ -1,4 +1,4 @@
-﻿CREATE FUNCTION [dbo].[get_instance_tag]()
+﻿CREATE FUNCTION [get].[instance_tag]()
 RETURNS @returntable TABLE
 (
 	[instance_tag] NVARCHAR(256)

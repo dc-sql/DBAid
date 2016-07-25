@@ -16,7 +16,6 @@ BEGIN
 
 	DECLARE @compression BIT;
 	DECLARE @cmd VARCHAR(MAX);
-	DECLARE @report_datetime DATETIME;
 
 	DECLARE @output TABLE ([database_id] INT,
 							[database_name] NVARCHAR(128),
@@ -36,8 +35,8 @@ BEGIN
 
 	IF (@start_datetime IS NULL)
 	BEGIN
-		SELECT @start_datetime=[last_execution_datetime] FROM [setting].[procedure_list] WHERE [procedure_id] = @@PROCID;
-		IF @start_datetime IS NULL SET @start_datetime=DATEADD(DAY,-1,GETDATE());
+		SELECT @start_datetime=ISNULL([last_execution_datetime], DATEADD(DAY,-1,GETDATE())) 
+		FROM [setting].[procedure_list] WHERE [procedure_id] = @@PROCID;
 	END
 
 	IF EXISTS (SELECT 1 FROM [msdb].[sys].[objects] [O] INNER JOIN [msdb].[sys].[columns] [C] ON [O].[object_id] = [C].[object_id] WHERE SCHEMA_NAME([O].[schema_id]) = N'dbo' AND [O].[name] = N'backupset' AND [C].[name] LIKE N'compressed_backup_size')
@@ -81,10 +80,8 @@ BEGIN
 	INSERT INTO @output 
 		EXEC(@cmd);
 
-	SET @report_datetime = GETDATE();
-
 	IF (@end_datetime IS NULL)
-		SET @end_datetime = @report_datetime;
+		SET @end_datetime = GETDATE();
 
 	SELECT [I].[guid] AS [instance_guid]
 		,[D1].[date] AS [backup_start_date]
@@ -101,16 +98,15 @@ BEGIN
 		,[O].[encryptor_type]
 		,[O].[encryptor_thumbprint]
 		,[O].[is_password_protected]
-		,[C].[check_backup_since_hour]
+		,[C].[column_value] AS [backup_frequency_hour]
 	FROM @output [O]
-		INNER JOIN [setting].[check_database] [C]
-			ON [O].[database_id] = [C].[database_id]
-		CROSS APPLY [dbo].[get_datetime_with_offset]([O].[backup_start_date]) [D1]
-		CROSS APPLY [dbo].[get_datetime_with_offset]([O].[backup_finish_date]) [D2]
-		CROSS APPLY [dbo].[get_instance_guid]() [I]
+		CROSS APPLY [get].[check_configuration]('database', [O].[database_name], 'backup_frequency_hour') [C]
+		CROSS APPLY [get].[datetime_with_offset]([O].[backup_start_date]) [D1]
+		CROSS APPLY [get].[datetime_with_offset]([O].[backup_finish_date]) [D2]
+		CROSS APPLY [get].[instance_guid]() [I]
 	WHERE [backup_start_date] BETWEEN @start_datetime AND @end_datetime
 	ORDER BY [backup_start_date], [backup_finish_date];
 
-	IF (SELECT [value] FROM [setting].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME()
+	IF (SELECT [value] FROM [setting].[static_parameters] WHERE [key] = 'PROGRAM_NAME') = PROGRAM_NAME()
 		UPDATE [setting].[procedure_list] SET [last_execution_datetime] = @end_datetime WHERE [procedure_id] = @@PROCID;
 END;

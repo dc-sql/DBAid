@@ -1,4 +1,4 @@
-﻿CREATE FUNCTION [dbo].[get_procedure_list]
+﻿CREATE FUNCTION [get].[procedure_list]
 (
 	@schema NVARCHAR(128)
 )

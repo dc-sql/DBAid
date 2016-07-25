@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE TABLE [setting].[chart_perfcounter]
+CREATE TABLE [setting].[chart_performace_counter]
 (
 	[object_name] NVARCHAR(128) NULL
 	,[counter_name] NVARCHAR(128) NULL

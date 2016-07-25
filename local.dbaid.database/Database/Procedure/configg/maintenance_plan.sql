@@ -23,6 +23,6 @@ BEGIN
 			ON [P].[id] = [S].[plan_id]
 		INNER JOIN [msdb].[dbo].[sysjobs] [J]
 			ON [S].[job_id] = [J].[job_id]
-		CROSS APPLY [dbo].[get_clean_string]([P].[description]) [plan_description]
-		CROSS APPLY [dbo].[get_clean_string]([S].[subplan_description]) [subplan_description]
+		CROSS APPLY [get].[clean_string]([P].[description]) [plan_description]
+		CROSS APPLY [get].[clean_string]([S].[subplan_description]) [subplan_description]
 END

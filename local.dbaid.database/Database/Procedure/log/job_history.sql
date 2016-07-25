@@ -7,14 +7,14 @@ Version 3, 29 June 2007
 CREATE PROCEDURE [log].[job_history]
 (
 	@start_datetime DATETIME = NULL,
-	@end_datetime DATETIME = NULL
+	@end_datetime DATETIME = NULL,
+	@sanitize BIT = 0
 )
 WITH ENCRYPTION, EXECUTE AS 'dbo'
 AS
 BEGIN
 	SET NOCOUNT ON;
 
-	DECLARE @sanitize BIT;
 	DECLARE @report_datetime DATETIME;
 
 	DECLARE @jobhistory TABLE ([instance_id] INT
@@ -35,18 +35,10 @@ BEGIN
 		,[retries_attempted] INT
 		,[server] NVARCHAR(128));
 	
-	IF ((SELECT [value] FROM [setting].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME())
-		SELECT @sanitize=CAST([value] AS BIT) FROM [setting].[static_parameters] WHERE [name]='SANITIZE_DATASET';
-	ELSE SET @sanitize = 0;
-	
 	IF (@start_datetime IS NULL)
 	BEGIN
-		SELECT @start_datetime=[last_execution_datetime] 
-		FROM [setting].[procedure_list] 
-		WHERE [procedure_id] = @@PROCID;
-
-		IF @start_datetime IS NULL 
-			SET @start_datetime=DATEADD(DAY,-1,GETDATE());
+		SELECT @start_datetime=ISNULL([last_execution_datetime], DATEADD(DAY,-1,GETDATE())) 
+		FROM [setting].[procedure_list] WHERE [procedure_id] = @@PROCID;
 	END
 
 	INSERT INTO @jobhistory 
@@ -96,12 +88,12 @@ BEGIN
 		,[run_status]
 		,[run_duration_sec]
 	FROM [JobHistory] [H]
-		CROSS APPLY [dbo].[get_instance_guid]() [I]
-		CROSS APPLY [dbo].[get_clean_string]([error_message]) [E]
-		CROSS APPLY [dbo].[get_datetime_with_offset]([H].[run_datetime]) [D1]
+		CROSS APPLY [get].[instance_guid]() [I]
+		CROSS APPLY [get].[clean_string]([error_message]) [E]
+		CROSS APPLY [get].[datetime_with_offset]([H].[run_datetime]) [D1]
 	WHERE [run_datetime] BETWEEN @start_datetime AND @end_datetime
 	ORDER BY [H].[run_datetime];
 
-	IF ((SELECT [value] FROM [setting].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME())
+	IF (SELECT [value] FROM [setting].[static_parameters] WHERE [key] = 'PROGRAM_NAME') = PROGRAM_NAME()
 		UPDATE [setting].[procedure_list] SET [last_execution_datetime] = @end_datetime WHERE [procedure_id] = @@PROCID;
 END;

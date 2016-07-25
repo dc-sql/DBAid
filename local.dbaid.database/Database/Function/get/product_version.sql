@@ -1,4 +1,4 @@
-﻿CREATE FUNCTION [dbo].[get_product_version]()
+﻿CREATE FUNCTION [get].[product_version]()
 RETURNS TABLE
 WITH ENCRYPTION
 RETURN(

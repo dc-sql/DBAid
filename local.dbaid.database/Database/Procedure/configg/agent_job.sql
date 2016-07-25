@@ -50,7 +50,7 @@ BEGIN
 		LEFT JOIN [msdb].[dbo].[sysoperators] [SOP]
 			ON [JO].[notify_page_operator_id] = [SOP].[id]
 				AND [SOP].[enabled] = 1
-		CROSS APPLY [dbo].[get_clean_string]([JO].[description]) [job_desc]
+		CROSS APPLY [get].[clean_string]([JO].[description]) [job_desc]
 		CROSS APPLY (SELECT(SELECT [S].[enabled] AS [schedule_enabled]
 		,CASE
 			WHEN [J].[job_id] IS NULL THEN 'Unscheduled'

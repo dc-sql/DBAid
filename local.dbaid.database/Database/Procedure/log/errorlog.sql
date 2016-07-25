@@ -7,28 +7,23 @@ Version 3, 29 June 2007
 CREATE PROCEDURE [log].[errorlog]
 (
 	@start_datetime DATETIME = NULL,
-	@end_datetime DATETIME = NULL
+	@end_datetime DATETIME = NULL,
+	@sanitize BIT = 0
 )
 WITH ENCRYPTION, EXECUTE AS 'dbo'
 AS
 BEGIN
 	SET NOCOUNT ON;
 
-	DECLARE @sanitize BIT;
 	DECLARE @mindate DATETIME;
 	DECLARE @loop INT;
 	DECLARE @lognum INT;
 	DECLARE @enumerrorlogs TABLE ([archive] INT, [date] DATETIME, [file_size_byte] BIGINT);
-	DECLARE @report_datetime DATETIME;
-
-	IF ((SELECT [value] FROM [setting].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME())
-		SELECT @sanitize=CAST([value] AS BIT) FROM [setting].[static_parameters] WHERE [name]='SANITIZE_DATASET';
-	ELSE SET @sanitize = 0;
 	
 	IF (@start_datetime IS NULL)
 	BEGIN
-		SELECT @start_datetime=[last_execution_datetime] FROM [setting].[procedure_list] WHERE [procedure_id] = @@PROCID;
-		IF @start_datetime IS NULL SET @start_datetime=DATEADD(DAY,-1,GETDATE());
+		SELECT @start_datetime=ISNULL([last_execution_datetime], DATEADD(DAY,-1,GETDATE())) 
+		FROM [setting].[procedure_list] WHERE [procedure_id] = @@PROCID;
 	END
 
 	IF OBJECT_ID('tempdb..#__Errorlog') IS NOT NULL
@@ -43,10 +38,8 @@ BEGIN
 	INSERT INTO @enumerrorlogs EXEC [master].[dbo].[xp_enumerrorlogs];
 	SELECT @lognum = MAX([archive]) FROM @enumerrorlogs;
 
-	SET @report_datetime = GETDATE();
-
 	IF (@end_datetime IS NULL)
-		SET @end_datetime = @report_datetime;
+		SET @end_datetime = GETDATE();
 
 	SET @mindate = GETDATE()
 	SET @loop = 0;
@@ -84,7 +77,7 @@ BEGIN
 			INNER JOIN [master].[sys].[messages] [M]
 				ON [M].[language_id] = CAST(SERVERPROPERTY('LCID') AS INT)
 					AND CAST(SUBSTRING([A].[message],8,CHARINDEX(',',[A].[message])-8) AS INT) = [M].[message_id]
-			CROSS APPLY [dbo].[get_datetime_with_offset]([A].[log_date]) [D1]
+			CROSS APPLY [get].[datetime_with_offset]([A].[log_date]) [D1]
 		WHERE [A].[message] LIKE 'Error:%Severity:%State:%'
 		ORDER BY [A].[log_date], [A].[source];
 
@@ -94,8 +87,8 @@ BEGIN
 			,[E].[message_header]
 			,[message].[string] AS [message]
 		FROM #__SeverityError [E]
-			CROSS APPLY [dbo].[get_clean_string]([E].[message]) [message]
-			CROSS APPLY [dbo].[get_instance_guid]() [I]
+			CROSS APPLY [get].[clean_string]([E].[message]) [message]
+			CROSS APPLY [get].[instance_guid]() [I]
 		UNION ALL
 		SELECT [I].[guid] AS [instance_guid]
 			,[D].[date1] COLLATE database_default AS [log_date]
@@ -103,13 +96,13 @@ BEGIN
 			,N'Error: dbcc'
 			,CASE WHEN @sanitize=0 THEN [message].[string] ELSE SUBSTRING([message].[string], CHARINDEX(' found ', [message].[string]), LEN([message].[string])) END AS [message]
 		FROM #__Errorlog [E]
-			CROSS APPLY [dbo].[get_clean_string]([E].[message]) [message]
-			CROSS APPLY [dbo].[get_datetime_with_offset]([E].[log_date], NULL) [D]
-			CROSS APPLY [dbo].[get_instance_guid]() [I]
+			CROSS APPLY [get].[clean_string]([E].[message]) [message]
+			CROSS APPLY [get].[datetime_with_offset]([E].[log_date], NULL) [D]
+			CROSS APPLY [get].[instance_guid]() [I]
 		WHERE [message] LIKE '%found % errors and repaired % errors%'
 			AND [message] NOT LIKE '%found 0 errors and repaired 0 errors%' 
 		ORDER BY [log_date];
 
-		IF ((SELECT [value] FROM [setting].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME())
+		IF (SELECT [value] FROM [setting].[static_parameters] WHERE [key] = 'PROGRAM_NAME') = PROGRAM_NAME()
 			UPDATE [setting].[procedure_list] SET [last_execution_datetime] = @end_datetime WHERE [procedure_id] = @@PROCID;
 END;
