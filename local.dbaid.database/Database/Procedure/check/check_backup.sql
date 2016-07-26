@@ -62,6 +62,7 @@ SET NOCOUNT ON;
 					ON [D].[name] = [B].[database_name]
 						AND [B].[type] IN (''D'', ''I'')
 						AND [B].[is_copy_only] = 0
+			WHERE [D].[state] = 0
 		)
 		INSERT INTO @check
 		SELECT N''database='' 
@@ -123,6 +124,7 @@ SET NOCOUNT ON;
 					ON [D].[name] = [B].[database_name]
 						AND [B].[type] IN ('D', 'I')
 						AND [B].[is_copy_only] = 0
+			WHERE [D].[state] = 0
 		)
 		INSERT INTO @check
 		SELECT N'database=' 
