@@ -25,7 +25,7 @@ namespace dbaid.common
                 @" |    |_____/_/    \_\_/_/    \_\_____\____/|_|  |_|        |",             
                 @" |                                                          |",
                 @" | GNU General Public License version 3 (GPLv3)             |",
-                @" | https://dbaid.codeplex.com                               |",
+                @" | https://github.com/dc-sql/DBAid                               |",
                 @" | Maintained by: Datacom SQL Team, Wellington, New Zealand |",
                 @" |----------------------------------------------------------|",
                 @"                                                             ",

@@ -171,8 +171,8 @@ IF (SELECT COUNT(name) FROM [sys].[extended_properties] WHERE [class] = 0 AND [n
 	EXEC sp_addextendedproperty @name = N'Version', @value = '$(Version)';
 ELSE EXEC sp_updateextendedproperty @name = N'Version', @value = '$(Version)';
 IF (SELECT COUNT(name) FROM [sys].[extended_properties] WHERE [class] = 0 AND [name] = N'Source') = 0
-	EXEC sp_addextendedproperty @name = N'Source', @value = 'https://dbaid.codeplex.com';
-ELSE EXEC sp_updateextendedproperty @name = N'Source', @value = 'https://dbaid.codeplex.com';
+	EXEC sp_addextendedproperty @name = N'Source', @value = 'https://github.com/dc-sql/DBAid';
+ELSE EXEC sp_updateextendedproperty @name = N'Source', @value = 'https://github.com/dc-sql/DBAid';
 IF (SELECT COUNT(name) FROM [sys].[extended_properties] WHERE [class] = 0 AND [name] = N'Installer') = 0
 	EXEC sp_addextendedproperty @name = N'Installer', @value = @installer;
 ELSE EXEC sp_updateextendedproperty @name = N'Installer', @value = @installer;
