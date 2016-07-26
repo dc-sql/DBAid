@@ -9,6 +9,12 @@ BEGIN
 
 	IF (OBJECT_ID(N'tempdb.dbo.$(DatabaseName)_backup_config_alwayson') IS NULL AND OBJECT_ID(N'[$(DatabaseName)].[deprecated].[tbparameters]') IS NOT NULL)
 	BEGIN
+		SET @backupsql = N'EXEC [$(DatabaseName)].[dbo].[toggle_audit_service] @enable_login_audit=0,@enable_blocked_process_audit=0,@enable_deadlock_audit=0,@enable_mirror_state_audit=0,@enable_server_ddl_audit=0,@enable_db_security_audit=0';
+		EXEC sp_executesql @stmt=@backupsql;
+	END
+
+	IF (OBJECT_ID(N'tempdb.dbo.$(DatabaseName)_backup_config_alwayson') IS NULL AND OBJECT_ID(N'[$(DatabaseName)].[deprecated].[tbparameters]') IS NOT NULL)
+	BEGIN
 		SET @backupsql = N'SELECT [parametername],[setting],[status],[comments] INTO [tempdb].[dbo].[$(DatabaseName)_deprecated_tbparameters] FROM [$(DatabaseName)].[deprecated].[tbparameters]';
 		EXEC sp_executesql @stmt=@backupsql;
 	END
