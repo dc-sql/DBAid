@@ -231,7 +231,9 @@
       <SuppressTSqlWarnings>
       </SuppressTSqlWarnings>
     </Build>
-    <Build Include="Database\Procedure\check\check_backup.sql" />
+    <Build Include="Database\Procedure\check\check_backup.sql">
+      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
+    </Build>
     <Build Include="Database\Procedure\check\check_checkdb.sql">
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>

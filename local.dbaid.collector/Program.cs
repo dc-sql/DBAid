@@ -60,6 +60,7 @@ namespace local.dbaid.collector
             bool emailEnableSsl = true;
             bool emailIgnoreSslError = false;
             bool emailAnonymous = true;
+            int defaultCmdTimout = 0;
             ConnectionStringSettingsCollection cssc = new ConnectionStringSettingsCollection();
 
             try
@@ -88,6 +89,7 @@ namespace local.dbaid.collector
                 emailEnableSsl = bool.Parse(ConfigurationManager.AppSettings["EmailEnableSsl"]);
                 emailIgnoreSslError = bool.Parse(ConfigurationManager.AppSettings["EmailIgnoreSslError"]);
                 emailAnonymous = bool.Parse(ConfigurationManager.AppSettings["EmailAnonymous"]);
+                defaultCmdTimout = int.Parse(ConfigurationManager.AppSettings["default_cmd_timeout_sec"]);
 
                 if (!Directory.Exists(workingDirectory))
                 {
@@ -139,17 +141,17 @@ namespace local.dbaid.collector
                 try
                 {
                     // query database for assigned application name.
-                    csb.ApplicationName = Query.Select(csb.ConnectionString, mssqlAppSelect).Rows[0][0].ToString();
+                    csb.ApplicationName = Query.Select(csb.ConnectionString, mssqlAppSelect, defaultCmdTimout).Rows[0][0].ToString();
                     // query database for instance guid.
-                    instanceTag = Query.Execute(csb.ConnectionString, mssqlInstanceTagProc).Rows[0][0].ToString();
+                    instanceTag = Query.Execute(csb.ConnectionString, mssqlInstanceTagProc, defaultCmdTimout).Rows[0][0].ToString();
 
                     if (String.IsNullOrEmpty(instanceTag))
                         instanceTag = css.Name.Replace("\\", "@").Replace("_","~") + "_" + IPGlobalProperties.GetIPGlobalProperties().DomainName.Replace(".", "_");
 
                     // query database for public key.
-                    publicKey = Query.Select(csb.ConnectionString, mssqlKeySelect).Rows[0][0].ToString();
+                    publicKey = Query.Select(csb.ConnectionString, mssqlKeySelect, defaultCmdTimout).Rows[0][0].ToString();
                     // get procedure returned from control procedure.
-                    procedures = Query.Select(csb.ConnectionString, mssqlControlProc).Rows;
+                    procedures = Query.Select(csb.ConnectionString, mssqlControlProc, defaultCmdTimout).Rows;
                 }
                 catch (Exception ex)
                 {
@@ -168,7 +170,7 @@ namespace local.dbaid.collector
                     {
                         try
                         {
-                            DataTable dt = Query.Execute(csb.ConnectionString, dr[0].ToString());
+                            DataTable dt = Query.Execute(csb.ConnectionString, dr[0].ToString(), defaultCmdTimout);
                             StringBuilder sb = new StringBuilder(dt.TableName.Length);
 
                             foreach (char c in dt.TableName) // remove special characters from table name as this causes issues with SSIS xml source.
