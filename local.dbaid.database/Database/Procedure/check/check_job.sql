@@ -13,11 +13,15 @@ BEGIN
 	DECLARE @check TABLE([message] NVARCHAR(4000)
 						,[state] NVARCHAR(8));
 
-	DECLARE @countjob INT;
+	DECLARE @countjobenabled INT, @countjobdisabled INT;
 
-	SELECT @countjob=COUNT(*)
-	FROM [msdb].[dbo].[sysjobs]
-	WHERE [enabled] = 1
+	SELECT @countjobenabled=COUNT(*)
+	FROM [dbo].[config_job]
+	WHERE [is_enabled] = 1
+
+	SELECT @countjobdisabled=COUNT(*)
+	FROM [dbo].[config_job]
+	WHERE [is_enabled] = 0
 
 	;WITH [jobset]
 	AS
@@ -52,7 +56,12 @@ BEGIN
 			AND [J].[run_status] = 0;
 
 	IF (SELECT COUNT(*) FROM @check) < 1
-		INSERT INTO @check VALUES(CAST(@countjob AS NVARCHAR(10)) + N' enabled job(s)',N'NA');
+		INSERT INTO @check 
+		VALUES(CAST(@countjobenabled AS NVARCHAR(10)) 
+			+ N' job(s) monitored; ' 
+			+ CAST(@countjobenabled AS NVARCHAR(10))
+			+ ' job(s) not monitored; '
+			,N'NA');
 
 	SELECT [message], [state] FROM @check;
 END
