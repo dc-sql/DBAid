@@ -49,7 +49,7 @@ SET NOCOUNT ON;
 
 		SELECT @not_backup=COUNT(*) - @to_backup FROM [dbo].[config_database] [D] WHERE LOWER([db_name]) NOT IN (N''tempdb'')	
 
-				;WITH Backups
+		;WITH Backups
 		AS
 		(
 			SELECT ROW_NUMBER() OVER (PARTITION BY [D].[name] ORDER BY [B].[backup_finish_date] DESC) AS [row]
@@ -63,6 +63,7 @@ SET NOCOUNT ON;
 						AND [B].[type] IN (''D'', ''I'')
 						AND [B].[is_copy_only] = 0
 			WHERE [D].[state] = 0
+				AND [D].[is_in_standby] = 0
 		)
 		INSERT INTO @check
 		SELECT N''database='' 
@@ -125,6 +126,7 @@ SET NOCOUNT ON;
 						AND [B].[type] IN ('D', 'I')
 						AND [B].[is_copy_only] = 0
 			WHERE [D].[state] = 0
+				AND [D].[is_in_standby] = 0
 		)
 		INSERT INTO @check
 		SELECT N'database=' 
