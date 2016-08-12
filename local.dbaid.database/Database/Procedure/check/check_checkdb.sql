@@ -39,7 +39,7 @@ BEGIN
 										Field, 
 										Value)
 									EXEC (''DBCC DBINFO() WITH TABLERESULTS, NO_INFOMSGS'');
-									UPDATE #dbccinfo SET [dbname] = N''?'' WHERE [dbname] IS NULL;';
+									UPDATE #dbccinfo SET [DbName] = N''?'' WHERE [DbName] IS NULL;';
 	REVERT;
 	REVERT;
 
@@ -52,7 +52,6 @@ BEGIN
 		FROM #dbccinfo
 		WHERE [Field] = 'dbi_dbccLastKnownGood'
 	)
-
 	INSERT INTO @check
 		SELECT N'database=' 
 				+ QUOTENAME([DbName])
