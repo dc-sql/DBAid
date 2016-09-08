@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [set].[service_property]
+CREATE PROCEDURE [set].[wmi_service_property]
 (
 	@service_property_tbl [dbo].[udtt_service_property] READONLY
 )
@@ -16,7 +16,7 @@ BEGIN
 	DECLARE @date DATETIME;
 	SET @date = GETDATE();
 
-	MERGE INTO [dbo].[service] AS [Target]
+	MERGE INTO [dbo].[wmi_service_property] AS [Target]
 	USING (SELECT [class_object],[property], [value] FROM @service_property_tbl) AS [Source]
 	ON [Target].[class_object] = [Source].[class_object]
 	WHEN MATCHED THEN 

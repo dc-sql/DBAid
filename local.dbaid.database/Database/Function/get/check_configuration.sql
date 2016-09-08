@@ -1,17 +1,17 @@
 ﻿CREATE FUNCTION [get].[check_configuration]
 (
-	@object_name NVARCHAR(128),
-	@item_name NVARCHAR(128),
-	@column_name NVARCHAR(128)
+	@procedure_name NVARCHAR(128) = NULL,
+	@config_name NVARCHAR(128) = NULL,
+	@ci_name NVARCHAR(128) = NULL
 )
 RETURNS TABLE
 WITH ENCRYPTION
 RETURN
 (
-	SELECT [column_value], [change_alert]
+	SELECT [config_name], [ci_name], [check_value], [check_change_alert]
 	FROM [setting].[check_configuration] 
-	WHERE [object_name] = @object_name COLLATE Latin1_General_CI_AS
-		AND @item_name = @item_name COLLATE Latin1_General_CI_AS
-		AND @column_name = @column_name COLLATE Latin1_General_CI_AS
+	WHERE ([procedure_name] = @procedure_name COLLATE Latin1_General_CI_AS OR ISNULL(@procedure_name,'') = '')
+		AND ([config_name] = @config_name COLLATE Latin1_General_CI_AS OR ISNULL(@config_name,'') = '')
+		AND ([ci_name] = @ci_name COLLATE Latin1_General_CI_AS OR ISNULL(@ci_name,'') = '')
 )
 

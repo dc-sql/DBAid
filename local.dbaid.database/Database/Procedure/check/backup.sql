@@ -8,103 +8,87 @@ CREATE PROCEDURE [check].[backup]
 WITH ENCRYPTION, EXECUTE AS 'dbo'
 AS
 BEGIN
-SET NOCOUNT ON;
+	SET NOCOUNT ON;
 
-	DECLARE @check TABLE([message] NVARCHAR(4000)
-						,[state] NVARCHAR(8));
+	DECLARE @check_config TABLE([config_name] NVARCHAR(128), [ci_name] NVARCHAR(128), [check_value] SQL_VARIANT, [check_change_alert] VARCHAR(10));
+	DECLARE @check_output TABLE([message] NVARCHAR(4000),[state] NVARCHAR(8));
 
-	DECLARE @to_backup INT, @not_backup INT, @major_version INT, @cluster NVARCHAR(128);
+	DECLARE @preferred_backup TABLE ([db_name] NVARCHAR(128), [preferred_backup] BIT);
+	DECLARE @full_backup INT, @diff_backup INT, @log_backup INT, @major_version INT, @cluster NVARCHAR(128);
+	
+	SELECT @major_version = [major] FROM [get].[product_version]();
 
-	SELECT @major_version = [major] FROM [dbo].[get_product_version]();
+	INSERT INTO @check_config
+		SELECT [config_name]
+			,[ci_name]
+			,[check_value]
+			,[check_change_alert]
+		FROM [get].[check_configuration](OBJECT_NAME(@@PROCID), NULL, NULL);
+
+	SELECT @full_backup=COUNT(*) 
+	FROM [get].[check_configuration](OBJECT_NAME(@@PROCID), N'full_backup_frequency_hour', NULL) 
+	WHERE [check_value] IS NOT NULL
+
+	SELECT @diff_backup=COUNT(*) 
+	FROM [get].[check_configuration](OBJECT_NAME(@@PROCID), N'diff_backup_frequency_hour', NULL) 
+	WHERE [check_value] IS NOT NULL
+
+	SELECT @log_backup=COUNT(*) 
+	FROM [get].[check_configuration](OBJECT_NAME(@@PROCID), N'log_backup_frequency_hour', NULL) 
+	WHERE [check_value] IS NOT NULL
 
 	IF @major_version >= 11
-		EXEC sp_executesql N'SELECT @out=[cluster_name] FROM [sys].[dm_hadr_cluster]', N'@out NVARCHAR(128) OUTPUT', @out = @cluster;
-
-	IF @major_version >= 11 AND @cluster IS NOT NULL
 	BEGIN
-		EXEC sp_executesql N'SELECT @out=COUNT(*) FROM [setting].[check_database] [D]
-						CROSS APPLY(SELECT [sys].[fn_hadr_backup_is_preferred_replica]([D].[db_name]) AS [IsPreferredBackupReplicaNow]) AS [AG_backup]
-							WHERE [check_backup_since_hour] > 0 AND LOWER([db_name]) NOT IN (N''tempdb'') AND [AG_backup].[IsPreferredBackupReplicaNow] > 0', N'@out NVARCHAR(128) OUTPUT', @out = @to_backup;
-
-		EXEC sp_executesql N'SELECT @out=COUNT(*) FROM [setting].[check_database] [D] 
-						CROSS APPLY(SELECT [sys].[fn_hadr_backup_is_preferred_replica]([D].[db_name]) AS [IsPreferredBackupReplicaNow]) AS [AG_backup]
-							WHERE [check_backup_since_hour] = 0 AND LOWER([db_name]) NOT IN (N''tempdb'') OR [AG_backup].[IsPreferredBackupReplicaNow] = 0', N'@out NVARCHAR(128) OUTPUT', @out = @not_backup;
-
-		EXEC sp_executesql N';WITH Backups AS (
-			SELECT ROW_NUMBER() OVER (PARTITION BY [D].[name] ORDER BY [B].[backup_finish_date] DESC) AS [row]
-				,[D].[database_id]
-				,[B].[backup_finish_date]
-				,[B].[type]
-				,[AG_backup].[IsPreferredBackupReplicaNow]
-			FROM [sys].[databases] [D]
-				LEFT JOIN [msdb].[dbo].[backupset] [B]
-					ON [D].[name] = [B].[database_name]
-						AND [B].[type] IN (''D'',''I'')
-						AND [B].[is_copy_only] = 0
-				CROSS APPLY(SELECT [sys].[fn_hadr_backup_is_preferred_replica]([D].[name]) AS [IsPreferredBackupReplicaNow]) AS [AG_backup]
-			)
-			INSERT INTO @check
-			SELECT N''database='' 
-					+ QUOTENAME([D].[db_name])
-					+ N''; last_backup=''
-					+ ISNULL(REPLACE(CONVERT(NVARCHAR(20), [B].[backup_finish_date], 120), N'' '', N''T''), N''NEVER'')
-					+ N''; type='' 
-					+ CASE [type] WHEN ''D'' THEN ''FULL'' WHEN ''I'' THEN ''DIFFERENTIAL'' ELSE ''UNKNOWN'' END
-					+ N''; backups_missed='' 
-					+ ISNULL(CAST(CAST(DATEDIFF(HOUR, [B].[backup_finish_date], GETDATE()) / [D].[check_backup_since_hour] AS INT) AS VARCHAR(5)), ''ALL'')
-				,[S].[state]
-			FROM Backups [B]
-				INNER JOIN [setting].[check_database] [D]
-					ON [B].[database_id] = [D].[database_id]
-				CROSS APPLY (SELECT CASE WHEN ([B].[backup_finish_date] IS NULL OR DATEDIFF(HOUR, [B].[backup_finish_date], GETDATE()) > ([D].[check_backup_since_hour])) THEN [D].[check_backup_state] ELSE N''OK'' END AS [state]) [S]
-			WHERE [B].[row] = 1
-				AND [D].[check_backup_since_hour] > 0
-				AND LOWER([D].[db_name]) NOT IN (N''tempdb'')
-				AND [S].[state] NOT IN (N''OK'')
-				AND [B].[IsPreferredBackupReplicaNow] = 1
-			ORDER BY [D].[db_name]';
+		INSERT INTO @preferred_backup
+		EXEC sp_executesql N'SELECT [name],[sys].[fn_hadr_backup_is_preferred_replica]([name]) AS [preferred_backup] FROM [sys].[databases]'
 	END
 	ELSE
 	BEGIN
-		SELECT @to_backup=COUNT(*) FROM [setting].[check_database] WHERE [check_backup_since_hour] > 0 AND LOWER([db_name]) NOT IN (N'tempdb')
-		SELECT @not_backup=COUNT(*) FROM [setting].[check_database] WHERE [check_backup_since_hour] = 0 AND LOWER([db_name]) NOT IN (N'tempdb')
-
-		;WITH Backups
-		AS
-		(
-			SELECT ROW_NUMBER() OVER (PARTITION BY [D].[name] ORDER BY [B].[backup_finish_date] DESC) AS [row]
-				,[D].[database_id]
+		;WITH [Backup]
+		AS (
+			SELECT [CC].[config_name] 
+				,[CC].[ci_name]
+				,CAST([CC].[check_value] AS NUMERIC(5,2)) AS [check_value]
+				,[CC].[check_change_alert]
+				,[DB].[create_date] AS [db_create_date]
 				,[B].[backup_finish_date]
 				,[B].[type]
-			FROM [sys].[databases] [D]
+				,ROW_NUMBER() OVER (PARTITION BY [CC].[config_name], [CC].[ci_name] ORDER BY [B].[backup_finish_date] DESC) AS [row]
+			FROM [sys].[databases] [DB] 
 				LEFT JOIN [msdb].[dbo].[backupset] [B]
-					ON [D].[name] = [B].[database_name]
-						AND [B].[type] IN ('D', 'I')
-						AND [B].[is_copy_only] = 0
+					ON [DB].[name] = [B].[database_name]
+				LEFT JOIN @check_config [CC]
+					ON CASE [B].[type]
+						WHEN 'D' THEN 'full_backup_frequency_hour'
+						WHEN 'I' THEN 'diff_backup_frequency_hour'
+						WHEN 'L' THEN 'log_backup_frequency_hour' END = [CC].[config_name] COLLATE Database_Default
+					AND [B].[database_name] = [CC].[ci_name] COLLATE Database_Default
+				OUTER APPLY(SELECT [preferred_backup] FROM @preferred_backup WHERE [db_name] = [CC].[ci_name]) AS [AG_backup]
+			WHERE [CC].[check_value] IS NOT NULL
+				AND ([AG_backup].[preferred_backup] = 1 OR [AG_backup].[preferred_backup] IS NULL)
 		)
-		INSERT INTO @check
-		SELECT N'database=' 
-				+ QUOTENAME([D].[db_name])
-				+ N'; last_backup=' 
-				+ ISNULL(REPLACE(CONVERT(NVARCHAR(20), [B].[backup_finish_date], 120), N' ', N'T'), N'NEVER')
-				+ N'; type=' 
-				+ CASE [type] WHEN 'D' THEN 'FULL' WHEN 'I' THEN 'DIFFERENTIAL' ELSE 'UNKNOWN' END
-				+ N'; backups_missed=' 
-				+ ISNULL(CAST(CAST(DATEDIFF(HOUR, [B].[backup_finish_date], GETDATE()) / [D].[check_backup_since_hour] AS INT) AS VARCHAR(5)), 'ALL')
-			,[S].[state]
-		FROM Backups [B]
-			INNER JOIN [setting].[check_database] [D]
-				ON [B].[database_id] = [D].[database_id]
-			CROSS APPLY (SELECT CASE WHEN ([B].[backup_finish_date] IS NULL OR DATEDIFF(HOUR, [B].[backup_finish_date], GETDATE()) > ([D].[check_backup_since_hour])) THEN [D].[check_backup_state] ELSE N'OK' END AS [state]) [S]
-		WHERE [B].[row] = 1
-			AND [D].[check_backup_since_hour] > 0
-			AND LOWER([D].[db_name]) NOT IN (N'tempdb')
-			AND [S].[state] NOT IN (N'OK')
-		ORDER BY [D].[db_name]
+		INSERT INTO @check_output
+			SELECT 'database=' 
+				+ QUOTENAME([ci_name])
+				+ '; last_backup=' 
+				+ ISNULL(REPLACE(CONVERT(NVARCHAR(20), [backup_finish_date], 120), N' ', N'T'), N'NEVER')
+				+ '; '
+				+ [config_name] 
+				+ '='
+				+ CAST([check_value] AS VARCHAR(10)) AS [message]
+				,[check_change_alert] AS [state]
+			FROM [Backup]
+			WHERE [row] = 1
+				AND (DATEDIFF(MINUTE, ISNULL([backup_finish_date], [db_create_date]), GETDATE())/60.00) >= [check_value]
+			ORDER BY [backup_finish_date] DESC
 	END
-	IF (SELECT COUNT(*) FROM @check) < 1
-		INSERT INTO @check VALUES(CAST(@to_backup AS NVARCHAR(10)) + N' database(s) monitored, ' + CAST(@not_backup AS NVARCHAR(10)) + N' database(s) opted-out', N'NA');
+
+	IF (SELECT COUNT(*) FROM @check_output) < 1
+		INSERT INTO @check_output VALUES('Monitoring database backup(s) for full=' 
+			+ CAST(@full_backup AS VARCHAR(3)) + N'; diff=' 
+			+ CAST(@diff_backup AS VARCHAR(3)) + N'; tlog=' 
+			+ CAST(@log_backup AS VARCHAR(3)), N'NA');
 
 	SELECT [message], [state] 
-	FROM @check;
+	FROM @check_output;
 END

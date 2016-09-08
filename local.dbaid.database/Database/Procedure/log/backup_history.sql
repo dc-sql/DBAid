@@ -7,7 +7,8 @@ Version 3, 29 June 2007
 CREATE PROCEDURE [log].[backup_history]
 (
 	@start_datetime DATETIME = NULL,
-	@end_datetime DATETIME = NULL
+	@end_datetime DATETIME = NULL,
+	@update_last_execution_datetime BIT = 0
 )
 WITH ENCRYPTION, EXECUTE AS 'dbo'
 AS
@@ -107,6 +108,6 @@ BEGIN
 	WHERE [backup_start_date] BETWEEN @start_datetime AND @end_datetime
 	ORDER BY [backup_start_date], [backup_finish_date];
 
-	IF (SELECT [value] FROM [setting].[static_parameters] WHERE [key] = 'PROGRAM_NAME') = PROGRAM_NAME()
+	IF (@update_last_execution_datetime = 1)
 		UPDATE [setting].[procedure_list] SET [last_execution_datetime] = @end_datetime WHERE [procedure_id] = @@PROCID;
 END;

@@ -10,12 +10,17 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-	DECLARE @check TABLE([message] NVARCHAR(4000)
-						,[state] NVARCHAR(8));
+	DECLARE @check_config TABLE([config_name] NVARCHAR(128), [ci_name] NVARCHAR(128), [check_value] SQL_VARIANT, [check_change_alert] VARCHAR(10));
+	DECLARE @check_output TABLE([message] NVARCHAR(4000),[state] NVARCHAR(8));
 	
-	DECLARE @onlinecount INT;
-	DECLARE @restorecount INT;
-	DECLARE @recovercount INT;
+	DECLARE @onlinecount INT, @restorecount INT, @recovercount INT;
+
+	INSERT INTO @check_config
+		SELECT [config_name]
+			,[ci_name]
+			,[check_value]
+			,[check_change_alert]
+		FROM [get].[check_configuration](OBJECT_NAME(@@PROCID), NULL, NULL);
 
 	SELECT @onlinecount = COUNT(*)
 	FROM [sys].[databases] [D]

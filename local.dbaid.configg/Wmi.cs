@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Data.SqlTypes;
+using System.Data;
 using System.Management;
 
 namespace dbaid.configg
@@ -66,53 +67,59 @@ namespace dbaid.configg
             return nsList;
         }
 
-        public static IEnumerable getWmiData(string host, string instance, string[] wmiQueryList)
+        public static DataTable getWmiData(string dataSource, string query)
         {
-            var PropertyValueCollection = new ArrayList();
-           // string service = String.Empty;
-            
+            var dt = new DataTable();
+            var dc1 = new DataColumn("class_object", typeof(SqlString));
+            var dc2 = new DataColumn("property", typeof(SqlString));
+            var dc3 = new DataColumn("value", typeof(object));
+            dt.Columns.Add(dc1);
+            dt.Columns.Add(dc2);
+            dt.Columns.Add(dc3);
 
-            if (String.IsNullOrEmpty(instance))
-                instance = "MSSQLSERVER";
+            string host = dataSource.Split('\\')[0];
+            string instance = dataSource.Split('\\').Length > 1 ? dataSource.Split('\\')[1] : "MSSQLSERVER";
 
             try
             {
                 foreach (string ns in GetSqlWmiNameSpaces(host))
                 {
-                    foreach (string query in wmiQueryList)
+                    string root = String.Empty;
+
+                    if (query.Contains("Win32"))
+                        root = @"\\" + host + @"\root\cimv2";
+                    else
+                        root = @"\\" + host + @"\root\Microsoft\SqlServer\" + ns;
+
+                    if (testSqlWmiClass(host, root, query))
                     {
-                        string root = String.Empty;
-
-                        if (query.Contains("Win32"))
-                            root = @"\\" + host + @"\root\cimv2";
-                        else
-                            root = @"\\" + host + @"\root\Microsoft\SqlServer\" + ns;
-
-                        if (testSqlWmiClass(host, root, query))
+                        using (var mos = new ManagementObjectSearcher(root, query))
                         {
-                            using (var mos = new ManagementObjectSearcher(root, query.Replace("?", instance)))
+                            int count = 0;
+                            string classObj = String.Empty;
+
+                            foreach (var obj in mos.Get())
                             {
-                                int count = 0;
-                                string classObj = String.Empty;
+                                count++;
+                                classObj = string.Concat(host, "/", instance, "/", obj.ClassPath.ClassName.ToString(), "/", count.ToString());
 
-                                foreach (var obj in mos.Get())
+                                foreach (PropertyData prop in obj.Properties)
                                 {
-                                    count++;
-                                    classObj = string.Concat(host, "/", instance, "/", obj.ClassPath.ClassName.ToString(), "/", count.ToString());
-
-                                    foreach (PropertyData prop in obj.Properties)
+                                    if (prop.Value != null && !prop.Type.Equals(CimType.Object) && !prop.Type.Equals(CimType.Reference))
                                     {
-                                        if (prop.Value != null && !prop.Type.Equals(CimType.Object) && !prop.Type.Equals(CimType.Reference))
-                                        {
-                                            if (prop.Value.GetType().Equals(typeof(string[])))
-                                            {
-                                                PropertyValueCollection.Add(new PropertyValue(classObj, prop.Name.ToString(), String.Join(", ", (string[])prop.Value)));
-                                            }
-                                            else
-                                            {
-                                                PropertyValueCollection.Add(new PropertyValue(classObj, prop.Name.ToString(), prop.Value.ToString()));
-                                            }
-                                        }
+                                        object[] newRow = new object[3];
+                                        DataRow row;
+
+                                        newRow[0] = classObj;
+                                        newRow[1] = prop.Name.ToString();
+
+                                        if (prop.Value.GetType().Equals(typeof(string[])))
+                                            newRow[2] = String.Join(", ", (string[])prop.Value);
+                                        else
+                                            newRow[2] = prop.Value.ToString();
+
+                                        dt.BeginLoadData();
+                                        row = dt.LoadDataRow(newRow, true);
                                     }
                                 }
                             }
@@ -125,7 +132,7 @@ namespace dbaid.configg
                 Console.WriteLine(ex.Message + " - " + ex.StackTrace);
             }
 
-            return PropertyValueCollection;
+            return dt;
         }
     }
 }

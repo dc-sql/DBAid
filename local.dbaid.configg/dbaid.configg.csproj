@@ -8,7 +8,7 @@
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>dbaid.configg</RootNamespace>
-    <AssemblyName>dbaid.configg</AssemblyName>
+    <AssemblyName>mssql_dbaid_configg</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SccProjectName>%24/dbaid/local.dbaid.configg</SccProjectName>

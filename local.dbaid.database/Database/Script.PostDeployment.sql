@@ -22,7 +22,6 @@ GO
 /* Insert static variables */
 MERGE INTO [setting].[static_parameters] AS [Target] 
 USING (SELECT N'GUID', NEWID()
-	UNION SELECT N'PROGRAM_NAME','_dbaid application - Datacom'
 	UNION SELECT N'SANITIZE_DATASET',1
 	UNION SELECT N'PUBLIC_ENCRYPTION_KEY',N'$(PublicKey)'
 	UNION SELECT N'CAPACITY_CACHE_RETENTION_MONTH',3
@@ -32,8 +31,6 @@ WHEN NOT MATCHED BY TARGET THEN
 	INSERT ([key],[value]) 
 	VALUES ([Source].[key],[Source].[value]);
 GO
-
-
 
 /* General perf counters */
 MERGE INTO [setting].[performance_counter] AS [Target] 
@@ -70,6 +67,25 @@ WHEN NOT MATCHED BY TARGET THEN
 	VALUES ([Source].[object_name],
 			[Source].[counter_name],
 			[Source].[instance_name]);
+GO
+
+/* General perf counters */
+MERGE INTO [setting].[wmi_service_queries] AS [Target] 
+USING (VALUES('SELECT DisplayName,BinaryPath,Description,HostName,ServiceName,StartMode,StartName FROM SqlService WHERE DisplayName LIKE ''%' + @@SERVICENAME + '%''')
+	,('SELECT InstanceName,ProtocolDisplayName,Enabled FROM ServerNetworkProtocol WHERE InstanceName LIKE ''%' + @@SERVICENAME + '%''')
+	,('SELECT InstanceName,PropertyName,PropertyStrVal FROM ServerNetworkProtocolProperty WHERE IPAddressName = ''IPAll'' AND InstanceName LIKE ''%' + @@SERVICENAME + '%''')
+	,('SELECT ServiceName,PropertyName,PropertyNumValue,PropertyStrValue FROM SqlServiceAdvancedProperty WHERE ServiceName LIKE ''%' + @@SERVICENAME + '%''')
+	,('SELECT InstanceName,FlagName,FlagValue FROM ServerSettingsGeneralFlag WHERE InstanceName LIKE ''%' + @@SERVICENAME + '%''')
+	,('SELECT * FROM Win32_OperatingSystem')
+	,('SELECT Caption FROM Win32_TimeZone')
+	,('SELECT * FROM win32_processor')
+	,('SELECT Domain, Manufacturer, Model, PrimaryOwnerName, TotalPhysicalMemory FROM Win32_computerSystem')
+	,('SELECT ServiceName, Caption, DHCPEnabled, DNSDomain, IPAddress, MACAddress FROM Win32_NetworkAdapterConfiguration WHERE IPEnabled = ''TRUE''')
+	,('SELECT DriveLetter, Label, DeviceID, DriveType, FileSystem, Capacity, BlockSize, Compressed, IndexingEnabled FROM Win32_Volume WHERE SystemVolume <> ''TRUE'' AND DriveType <> 4 AND DriveType <> 5')
+) AS [Source] ([query])  
+ON [Target].[query] = [Source].[query] 
+WHEN NOT MATCHED BY TARGET THEN  
+	INSERT ([query]) VALUES ([Source].[query]);
 GO
 
 /* execute dbaid inventory */

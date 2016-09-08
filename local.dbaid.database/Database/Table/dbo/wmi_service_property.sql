@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE TABLE [dbo].[service](
+CREATE TABLE [dbo].[wmi_service_property](
 	[class_object] [nvarchar](260) NULL,
 	[property] [nvarchar](128) NULL,
 	[value] [sql_variant] NULL, 

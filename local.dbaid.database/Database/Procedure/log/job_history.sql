@@ -8,7 +8,8 @@ CREATE PROCEDURE [log].[job_history]
 (
 	@start_datetime DATETIME = NULL,
 	@end_datetime DATETIME = NULL,
-	@sanitize BIT = 0
+	@sanitize BIT = 0,
+	@update_last_execution_datetime BIT = 0
 )
 WITH ENCRYPTION, EXECUTE AS 'dbo'
 AS
@@ -94,6 +95,6 @@ BEGIN
 	WHERE [run_datetime] BETWEEN @start_datetime AND @end_datetime
 	ORDER BY [H].[run_datetime];
 
-	IF (SELECT [value] FROM [setting].[static_parameters] WHERE [key] = 'PROGRAM_NAME') = PROGRAM_NAME()
+	IF (@update_last_execution_datetime = 1)
 		UPDATE [setting].[procedure_list] SET [last_execution_datetime] = @end_datetime WHERE [procedure_id] = @@PROCID;
 END;

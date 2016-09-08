@@ -10,8 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-	DECLARE @check TABLE([message] NVARCHAR(4000)
-						,[state] NVARCHAR(8));
+	DECLARE @check_config TABLE([config_name] NVARCHAR(128), [ci_name] NVARCHAR(128), [check_value] SQL_VARIANT, [check_change_alert] VARCHAR(10));
+	DECLARE @check_output TABLE([message] NVARCHAR(4000),[state] NVARCHAR(8));
 
 	INSERT INTO @check
 	SELECT N'database=' + QUOTENAME([D].[name]) COLLATE Database_Default

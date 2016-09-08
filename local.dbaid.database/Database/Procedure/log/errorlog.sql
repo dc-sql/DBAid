@@ -8,7 +8,8 @@ CREATE PROCEDURE [log].[errorlog]
 (
 	@start_datetime DATETIME = NULL,
 	@end_datetime DATETIME = NULL,
-	@sanitize BIT = 0
+	@sanitize BIT = 0,
+	@update_last_execution_datetime BIT = 0
 )
 WITH ENCRYPTION, EXECUTE AS 'dbo'
 AS
@@ -32,8 +33,8 @@ BEGIN
 	IF OBJECT_ID('tempdb..#__SeverityError') IS NOT NULL
 		DROP TABLE #__SeverityError;
 
-	CREATE TABLE #__Errorlog ([log_date] DATETIME,[source] NVARCHAR(100),[message] NVARCHAR(MAX));
-	CREATE TABLE #__SeverityError ([log_date] CHAR(29), [source] NVARCHAR(100), [message_header] NVARCHAR(MAX), [message] NVARCHAR(MAX));
+	CREATE TABLE #__Errorlog ([id] BIGINT IDENTITY(1,1) PRIMARY KEY, [log_date] DATETIME,[source] NVARCHAR(100),[message] NVARCHAR(MAX));
+	CREATE TABLE #__SeverityError ([id] BIGINT IDENTITY(1,1) PRIMARY KEY, [log_date] DATETIME, [source] NVARCHAR(100), [message_header] NVARCHAR(MAX), [message] NVARCHAR(MAX));
 
 	INSERT INTO @enumerrorlogs EXEC [master].[dbo].[xp_enumerrorlogs];
 	SELECT @lognum = MAX([archive]) FROM @enumerrorlogs;
@@ -60,49 +61,46 @@ BEGIN
 	;WITH ErrorSet
 	AS
 	(
-		SELECT ROW_NUMBER() OVER(ORDER BY [E].[log_date], [E].[source]) AS [row_id]
+		SELECT [E].[id]
 			,[E].[log_date]
 			,[E].[source]
 			,[E].[message]
 		FROM #__Errorlog [E]
 	)
-	INSERT INTO #__SeverityError
+	INSERT INTO #__SeverityError([log_date],[source],[message_header],[message])
 		SELECT [D1].[date] AS [log_date]
 			,CASE WHEN CAST([A].[source] AS CHAR(4)) = 'spid' THEN 'spid' ELSE [A].[source] END AS [source] 
-			,[A].[message] AS [message_header]
-			,CASE WHEN @sanitize=0 THEN [B].[message] ELSE [M].[text] END AS [message]
+			,CASE WHEN [BMSG].[string] LIKE '%found % errors and repaired % errors%'
+				THEN N'ERROR:DBCC'
+				WHEN [BMSG].[string] LIKE 'SQL Server has encountered%' 
+				THEN N'WARNING:Encountered'
+				ELSE [AMSG].[string] END AS [message_header]
+			,CASE WHEN @sanitize=0 THEN [BMSG].[string] ELSE [M].[text] END AS [message]
 		FROM ErrorSet [A]
 			INNER JOIN ErrorSet [B]
-				ON [A].[row_id]+1 = [B].[row_id]
+				ON [A].[id]+1 = [B].[id]
 			INNER JOIN [master].[sys].[messages] [M]
 				ON [M].[language_id] = CAST(SERVERPROPERTY('LCID') AS INT)
 					AND CAST(SUBSTRING([A].[message],8,CHARINDEX(',',[A].[message])-8) AS INT) = [M].[message_id]
+			CROSS APPLY [get].[clean_string]([A].[message]) [AMSG]
+			CROSS APPLY [get].[clean_string]([B].[message]) [BMSG]
 			CROSS APPLY [get].[datetime_with_offset]([A].[log_date]) [D1]
 		WHERE [A].[message] LIKE 'Error:%Severity:%State:%'
-		ORDER BY [A].[log_date], [A].[source];
+			OR ([B].[message] LIKE '%found % errors and repaired % errors%'
+				AND [B].[message] NOT LIKE '%found 0 errors and repaired 0 errors%')
+			OR [B].[message] LIKE 'SQL Server has encountered%'
+		ORDER BY [A].[id] ASC;
+	
+	SELECT [I].[guid] AS [instance_guid]
+		,[E].[id]
+		,[E].[log_date]
+		,[E].[source]
+		,[E].[message_header]
+		,[E].[message]
+	FROM #__SeverityError [E]
+		CROSS APPLY [get].[instance_guid]() [I]
+	ORDER BY [E].[id] ASC;
 
-		SELECT [I].[guid] AS [instance_guid]
-			,[E].[log_date]
-			,[E].[source]
-			,[E].[message_header]
-			,[message].[string] AS [message]
-		FROM #__SeverityError [E]
-			CROSS APPLY [get].[clean_string]([E].[message]) [message]
-			CROSS APPLY [get].[instance_guid]() [I]
-		UNION ALL
-		SELECT [I].[guid] AS [instance_guid]
-			,[D].[date1] COLLATE database_default AS [log_date]
-			,[E].[source]
-			,N'Error: dbcc'
-			,CASE WHEN @sanitize=0 THEN [message].[string] ELSE SUBSTRING([message].[string], CHARINDEX(' found ', [message].[string]), LEN([message].[string])) END AS [message]
-		FROM #__Errorlog [E]
-			CROSS APPLY [get].[clean_string]([E].[message]) [message]
-			CROSS APPLY [get].[datetime_with_offset]([E].[log_date], NULL) [D]
-			CROSS APPLY [get].[instance_guid]() [I]
-		WHERE [message] LIKE '%found % errors and repaired % errors%'
-			AND [message] NOT LIKE '%found 0 errors and repaired 0 errors%' 
-		ORDER BY [log_date];
-
-		IF (SELECT [value] FROM [setting].[static_parameters] WHERE [key] = 'PROGRAM_NAME') = PROGRAM_NAME()
-			UPDATE [setting].[procedure_list] SET [last_execution_datetime] = @end_datetime WHERE [procedure_id] = @@PROCID;
+	IF (@update_last_execution_datetime = 1)
+		UPDATE [setting].[procedure_list] SET [last_execution_datetime] = @end_datetime WHERE [procedure_id] = @@PROCID;
 END;

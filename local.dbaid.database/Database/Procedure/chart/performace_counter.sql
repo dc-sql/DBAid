@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [chart].[perfcounter]
+CREATE PROCEDURE [chart].[performace_counter]
 WITH ENCRYPTION
 AS
 BEGIN
@@ -35,7 +35,7 @@ BEGIN
 			,[S].[cntr_type]
 			,[T].[ms_ticks]
 		FROM [sys].[dm_os_performance_counters] [S]
-			INNER JOIN [setting].[chart_perfcounter] [C]
+			INNER JOIN [setting].[chart_performace_counter] [C]
 				ON [S].[object_name] LIKE [C].[object_name] COLLATE Latin1_General_CI_AS
 				AND ([S].[counter_name] LIKE [C].[counter_name] COLLATE Latin1_General_CI_AS 
 					OR ISNULL([C].[counter_name],'') = '')
@@ -54,7 +54,7 @@ BEGIN
 			,[S].[cntr_type]
 			,[T].[ms_ticks]
 		FROM [sys].[dm_os_performance_counters] [S]
-			INNER JOIN [setting].[chart_perfcounter] [C]
+			INNER JOIN [setting].[chart_performace_counter] [C]
 				ON [S].[object_name] LIKE [C].[object_name] COLLATE Latin1_General_CI_AS
 				AND ([S].[counter_name] LIKE [C].[counter_name] COLLATE Latin1_General_CI_AS 
 					OR ISNULL([C].[counter_name],'') = '')
@@ -72,7 +72,7 @@ BEGIN
 	FROM @sample1 [S1]
 		INNER JOIN @sample2 [S2]
 			ON [S1].[rownum] = [S2].[rownum]
-		INNER JOIN [setting].[chart_perfcounter] [C]
+		INNER JOIN [setting].[chart_performace_counter] [C]
 				ON [S1].[object_name] LIKE [C].[object_name] COLLATE Latin1_General_CI_AS
 				AND ([S1].[counter_name] LIKE [C].[counter_name] COLLATE Latin1_General_CI_AS 
 					OR ISNULL([C].[counter_name],'') = '')

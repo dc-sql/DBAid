@@ -146,7 +146,7 @@
     <Build Include="Database\Procedure\configg\mirroring.sql">
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>
-    <Build Include="Database\Procedure\configg\dbaid_config.sql" />
+    <Build Include="Database\Procedure\configg\dbaid_setting_static_parameter.sql" />
     <Build Include="Database\Procedure\configg\agent_job.sql" />
     <Build Include="Database\Procedure\configg\resource_governor.sql" />
     <Build Include="Database\Procedure\check\backup.sql" />
@@ -162,11 +162,11 @@
     <Build Include="Database\Procedure\chart\capacity_filegroup.sql">
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>
-    <Build Include="Database\Procedure\chart\perfcounter.sql" />
+    <Build Include="Database\Procedure\chart\performace_counter.sql" />
     <Build Include="Database\Table\setting\chart_performace_counter.sql" />
     <Build Include="Database\Table\setting\static_parameter.sql" />
-    <Build Include="Database\Table\dbo\dbo_service.sql" />
-    <Build Include="Database\Table\dbo\dbo_capacity.sql" />
+    <Build Include="Database\Table\dbo\wmi_service_property.sql" />
+    <Build Include="Database\Table\dbo\capacity.sql" />
     <Build Include="Database\Table\setting\procedure_list.sql" />
     <Build Include="Database\Function\get\clean_string.sql" />
     <Build Include="Database\Function\get\instance_guid.sql" />
@@ -184,10 +184,16 @@
     </Build>
     <Build Include="Database\Procedure\audit\sql_password.sql" />
     <Build Include="Database\Table\setting\check_configuration.sql" />
-    <Build Include="Database\Procedure\set\service_property.sql" />
+    <Build Include="Database\Procedure\set\wmi_service_property.sql" />
     <Build Include="Database\Type\service_property.sql" />
     <Build Include="Database\Security\signature.sql" />
     <Build Include="Database\Security\_dbaid_cert.sql" />
+    <Build Include="Database\Table\setting\wmi_service_query.sql" />
+    <Build Include="Database\Procedure\configg\dbaid_setting_check_configuration.sql" />
+    <Build Include="Database\Procedure\configg\dbaid_setting_chart_performace_counter.sql" />
+    <Build Include="Database\Procedure\configg\dbaid_setting_procedure_list.sql" />
+    <Build Include="Database\Procedure\configg\dbaid_setting_wmi_service_query.sql" />
+    <Build Include="Database\Function\get\wmi_service_query.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Database\Script.PostDeployment.sql" />
