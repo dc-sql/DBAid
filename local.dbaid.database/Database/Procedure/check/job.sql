@@ -34,7 +34,7 @@ BEGIN
 		WHERE [J].[enabled] = 1
 			AND [H].[step_id] = 0
 	)
-	INSERT INTO @check
+	INSERT INTO @check_output
 		SELECT N'job=' + QUOTENAME([J].[name]) COLLATE Database_Default
 				+ N'; state=' 
 				+ CASE [J].[run_status] 
@@ -51,8 +51,8 @@ BEGIN
 			AND [C].[check_job_enabled] = 1
 			AND [J].[run_status] = 0;
 
-	IF (SELECT COUNT(*) FROM @check) < 1
-		INSERT INTO @check VALUES(CAST(@countjob AS NVARCHAR(10)) + N' enabled job(s)',N'NA');
+	IF (SELECT COUNT(*) FROM @check_output) < 1
+		INSERT INTO @check_output VALUES(CAST(@countjob AS NVARCHAR(10)) + N' enabled job(s)',N'NA');
 
-	SELECT [message], [state] FROM @check;
+	SELECT [message], [state] FROM @check_output;
 END

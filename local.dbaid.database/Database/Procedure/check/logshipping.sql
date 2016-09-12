@@ -31,7 +31,7 @@ BEGIN
 				ON [L].[secondary_database] = [C].[db_name] COLLATE Database_Default
 	WHERE [C].[check_logshipping_enabled] = 1
 
-	INSERT INTO @check
+	INSERT INTO @check_output
 		SELECT N'database=' 
 			+ QUOTENAME([L].[primary_database]) COLLATE Database_Default 
 			+ N'; role=PRIMARY; last_backup_minago=' 
@@ -55,9 +55,9 @@ BEGIN
 			AND DATEDIFF(MINUTE, [L].[last_restored_date_utc], @curdate_utc) > [L].[restore_threshold]
 		ORDER BY [message];
 
-	IF (SELECT COUNT(*) FROM @check) < 1 AND (@primarycount > 0 OR @secondarycount > 0)
-		INSERT INTO @check VALUES(CAST(@primarycount AS NVARCHAR(10)) +  N' primary database(s), ' + CAST(@secondarycount AS NVARCHAR(10)) +  N' secondary database(s), ',N'NA');
-	ELSE IF (SELECT COUNT(*) FROM @check) < 1
-		INSERT INTO @check VALUES(N'Logshipping is currently not configured.',N'NA');
-	SELECT [message], [state] FROM @check;
+	IF (SELECT COUNT(*) FROM @check_output) < 1 AND (@primarycount > 0 OR @secondarycount > 0)
+		INSERT INTO @check_output VALUES(CAST(@primarycount AS NVARCHAR(10)) +  N' primary database(s), ' + CAST(@secondarycount AS NVARCHAR(10)) +  N' secondary database(s), ',N'NA');
+	ELSE IF (SELECT COUNT(*) FROM @check_output) < 1
+		INSERT INTO @check_output VALUES(N'Logshipping is currently not configured.',N'NA');
+	SELECT [message], [state] FROM @check_output;
 END

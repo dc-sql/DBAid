@@ -28,13 +28,13 @@ BEGIN
 							,[job_state] INT);
 	
 	IF ((SELECT LOWER(CAST(SERVERPROPERTY('Edition') AS NVARCHAR(128)))) LIKE '%express%')
-		INSERT INTO @check VALUES ('Express Edition Detected. No SQL Agent.', 'NA')
+		INSERT INTO @check_output VALUES ('Express Edition Detected. No SQL Agent.', 'NA')
 	ELSE
 	BEGIN
 		INSERT INTO @xpresults
 			EXECUTE [master].[dbo].[xp_sqlagent_enum_jobs] 1, '$(DatabaseName)_sa', NULL;
 
-		INSERT INTO @check
+		INSERT INTO @check_output
 			SELECT N'job=' 
 					+ QUOTENAME([C].[job_name]) 
 					+ N'; state='  
@@ -60,8 +60,8 @@ BEGIN
 				AND DATEDIFF(MINUTE,[T].[last_exec_date],GETDATE()) > [C].[max_job_runtime_minute];
 	END 
 
-	IF (SELECT COUNT(*) FROM @check) < 1
-		INSERT INTO @check VALUES(N'Job(s) not currently executing.',N'NA');
+	IF (SELECT COUNT(*) FROM @check_output) < 1
+		INSERT INTO @check_output VALUES(N'Job(s) not currently executing.',N'NA');
 
-	SELECT [message], [state] FROM @check;
+	SELECT [message], [state] FROM @check_output;
 END

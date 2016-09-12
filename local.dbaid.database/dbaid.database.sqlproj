@@ -194,6 +194,8 @@
     <Build Include="Database\Procedure\configg\dbaid_setting_procedure_list.sql" />
     <Build Include="Database\Procedure\configg\dbaid_setting_wmi_service_query.sql" />
     <Build Include="Database\Function\get\wmi_service_query.sql" />
+    <Build Include="Database\Table\setting\configuration_list.sql" />
+    <Build Include="Database\Table\setting\item_list.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Database\Script.PostDeployment.sql" />
@@ -227,6 +229,9 @@
       <DatabaseVariableLiteralValue>msdb</DatabaseVariableLiteralValue>
       <Private>False</Private>
     </ArtifactReference>
+  </ItemGroup>
+  <ItemGroup>
+    <RefactorLog Include="dbaid.database.refactorlog" />
   </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>

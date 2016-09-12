@@ -13,7 +13,7 @@ BEGIN
 	DECLARE @check_config TABLE([config_name] NVARCHAR(128), [ci_name] NVARCHAR(128), [check_value] SQL_VARIANT, [check_change_alert] VARCHAR(10));
 	DECLARE @check_output TABLE([message] NVARCHAR(4000),[state] NVARCHAR(8));
 
-	INSERT INTO @check
+	INSERT INTO @check_output
 	SELECT N'database=' + QUOTENAME([D].[name]) COLLATE Database_Default
 		+ N'; state=' + UPPER([M].[mirroring_state_desc]) COLLATE Database_Default
 		+ N'; expected_role=' + UPPER([C].[expected_mirror_role]) COLLATE Database_Default
@@ -27,8 +27,8 @@ BEGIN
 	WHERE [C].[check_mirror_enabled] = 1
 		AND [M].[mirroring_guid] IS NOT NULL;
 
-	IF (SELECT COUNT(*) FROM @check) < 1
-		INSERT INTO @check VALUES(N'Mirroring is currently not configured.',N'NA');
+	IF (SELECT COUNT(*) FROM @check_output) < 1
+		INSERT INTO @check_output VALUES(N'Mirroring is currently not configured.',N'NA');
 
-	SELECT [message], [state] FROM @check;
+	SELECT [message], [state] FROM @check_output;
 END

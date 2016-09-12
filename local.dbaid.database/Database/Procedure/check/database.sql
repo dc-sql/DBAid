@@ -43,7 +43,7 @@ BEGIN
 	WHERE [C].[check_database_enabled] = 1
 		AND [D].[state] IN (2);
 
-	INSERT INTO @check
+	INSERT INTO @check_output
 		SELECT QUOTENAME([D].[name]) COLLATE Database_Default 
 			+ N'=' 
 			+ UPPER([D].[state_desc]) COLLATE Database_Default AS [message]
@@ -56,9 +56,9 @@ BEGIN
 		WHERE [CD].[check_database_enabled] = 1
 		ORDER BY [D].[name];
 
-		IF (SELECT COUNT(*) FROM @check WHERE [state] != 'OK') = 0
-			INSERT INTO @check 
+		IF (SELECT COUNT(*) FROM @check_output WHERE [state] != 'OK') = 0
+			INSERT INTO @check_output 
 			VALUES(CAST(@onlinecount AS NVARCHAR(10)) + N' online, ' + CAST(@restorecount AS NVARCHAR(10)) + N' restoring, ' + CAST(@recovercount AS NVARCHAR(10)) + N' recovering.',N'NA');
 
-		SELECT [message], [state] FROM @check WHERE [state] != 'OK'
+		SELECT [message], [state] FROM @check_output WHERE [state] != 'OK'
 END
