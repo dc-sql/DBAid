@@ -56,6 +56,7 @@ BEGIN
 					ON [X].[job_id] = [C].[job_id]
 				CROSS APPLY (SELECT ISNULL(MAX([start_execution_date]),GETDATE()) FROM [msdb].[dbo].[sysjobactivity] WHERE [job_id] = [X].[job_id]) [T]([last_exec_date])
 			WHERE [C].[is_enabled] = 1
+				AND [C].[max_exec_time_min] != 0
 				AND ISNULL([X].[running],0) = 1
 				AND DATEDIFF(MINUTE,[T].[last_exec_date],GETDATE()) > [C].[max_exec_time_min];
 	END 
