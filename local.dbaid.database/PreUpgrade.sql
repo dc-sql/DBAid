@@ -13,7 +13,7 @@ BEGIN
 		EXEC sp_executesql @stmt=@backupsql;
 	END
 
-	IF (OBJECT_ID(N'tempdb.dbo.$(DatabaseName)_backup_config_alwayson') IS NULL AND OBJECT_ID(N'[$(DatabaseName)].[deprecated].[tbparameters]') IS NOT NULL)
+	IF (OBJECT_ID(N'tempdb.dbo.$(DatabaseName)_deprecated_tbparameters') IS NULL AND OBJECT_ID(N'[$(DatabaseName)].[deprecated].[tbparameters]') IS NOT NULL)
 	BEGIN
 		SET @backupsql = N'SELECT [parametername],[setting],[status],[comments] INTO [tempdb].[dbo].[$(DatabaseName)_deprecated_tbparameters] FROM [$(DatabaseName)].[deprecated].[tbparameters]';
 		EXEC sp_executesql @stmt=@backupsql;
@@ -37,13 +37,13 @@ BEGIN
 		EXEC sp_executesql @stmt=@backupsql;
 	END
 
-	IF (OBJECT_ID(N'tempdb.dbo.$(DatabaseName)_backup_config_perfcounter') IS NULL AND OBJECT_ID(N'[$(DatabaseName)].[dbo].[config_job]') IS NOT NULL)
+	IF (OBJECT_ID(N'tempdb.dbo.$(DatabaseName)_backup_config_perfcounter') IS NULL AND OBJECT_ID(N'[$(DatabaseName)].[dbo].[config_perfcounter]') IS NOT NULL)
 	BEGIN
 		SET @backupsql = N'SELECT * INTO [tempdb].[dbo].[$(DatabaseName)_backup_config_perfcounter] FROM [$(DatabaseName)].[dbo].[config_perfcounter]';
 		EXEC sp_executesql @stmt=@backupsql;
 	END
 
-	IF (OBJECT_ID(N'tempdb.dbo.$(DatabaseName)_backup_static_parameters') IS NULL AND OBJECT_ID(N'[$(DatabaseName)].[dbo].[config_job]') IS NOT NULL)
+	IF (OBJECT_ID(N'tempdb.dbo.$(DatabaseName)_backup_static_parameters') IS NULL AND OBJECT_ID(N'[$(DatabaseName)].[dbo].[static_parameters]') IS NOT NULL)
 	BEGIN
 		SET @backupsql = N'SELECT * INTO [tempdb].[dbo].[$(DatabaseName)_backup_static_parameters] FROM [$(DatabaseName)].[dbo].[static_parameters] WHERE [name] NOT IN (''PUBLIC_ENCRYPTION_KEY'')';
 		EXEC sp_executesql @stmt=@backupsql;
