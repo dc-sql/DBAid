@@ -1,4 +1,4 @@
-﻿/*
+﻿git gui/*
 Copyright (c) 2015 Ola Hallengren
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), 
@@ -10,44 +10,47 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+20 Jun 2016
+Added support for SQL Server 2016
 */
 
 CREATE PROCEDURE [maintenance].[database_backup]
 (
-	@Databases nvarchar(max),
-	@Directory nvarchar(max) = NULL,
-	@BackupType nvarchar(max),
-	@Verify nvarchar(max) = 'N',
-	@CleanupTime int = NULL,
-	@CleanupMode nvarchar(max) = 'AFTER_BACKUP',
-	@Compress nvarchar(max) = NULL,
-	@CopyOnly nvarchar(max) = 'N',
-	@ChangeBackupType nvarchar(max) = 'N',
-	@BackupSoftware nvarchar(max) = NULL,
-	@CheckSum nvarchar(max) = 'N',
-	@BlockSize int = NULL,
-	@BufferCount int = NULL,
-	@MaxTransferSize int = NULL,
-	@NumberOfFiles int = NULL,
-	@CompressionLevel int = NULL,
-	@Description nvarchar(max) = NULL,
-	@Threads int = NULL,
-	@Throttle int = NULL,
-	@Encrypt nvarchar(max) = 'N',
-	@EncryptionAlgorithm nvarchar(max) = NULL,
-	@ServerCertificate nvarchar(max) = NULL,
-	@ServerAsymmetricKey nvarchar(max) = NULL,
-	@EncryptionKey nvarchar(max) = NULL,
-	@ReadWriteFileGroups nvarchar(max) = 'N',
-	@OverrideBackupPreference nvarchar(max) = 'N',
-	@NoRecovery nvarchar(max) = 'N',
-	@URL nvarchar(max) = NULL,
-	@Credential nvarchar(max) = NULL,
-	@MirrorDirectory nvarchar(max) = NULL,
-	@MirrorCleanupTime int = NULL,
-	@MirrorCleanupMode nvarchar(max) = 'AFTER_BACKUP',
-	@LogToTable nvarchar(max) = 'N',
-	@Execute nvarchar(max) = 'Y'
+  @Databases nvarchar(max),
+  @Directory nvarchar(max) = NULL,
+  @BackupType nvarchar(max),
+  @Verify nvarchar(max) = 'N',
+  @CleanupTime int = NULL,
+  @CleanupMode nvarchar(max) = 'AFTER_BACKUP',
+  @Compress nvarchar(max) = NULL,
+  @CopyOnly nvarchar(max) = 'N',
+  @ChangeBackupType nvarchar(max) = 'N',
+  @BackupSoftware nvarchar(max) = NULL,
+  @CheckSum nvarchar(max) = 'N',
+  @BlockSize int = NULL,
+  @BufferCount int = NULL,
+  @MaxTransferSize int = NULL,
+  @NumberOfFiles int = NULL,
+  @CompressionLevel int = NULL,
+  @Description nvarchar(max) = NULL,
+  @Threads int = NULL,
+  @Throttle int = NULL,
+  @Encrypt nvarchar(max) = 'N',
+  @EncryptionAlgorithm nvarchar(max) = NULL,
+  @ServerCertificate nvarchar(max) = NULL,
+  @ServerAsymmetricKey nvarchar(max) = NULL,
+  @EncryptionKey nvarchar(max) = NULL,
+  @ReadWriteFileGroups nvarchar(max) = 'N',
+  @OverrideBackupPreference nvarchar(max) = 'N',
+  @NoRecovery nvarchar(max) = 'N',
+  @URL nvarchar(max) = NULL,
+  @Credential nvarchar(max) = NULL,
+  @MirrorDirectory nvarchar(max) = NULL,
+  @MirrorCleanupTime int = NULL,
+  @MirrorCleanupMode nvarchar(max) = 'AFTER_BACKUP',
+  @LogToTable nvarchar(max) = 'N',
+  @Execute nvarchar(max) = 'Y'
 )
 WITH ENCRYPTION
 

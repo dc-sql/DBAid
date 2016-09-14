@@ -10,27 +10,28 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+20 Jun 2016
+Added support for SQL Server 2016
 */
 
 CREATE PROCEDURE [dbo].[CommandExecute]
-(
-	@Command nvarchar(max),
-	@CommandType nvarchar(max),
-	@Mode int,
-	@Comment nvarchar(max) = NULL,
-	@DatabaseName nvarchar(max) = NULL,
-	@SchemaName nvarchar(max) = NULL,
-	@ObjectName nvarchar(max) = NULL,
-	@ObjectType nvarchar(max) = NULL,
-	@IndexName nvarchar(max) = NULL,
-	@IndexType int = NULL,
-	@StatisticsName nvarchar(max) = NULL,
-	@PartitionNumber int = NULL,
-	@ExtendedInfo xml = NULL,
-	@LogToTable nvarchar(max),
-	@Execute nvarchar(max)
-)
-WITH ENCRYPTION
+
+@Command nvarchar(max),
+@CommandType nvarchar(max),
+@Mode int,
+@Comment nvarchar(max) = NULL,
+@DatabaseName nvarchar(max) = NULL,
+@SchemaName nvarchar(max) = NULL,
+@ObjectName nvarchar(max) = NULL,
+@ObjectType nvarchar(max) = NULL,
+@IndexName nvarchar(max) = NULL,
+@IndexType int = NULL,
+@StatisticsName nvarchar(max) = NULL,
+@PartitionNumber int = NULL,
+@ExtendedInfo xml = NULL,
+@LogToTable nvarchar(max),
+@Execute nvarchar(max)
 
 AS
 
