@@ -7,6 +7,13 @@ Version 3, 29 June 2007
 CREATE PROCEDURE [audit].[cis_benchmark]
 WITH ENCRYPTION
 AS
+/*
+Copyright (C) 2015 Datacom
+GNU GENERAL PUBLIC LICENSE
+Version 3, 29 June 2007
+*/
+
+
 BEGIN
 
 	SET NOCOUNT ON;
@@ -72,6 +79,34 @@ BEGIN
 	INSERT INTO @loginfo_cmd_list([property], [value])
 			EXEC xp_loginconfig 'audit level';
 
+	--get asymmetric keys less than 2048 bits
+	IF OBJECT_ID('tempdb..#__asymmetric') IS NOT NULL
+		DROP TABLE #__asymmetric;		
+	CREATE TABLE #__asymmetric ([db_id] INT, [key_name] NVARCHAR(128))
+
+	EXEC foreachdb N'USE [?]; 
+					INSERT INTO #__asymmetric 
+						SELECT 
+							db_id(), 
+							[name] 
+						FROM sys.asymmetric_keys
+						WHERE key_length < 2048
+						AND db_id() > 4;'
+
+	--get symmetric keys using bad AES length
+	IF OBJECT_ID('tempdb..#__symmetric') IS NOT NULL
+		DROP TABLE #__symmetric;		
+	CREATE TABLE #__symmetric ([db_id] INT, [key_name] NVARCHAR(128))
+
+	EXEC foreachdb N'USE [?]; 
+					INSERT INTO #__symmetric 
+						SELECT 
+							db_id(), 
+							[name] 
+						FROM sys.symmetric_keys
+						WHERE algorithm_desc NOT IN (''AES_128'',''AES_192'',''AES_256'')
+						AND db_id() > 4;'
+						
 	--setup result table
 	DECLARE @results AS TABLE([cis_id] NVARCHAR(4), [policy_name] NVARCHAR(1024), [pass] INT)
 
@@ -150,11 +185,11 @@ BEGIN
 	INSERT INTO @results
 	SELECT '6.2', 'Set the CLR Assembly Permission Set to SAFE_ACCESS for All CLR Assemblies (Scored)' AS [Policy Name], CASE [count] WHEN 0 THEN 1 ELSE 0 END AS [pass] FROM #__clr_assembly
 
-	--7. Encryption -WIP new section
+	--7. Encryption
 	INSERT INTO @results
-	SELECT '7.1', 'Ensure Symmetric Key encryption algorithm is AES_128 or higher in non-system databases (Scored)' AS [Policy Name], 0 AS [pass]
+	SELECT '7.1', 'Ensure Symmetric Key encryption algorithm is AES_128 or higher in non-system databases (Scored)' AS [Policy Name], CASE WHEN EXISTS (SELECT 1 FROM #__symmetric) THEN 0 ELSE 1 END AS [score]
 	INSERT INTO @results
-	SELECT '7.2', 'Ensure asymmetric key size is greater than or equal to 2048 in nonsystem databases (Scored)' AS [Policy Name], 0 AS [pass]
+	SELECT '7.2', 'Ensure asymmetric key size is greater than or equal to 2048 in nonsystem databases (Scored)' AS [Policy Name], CASE WHEN EXISTS (SELECT 1 FROM #__asymmetric) THEN 0 ELSE 1 END AS [score]
 
 	--8. Appendix: Additional Considerations - WIP
 	INSERT INTO @results
