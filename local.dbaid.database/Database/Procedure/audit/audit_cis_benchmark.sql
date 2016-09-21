@@ -5,6 +5,9 @@ Version 3, 29 June 2007
 */
 
 CREATE PROCEDURE [audit].[cis_benchmark]
+(
+	DECLARE @policy_filter NVARCHAR(10)
+)
 WITH ENCRYPTION
 AS
 /*
@@ -17,6 +20,16 @@ Version 3, 29 June 2007
 BEGIN
 
 	SET NOCOUNT ON;
+
+	DECLARE @errormessage NVARCHAR(MAX)
+	DECLARE @error INT
+
+	IF LOWER(@policy_filter) NOT IN ('failed','notscored')
+	BEGIN
+		SET @errormessage = 'The value for the parameter @policy_filter is incorrect only supports filters ''failed'' and ''notscored''' + CHAR(13) + CHAR(10) + ' '
+		RAISERROR(@errormessage,16,1) WITH NOWAIT
+		SET @error = @@ERROR
+	END
 
 	--setup version info
 	DECLARE @Version NUMERIC(18,10);
@@ -177,7 +190,7 @@ BEGIN
 	INSERT INTO @results
 	SELECT '5.2', '5.2 Set the Default Trace Enabled Server Configuration Option to 1 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 1 ELSE 0 END AS [pass] FROM [info].[instance] WHERE [name] = 'default trace enabled'
 	INSERT INTO @results
-	SELECT '5.3', 'Set Login Auditing to failed logins (Not Scored)' AS [Policy Name], CASE [value] WHEN 'failed' THEN 1 ELSE 0 END AS [pass] FROM @loginfo_cmd_list
+	SELECT '5.3', 'Set Login Auditing to failed logins (Not Scored)' AS [Policy Name], CASE [value] WHEN 'failure' THEN 1 ELSE 0 END AS [pass] FROM @loginfo_cmd_list
 	INSERT INTO @results
 	SELECT '5.4', 'Use SQL Server Audit to capture both failed and successful logins (Not Scored)' AS [Policy Name], 0 AS [pass]
 
@@ -193,17 +206,31 @@ BEGIN
 
 	--8. Appendix: Additional Considerations - WIP
 	INSERT INTO @results
-	SELECT '8.1', 'SQL Server Browser Service (Not Scored)' AS [Policy Name], 0 AS [pass]
+	SELECT '8.1', 'SQL Server Browser Service Disabled (Not Scored)' AS [Policy Name], 0 AS [pass]
 	
 	--results
 	DECLARE @audit_total INT
 	DECLARE @audit_result INT
+	DECLARE @audit_notscored INT
 	
 	SELECT @audit_result = COUNT([pass]) FROM @results WHERE [policy_name] NOT LIKE '%(Not Scored)%' AND [pass] = 1
 	SELECT @audit_total = COUNT([pass]) FROM @results WHERE [policy_name] NOT LIKE '%(Not Scored)%'
-	
-	INSERT INTO @results
-	SELECT '', 'Total Score '+CAST(@audit_result AS NVARCHAR(2)) +'/'+CAST(@audit_total AS NVARCHAR(2)), @audit_result
+	SELECT @audit_notscored = COUNT([pass]) FROM @results WHERE [policy_name] LIKE '%(Not Scored)%'
 
+	INSERT INTO @results
+	SELECT '', 'Total Score = '+CAST(@audit_result AS NVARCHAR(2)) +'/'+CAST(@audit_total AS NVARCHAR(2)) + '  Failed = '+(CAST(@audit_total - @audit_result AS NVARCHAR(2)))+ '  Not Scored = '+CAST(@audit_notscored AS NVARCHAR(2)), @audit_result
+
+	IF (LOWER(@policy_filter) = 'failed')
+	BEGIN
+		SELECT * from @results WHERE [policy_name] NOT LIKE '%Not Scored%' AND [pass] = 0 OR [policy_name] LIKE 'Total Score%'
+	END
+	ELSE IF (LOWER(@policy_filter) = 'notscored')
+	BEGIN
+		SELECT * FROM @results WHERE [policy_name] LIKE '%Not Scored%'
+	END
+	ELSE
+	BEGIN
+		SELECT * FROM @results
+	END
 
 END
