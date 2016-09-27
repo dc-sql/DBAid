@@ -22,4 +22,5 @@ BEGIN
 	SELECT N'SqlServiceInstanceProperty/' + CASE WHEN @@SERVICENAME = N'MSSQLSERVER' THEN @@SERVICENAME ELSE N'MSSQL$' + @@SERVICENAME END AS [hierarchy]
 		,N'TraceFlags' AS [property]
 		,STUFF((SELECT N', ' + CAST([flag] AS NCHAR(4)) AS [text()] FROM @flags WHERE [global] = 1 AND [enabled] = 1 FOR XML PATH('')), 1, 2, '') AS [value]
+	ORDER BY [hierarchy] DESC
 END

@@ -10,36 +10,39 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+20 Jun 2016
+Added support for SQL Server 2016
 */
 
 CREATE PROCEDURE [maintenance].[index_optimize]
 (
 	@Databases nvarchar(max),
-	@FragmentationLow nvarchar(max) = NULL,
-	@FragmentationMedium nvarchar(max) = 'INDEX_REORGANIZE,INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE',
-	@FragmentationHigh nvarchar(max) = 'INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE',
-	@FragmentationLevel1 int = 5,
-	@FragmentationLevel2 int = 30,
-	@PageCountLevel int = 1000,
-	@SortInTempdb nvarchar(max) = 'N',
-	@MaxDOP int = NULL,
-	@FillFactor int = NULL,
-	@PadIndex nvarchar(max) = NULL,
-	@LOBCompaction nvarchar(max) = 'Y',
-	@UpdateStatistics nvarchar(max) = NULL,
-	@OnlyModifiedStatistics nvarchar(max) = 'N',
-	@StatisticsSample int = NULL,
-	@StatisticsResample nvarchar(max) = 'N',
-	@PartitionLevel nvarchar(max) = 'Y',
-	@MSShippedObjects nvarchar(max) = 'N',
-	@Indexes nvarchar(max) = NULL,
-	@TimeLimit int = NULL,
-	@Delay int = NULL,
-	@WaitAtLowPriorityMaxDuration int = NULL,
-	@WaitAtLowPriorityAbortAfterWait nvarchar(max) = NULL,
-	@LockTimeout int = NULL,
-	@LogToTable nvarchar(max) = 'N',
-	@Execute nvarchar(max) = 'Y'
+  @FragmentationLow nvarchar(max) = NULL,
+  @FragmentationMedium nvarchar(max) = 'INDEX_REORGANIZE,INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE',
+  @FragmentationHigh nvarchar(max) = 'INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE',
+  @FragmentationLevel1 int = 5,
+  @FragmentationLevel2 int = 30,
+  @PageCountLevel int = 1000,
+  @SortInTempdb nvarchar(max) = 'N',
+  @MaxDOP int = NULL,
+  @FillFactor int = NULL,
+  @PadIndex nvarchar(max) = NULL,
+  @LOBCompaction nvarchar(max) = 'Y',
+  @UpdateStatistics nvarchar(max) = NULL,
+  @OnlyModifiedStatistics nvarchar(max) = 'N',
+  @StatisticsSample int = NULL,
+  @StatisticsResample nvarchar(max) = 'N',
+  @PartitionLevel nvarchar(max) = 'Y',
+  @MSShippedObjects nvarchar(max) = 'N',
+  @Indexes nvarchar(max) = NULL,
+  @TimeLimit int = NULL,
+  @Delay int = NULL,
+  @WaitAtLowPriorityMaxDuration int = NULL,
+  @WaitAtLowPriorityAbortAfterWait nvarchar(max) = NULL,
+  @LockTimeout int = NULL,
+  @LogToTable nvarchar(max) = 'N',
+  @Execute nvarchar(max) = 'Y'
 )
 WITH ENCRYPTION
 
@@ -516,7 +519,7 @@ BEGIN
     SET @Error = @@ERROR
   END
 
-  IF @MaxDOP < 0 OR @MaxDOP > 64 OR @MaxDOP > (SELECT cpu_count FROM sys.dm_os_sys_info) OR (@MaxDOP > 1 AND SERVERPROPERTY('EngineEdition') NOT IN (3,5))
+  IF @MaxDOP < 0 OR @MaxDOP > 64 OR (@MaxDOP > 1 AND SERVERPROPERTY('EngineEdition') NOT IN (3,5))
   BEGIN
     SET @ErrorMessage = 'The value for the parameter @MaxDOP is not supported.' + CHAR(13) + CHAR(10) + ' '
     RAISERROR(@ErrorMessage,16,1) WITH NOWAIT

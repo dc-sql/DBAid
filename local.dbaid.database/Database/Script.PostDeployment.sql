@@ -951,7 +951,7 @@ BEGIN TRANSACTION
 							,[critical_threshold] = [C].[critical_threshold]
 						FROM [$(DatabaseName)].[dbo].[config_perfcounter] [O]
 							INNER JOIN [tempdb].[dbo].[$(DatabaseName)_backup_config_perfcounter] [C]
-								ON [O].[object_name]+[O].[counter_name]+[O].[instance_name] = [C].[object_name]+[C].[counter_name]+[C].[instance_name] COLLATE Database_Default;';
+								ON [O].[object_name]+[O].[counter_name]+ISNULL([O].[instance_name],'''') = [C].[object_name]+[C].[counter_name]+ISNULL([C].[instance_name],'''') COLLATE Database_Default;';
 	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_perfcounter') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
 

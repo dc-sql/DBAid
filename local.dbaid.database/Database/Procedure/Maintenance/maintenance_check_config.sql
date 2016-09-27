@@ -80,12 +80,11 @@ BEGIN
 	/* Update database mirroring role if previous was null */
 	UPDATE [dbo].[config_database]
 	SET [mirroring_role] = [M].[mirroring_role_desc]
-	FROM (SELECT [M].[database_id], [M].[mirroring_role_desc]
-		FROM [dbo].[config_database] [D]
-			INNER JOIN sys.database_mirroring [M]
-				ON [D].[database_id] = [M].[database_id]
-		WHERE [D].[mirroring_role] IS NULL) [M]
-	WHERE [database_id] = [M].[database_id];
+	FROM [dbo].[config_database] [D]
+		INNER JOIN sys.database_mirroring [M]
+			ON [D].[database_id] = [M].[database_id]
+		WHERE [M].[mirroring_role] IS NOT NULL 
+			AND [D].[mirroring_role] IS NULL;
 
 	/* Update job names */
 	UPDATE [dbo].[config_job]
