@@ -18,6 +18,7 @@
     <add key="EmailIgnoreSslError" value="false" />
     <add key="EmailAnonymous" value="false" />
     <add key="logVerbose" value="false"/>
+    <add key="default_cmd_timeout_sec" value="30" />
   </appSettings>
   <startup>
     <supportedRuntime version="v2.0.50727"/>

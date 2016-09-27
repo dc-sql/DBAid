@@ -19,6 +19,7 @@ namespace local.dbaid.checkmk
         {
             string isCheck = ConfigurationManager.AppSettings["is_check_enabled"];
             string isChart = ConfigurationManager.AppSettings["is_chart_enabled"];
+            int defaultCmdTimout = int.Parse(ConfigurationManager.AppSettings["default_cmd_timeout_sec"]);
 
             ConnectionStringSettingsCollection settings = ConfigurationManager.ConnectionStrings;
 
@@ -33,22 +34,22 @@ namespace local.dbaid.checkmk
                 try
                 {
                     // refresh check configuration
-                    Query.Execute(cs, mssqlConfigCheck);
+                    Query.Execute(cs, mssqlConfigCheck, defaultCmdTimout);
 
                     // output service version
-                    Console.WriteLine("0 {0}_{1} - {2}", "mssql", instance, Query.Select(cs, mssqlEditionCheck).Rows[0][0].ToString());
+                    Console.WriteLine("0 {0}_{1} - {2}", "mssql", instance, Query.Select(cs, mssqlEditionCheck, defaultCmdTimout).Rows[0][0].ToString());
 
                     if (isCheck == "1")
                     {
                         // get list of executable check commands
-                        cds.Tables.Add(Query.Execute(cs, mssqlControlCheck));
+                        cds.Tables.Add(Query.Execute(cs, mssqlControlCheck, defaultCmdTimout));
                         cds.Tables[mssqlControlCheck].PrimaryKey = new DataColumn[] { cds.Tables[mssqlControlCheck].Columns[0] };
                     }
 
                     if (isChart == "1")
                     {
                         // get list of executable chart commands
-                        cds.Tables.Add(Query.Execute(cs, mssqlControlChart));
+                        cds.Tables.Add(Query.Execute(cs, mssqlControlChart, defaultCmdTimout));
                         cds.Tables[mssqlControlChart].PrimaryKey = new DataColumn[] { cds.Tables[mssqlControlChart].Columns[0] };
                     }
 
@@ -57,7 +58,7 @@ namespace local.dbaid.checkmk
                     {
                         foreach (DataRow dr in dt.Rows)
                         {
-                            rds.Tables.Add(Query.Execute(cs, dr[0].ToString()));
+                            rds.Tables.Add(Query.Execute(cs, dr[0].ToString(), defaultCmdTimout));
                         }
                     }
 
@@ -83,9 +84,9 @@ namespace local.dbaid.checkmk
                     return 2;
                 }
             }
-
-            //Console.ReadKey();
-
+#if (DEBUG)
+            Console.ReadKey();
+#endif
             return 1;
         }
     }

@@ -33,10 +33,20 @@ namespace dbaid.common
 
         public static DataTable Execute(string connectionString, string procedure)
         {
-            return Execute(connectionString, procedure, null);
+            return Execute(connectionString, procedure, null, 0);
+        }
+
+        public static DataTable Execute(string connectionString, string procedure, int timeOut)
+        {
+            return Execute(connectionString, procedure, null, timeOut);
         }
 
         public static DataTable Execute(string connectionString, string procedure, Dictionary<string, object> parameters)
+        {
+            return Execute(connectionString, procedure, parameters, 0);
+        }
+
+        public static DataTable Execute(string connectionString, string procedure, Dictionary<string, object> parameters, int timeOut)
         {
             using (SqlConnection conn = new SqlConnection(SecureConnectionString(connectionString)))
             {
@@ -45,7 +55,9 @@ namespace dbaid.common
                 using (SqlCommand cmd = new SqlCommand(procedure, conn))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.CommandTimeout = 300;
+
+                    if (timeOut > 0)
+                        cmd.CommandTimeout = timeOut;
 
                     if (parameters != null)
                     {
@@ -71,6 +83,11 @@ namespace dbaid.common
 
         public static DataTable Select(string connectionString, string query)
         {
+            return Select(connectionString, query, 0);
+        }
+
+        public static DataTable Select(string connectionString, string query, int timeOut)
+        {
             using (SqlConnection conn = new SqlConnection(SecureConnectionString(connectionString)))
             {
                 conn.Open();
@@ -78,6 +95,9 @@ namespace dbaid.common
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.CommandType = CommandType.Text;
+
+                    if (timeOut > 0)
+                        cmd.CommandTimeout = timeOut;
 
                     using (SqlDataAdapter da = new SqlDataAdapter(cmd))
                     {

@@ -23,7 +23,7 @@ namespace local.dbaid.asbuilt
 
             if (Array.IndexOf(args, @"/?") >= 0)
             {
-                Console.WriteLine("See https://dbaid.codeplex.com/documentation for more details");
+                Console.WriteLine("See https://github.com/dc-sql/DBAid for more details");
 
                 return;
             }

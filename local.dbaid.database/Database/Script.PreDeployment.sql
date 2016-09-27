@@ -26,13 +26,26 @@ IF NOT EXISTS (SELECT 1 FROM sys.messages WHERE message_id=54321)
 	EXEC sp_addmessage @msgnum=54321, @severity=15, @msgtext = N'Database %s dropped by user %s.';
 
 /* Turn on blocking report*/
-EXEC sp_configure 'show advanced options', 1;
-RECONFIGURE WITH OVERRIDE;
-GO
+DECLARE @sao BIT, @bpt INT;
+SELECT @sao = CAST([value_in_use] AS BIT) FROM sys.configurations WHERE [name] = 'show advanced options';
+SELECT @bpt = CAST([value_in_use] AS BIT) FROM sys.configurations WHERE [name] = 'blocked process threshold (s)';
 
-EXEC sp_configure 'blocked process threshold', 60;
-EXEC sp_configure 'show advanced options', 0;
-RECONFIGURE WITH OVERRIDE;
+IF @sao = 0
+BEGIN
+	EXEC sp_configure 'show advanced options', 1;
+	RECONFIGURE WITH OVERRIDE;
+END
+
+IF @bpt = 0
+BEGIN
+	EXEC sp_configure 'blocked process threshold', 60;
+END
+
+IF @sao = 0
+BEGIN
+	EXEC sp_configure 'show advanced options', 0;
+	RECONFIGURE WITH OVERRIDE;
+END
 GO
 
 DECLARE @password NVARCHAR(50);

@@ -171,8 +171,8 @@ IF (SELECT COUNT(name) FROM [sys].[extended_properties] WHERE [class] = 0 AND [n
 	EXEC sp_addextendedproperty @name = N'Version', @value = '$(Version)';
 ELSE EXEC sp_updateextendedproperty @name = N'Version', @value = '$(Version)';
 IF (SELECT COUNT(name) FROM [sys].[extended_properties] WHERE [class] = 0 AND [name] = N'Source') = 0
-	EXEC sp_addextendedproperty @name = N'Source', @value = 'https://dbaid.codeplex.com';
-ELSE EXEC sp_updateextendedproperty @name = N'Source', @value = 'https://dbaid.codeplex.com';
+	EXEC sp_addextendedproperty @name = N'Source', @value = 'https://github.com/dc-sql/DBAid';
+ELSE EXEC sp_updateextendedproperty @name = N'Source', @value = 'https://github.com/dc-sql/DBAid';
 IF (SELECT COUNT(name) FROM [sys].[extended_properties] WHERE [class] = 0 AND [name] = N'Installer') = 0
 	EXEC sp_addextendedproperty @name = N'Installer', @value = @installer;
 ELSE EXEC sp_updateextendedproperty @name = N'Installer', @value = @installer;
@@ -951,7 +951,7 @@ BEGIN TRANSACTION
 							,[critical_threshold] = [C].[critical_threshold]
 						FROM [$(DatabaseName)].[dbo].[config_perfcounter] [O]
 							INNER JOIN [tempdb].[dbo].[$(DatabaseName)_backup_config_perfcounter] [C]
-								ON [O].[object_name]+[O].[counter_name]+[O].[instance_name] = [C].[object_name]+[C].[counter_name]+[C].[instance_name] COLLATE Database_Default;';
+								ON [O].[object_name]+[O].[counter_name]+ISNULL([O].[instance_name],'''') = [C].[object_name]+[C].[counter_name]+ISNULL([C].[instance_name],'''') COLLATE Database_Default;';
 	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_perfcounter') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
 

@@ -44,12 +44,41 @@ foreach ($DS as $i)
 # Main logic
 for ($loopcounter = 1; $loopcounter <= $maxcounter; $loopcounter++)
     {
-	$opt[$loopcounter] = "--vertical-label 'SQL' -l 0  --title '$NAME[$loopcounter]' ";
-	$def[$loopcounter] = "DEF:counter=$RRDFILE[$loopcounter]:$DS[$loopcounter]:MAX "; 
-	$def[$loopcounter] .= "LINE1:counter$line[1]:\"ctr     \" "; 
-	$def[$loopcounter] .= "GPRINT:counter:LAST:\"last\: %8.2lf ctr\" ";
-	$def[$loopcounter] .= "GPRINT:counter:MAX:\"max\: %8.2lf ctr \" ";
-	$def[$loopcounter] .= "GPRINT:counter:AVERAGE:\"avg\: %8.2lf ctr\\n\" ";
+      $warnval = $WARN[$loopcounter];
+      $critval = $CRIT[$loopcounter];
+      $currentval = $ACT[$loopcounter];
+      
+      settype($warnval, "float");
+      settype($critval, "float");
+      settype($currentval, "float");
+      
+      $warntxt = sprintf("%.2f", $warnval);
+      $crittxt = sprintf("%.2f", $critval); 
+   
+      if($critval > $currentval)
+      {
+	      $opt[$loopcounter] = "--vertical-label 'SQL' -l 0 -u $critval  --title '$NAME[$loopcounter]' ";
+	      $def[$loopcounter] = "DEF:counter=$RRDFILE[$loopcounter]:$DS[$loopcounter]:MAX "; 
+	      $def[$loopcounter] .= "LINE1:counter$line[1]:\"ctr \" "; 
+	      $def[$loopcounter] .= "GPRINT:counter:LAST:\"Last\: %8.2lf ctr \" ";
+        $def[$loopcounter] .= "GPRINT:counter:AVERAGE:\"Avg\: %8.2lf ctr \" ";
+	      $def[$loopcounter] .= "GPRINT:counter:MAX:\"Max\: %8.2lf ctr \" ";
+        $def[$loopcounter] .= "HRULE:$warnval#ffff00:\"Warning at $warntxt \" ";
+        $def[$loopcounter] .= "HRULE:$critval#ff0000:\"Critical at $crittxt \" ";
+
+      }
+      else
+      {
+	      $opt[$loopcounter] = "--vertical-label 'SQL' -l 0  --title '$NAME[$loopcounter]' ";
+	      $def[$loopcounter] = "DEF:counter=$RRDFILE[$loopcounter]:$DS[$loopcounter]:MAX "; 
+	      $def[$loopcounter] .= "LINE1:counter$line[1]:\"ctr \" "; 
+	      $def[$loopcounter] .= "GPRINT:counter:LAST:\"Last\: %8.2lf ctr \" ";
+        $def[$loopcounter] .= "GPRINT:counter:AVERAGE:\"Avg\: %8.2lf ctr \" ";
+	      $def[$loopcounter] .= "GPRINT:counter:MAX:\"Max\: %8.2lf ctr \" ";
+        $def[$loopcounter] .= "HRULE:$warnval#ffff00:\"Warning at $warntxt \" ";
+        $def[$loopcounter] .= "HRULE:$critval#ff0000:\"Critical at $crittxt \" ";
+      }
+      
     }
  
 ?>
