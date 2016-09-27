@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data.SqlTypes;
 using System.Data;
 using System.Management;
 
-namespace dbaid.configg
+namespace client.dbaid.wmiload
 {
     class Wmi
     {
@@ -27,7 +26,7 @@ namespace dbaid.configg
         {
             try
             {
-                using (ManagementObjectSearcher tester = new ManagementObjectSearcher(root, wmiClass))
+                using (var tester = new ManagementObjectSearcher(root, wmiClass))
                 {
                     //need to loop to stimulate failure
                     foreach (ManagementObject obj in tester.Get()) { }
@@ -46,10 +45,8 @@ namespace dbaid.configg
             string root = @"\\" + host + @"\root\Microsoft\SqlServer";
             List<string> nsList = new List<string>();
 
-            try
+            using (var nsClass = new ManagementClass(new ManagementScope(root), new ManagementPath("__namespace"), null))
             {
-                ManagementClass nsClass = new ManagementClass(new ManagementScope(root), new ManagementPath("__namespace"), null);
-
                 foreach (ManagementObject ns in nsClass.GetInstances())
                 {
                     string namespaceName = ns["Name"].ToString();
@@ -57,10 +54,6 @@ namespace dbaid.configg
                     if (namespaceName.Contains("ComputerManagement"))
                         nsList.Add(namespaceName);
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message + " - " + ex.StackTrace);
             }
 
             nsList.Sort(delegate(string p1, string p2) { return p1.CompareTo(p2); });
@@ -80,56 +73,49 @@ namespace dbaid.configg
             string host = dataSource.Split('\\')[0];
             string instance = dataSource.Split('\\').Length > 1 ? dataSource.Split('\\')[1] : "MSSQLSERVER";
 
-            try
+            foreach (string ns in GetSqlWmiNameSpaces(host))
             {
-                foreach (string ns in GetSqlWmiNameSpaces(host))
+                string root = String.Empty;
+
+                if (query.Contains("Win32"))
+                    root = @"\\" + host + @"\root\cimv2";
+                else
+                    root = @"\\" + host + @"\root\Microsoft\SqlServer\" + ns;
+
+                if (testSqlWmiClass(host, root, query))
                 {
-                    string root = String.Empty;
-
-                    if (query.Contains("Win32"))
-                        root = @"\\" + host + @"\root\cimv2";
-                    else
-                        root = @"\\" + host + @"\root\Microsoft\SqlServer\" + ns;
-
-                    if (testSqlWmiClass(host, root, query))
+                    using (var mos = new ManagementObjectSearcher(root, query))
                     {
-                        using (var mos = new ManagementObjectSearcher(root, query))
+                        int count = 0;
+                        string classObj = String.Empty;
+
+                        foreach (var obj in mos.Get())
                         {
-                            int count = 0;
-                            string classObj = String.Empty;
+                            count++;
+                            classObj = string.Concat(host, "/", instance, "/", obj.ClassPath.ClassName.ToString(), "/", count.ToString());
 
-                            foreach (var obj in mos.Get())
+                            foreach (PropertyData prop in obj.Properties)
                             {
-                                count++;
-                                classObj = string.Concat(host, "/", instance, "/", obj.ClassPath.ClassName.ToString(), "/", count.ToString());
-
-                                foreach (PropertyData prop in obj.Properties)
+                                if (prop.Value != null && !prop.Type.Equals(CimType.Object) && !prop.Type.Equals(CimType.Reference))
                                 {
-                                    if (prop.Value != null && !prop.Type.Equals(CimType.Object) && !prop.Type.Equals(CimType.Reference))
-                                    {
-                                        object[] newRow = new object[3];
-                                        DataRow row;
+                                    object[] newRow = new object[3];
+                                    DataRow row;
 
-                                        newRow[0] = classObj;
-                                        newRow[1] = prop.Name.ToString();
+                                    newRow[0] = classObj;
+                                    newRow[1] = prop.Name.ToString();
 
-                                        if (prop.Value.GetType().Equals(typeof(string[])))
-                                            newRow[2] = String.Join(", ", (string[])prop.Value);
-                                        else
-                                            newRow[2] = prop.Value.ToString();
+                                    if (prop.Value.GetType().Equals(typeof(string[])))
+                                        newRow[2] = String.Join(", ", (string[])prop.Value);
+                                    else
+                                        newRow[2] = prop.Value.ToString();
 
-                                        dt.BeginLoadData();
-                                        row = dt.LoadDataRow(newRow, true);
-                                    }
+                                    dt.BeginLoadData();
+                                    row = dt.LoadDataRow(newRow, true);
                                 }
                             }
                         }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message + " - " + ex.StackTrace);
             }
 
             return dt;

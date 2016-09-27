@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE TABLE [system].[tbl_parameter_default] (
+CREATE TABLE [system].[tbl_default] (
     [key] VARCHAR(128) NOT NULL,
     [value] SQL_VARIANT NOT NULL,
     UNIQUE NONCLUSTERED ([key] ASC)

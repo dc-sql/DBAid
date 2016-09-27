@@ -94,39 +94,7 @@ namespace dbaid.configg
                 if (logVerbose) { Log.message(LogEntryType.WARNING, _assemblyName, ex.Message + "\r\n" + ex.StackTrace, logFile); }
             }
 
-            if (loadServiceTable)
-            {
-                string dataSource = csb.DataSource;
-                var parameters = new Dictionary<string, object>();
-
-                Log.message(LogEntryType.INFO, _assemblyName, "Service data load starting.", logFile);
-
-                DataTable dtWmiQueries = Query.Select(csb.ConnectionString, _getWmiQueryList);
-
-                foreach (DataRow row in dtWmiQueries.Rows)
-                {
-                    string query = row["query"].ToString();
-
-                    parameters.Clear();
-                    parameters.Add("service_property_tbl", Wmi.getWmiData(dataSource, query));
-
-                    try
-                    {
-                        Query.Execute(csb.ConnectionString, _setServiceProperty, parameters);
-                    }
-                    catch(SystemException ex)
-                    {
-                        Log.message(LogEntryType.WARNING, _assemblyName, "Failed to load WMI service properties \r\nTerminating process", logFile);
-                        if (logVerbose) { Log.message(LogEntryType.WARNING, _assemblyName, ex.Message + "\r\n" + ex.StackTrace, logFile); }
-#if (DEBUG)
-                        Console.ReadKey();
-#endif
-                        return 1;
-                    }
-                }
-
-                Log.message(LogEntryType.INFO, _assemblyName, "Service data load complete.", logFile);
-            }
+            
 
             if (generateConfigReport)
             {

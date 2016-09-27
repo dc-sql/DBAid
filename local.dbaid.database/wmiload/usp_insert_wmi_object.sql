@@ -6,7 +6,7 @@ Version 3, 29 June 2007
 
 CREATE PROCEDURE [wmiload].[usp_insert_wmi_object]
 (
-	@service_property_tbl [wmiload].[udt_wmi_object] READONLY
+	@udt_wmi_object [wmiload].[udt_wmi_object] READONLY
 )
 WITH ENCRYPTION, EXECUTE AS 'dbo'
 AS

@@ -110,8 +110,8 @@
     <Folder Include="collector" />
     <Folder Include="collector\log" />
     <Folder Include="collector\audit" />
-    <Folder Include="_dbaid_system\system_control" />
     <Folder Include="wmiload" />
+    <Folder Include="_dbaid_system\control" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="configg\procedure\agent_job.sql" />
@@ -159,21 +159,20 @@
     <Build Include="collector\log\job_history.sql" />
     <Build Include="collector\audit\cis_benchmark.sql" />
     <Build Include="collector\audit\sql_password.sql" />
-    <Build Include="_dbaid_system\system_control\tbl_default_parameter.sql" />
-    <Build Include="_dbaid_system\system_control\tbl_module.sql" />
-    <Build Include="_dbaid_system\system_control\tbl_module_command.sql" />
     <Build Include="_dbaid_system\dbo\udf_get_clean_string.sql" />
     <Build Include="_dbaid_system\dbo\udf_get_datetime_with_offset.sql" />
     <Build Include="_dbaid_system\dbo\udf_get_instance_guid.sql" />
     <Build Include="_dbaid_system\dbo\udf_get_instance_tag.sql" />
     <Build Include="_dbaid_system\dbo\udf_get_product_version.sql" />
-    <Build Include="_dbaid_system\schemas.sql" />
-    <Build Include="_dbaid_system\system_control\usp_get_module_command_list.sql" />
+    <Build Include="_dbaid_system\sec_schemas.sql" />
     <Build Include="wmiload\tbl_wmi_object.sql" />
     <Build Include="wmiload\udt_wmi_object.sql" />
     <Build Include="wmiload\usp_insert_wmi_object.sql" />
     <Build Include="wmiload\tbl_wmi_query.sql" />
     <Build Include="_dbaid_system\cache\tbl_database_capacity.sql" />
+    <Build Include="_dbaid_system\tbl_default.sql" />
+    <Build Include="_dbaid_system\control\tbl_module_cmd.sql" />
+    <Build Include="_dbaid_system\control\udf_get_module_cmd.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="_dbaid_system\_post_script.sql" />

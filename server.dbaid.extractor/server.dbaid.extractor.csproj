@@ -110,9 +110,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\dbaid.common\client.dbaid.common.csproj">
+    <ProjectReference Include="..\dbaid.common\dbaid.common.csproj">
       <Project>{a98be846-df13-4861-b963-7bab212e8d4b}</Project>
-      <Name>client.dbaid.common</Name>
+      <Name>dbaid.common</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
