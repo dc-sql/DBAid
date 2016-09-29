@@ -103,7 +103,7 @@ BEGIN
 	INSERT INTO @password([password]) SELECT TOP(@top) REPLACE([password], 'password', 'Friday') FROM @password ORDER BY [id] ASC;
 
 	INSERT INTO @database_roles
-	EXEC [dbo].[foreach_db] 'USE [?]; 
+	EXEC [system].[usp_execute_foreach_db] 'USE [?]; 
 		WITH [membership] ([row],[user_id],[role_id],[nest_id])
 		AS
 		(

@@ -17,7 +17,7 @@ BEGIN
 	SET @date = GETDATE();
 
 	MERGE INTO [wmiload].[tbl_wmi_object] AS [Target]
-	USING (SELECT [class_object],[property], [value] FROM @service_property_tbl) AS [Source]
+	USING (SELECT [class_object],[property], [value] FROM @udt_wmi_object) AS [Source]
 	ON [Target].[class_object] = [Source].[class_object]
 	WHEN MATCHED THEN 
 		UPDATE SET [Target].[property] = [Source].[property]

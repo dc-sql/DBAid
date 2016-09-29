@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [chart].[capacity_database]
+CREATE PROCEDURE [checkmk].[usp_pnp_capacity_db_chart]
 WITH ENCRYPTION, EXECUTE AS 'dbo'
 AS
 BEGIN
@@ -18,7 +18,7 @@ BEGIN
 		[size_reserved_mb] NUMERIC(20,2));
 
 	INSERT INTO @file_info
-	EXEC [dbo].[foreach_db] 'USE [?];
+	EXEC [system].[usp_execute_foreach_db] 'USE [?];
 		SELECT DB_ID() AS [database_id]
 			,[F].[file_id]
 			,CASE WHEN [F].[type_desc] = N''LOG'' THEN ''log'' ELSE ''data'' END AS [data_type]

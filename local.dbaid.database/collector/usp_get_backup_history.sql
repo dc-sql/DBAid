@@ -4,11 +4,11 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [log].[backup_history]
+CREATE PROCEDURE [collector].[usp_get_backup_history]
 (
-	@start_datetime DATETIME = NULL,
-	@end_datetime DATETIME = NULL,
-	@update_last_execution_datetime BIT = 0
+	@start_datetime DATETIME2 = NULL,
+	@end_datetime DATETIME2 = NULL,
+	@update_execution_timestamp BIT = 0
 )
 WITH ENCRYPTION, EXECUTE AS 'dbo'
 AS
@@ -36,8 +36,8 @@ BEGIN
 
 	IF (@start_datetime IS NULL)
 	BEGIN
-		SELECT @start_datetime=ISNULL([last_execution_datetime], DATEADD(DAY,-1,GETDATE())) 
-		FROM [setting].[procedure_list] WHERE [procedure_id] = @@PROCID;
+		SELECT @start_datetime=ISNULL([last_execution], DATEADD(DAY,-1,GETDATE())) 
+		FROM [collector].[tbl_execution_timestamp] WHERE [object_name] = OBJECT_NAME(@@PROCID);
 	END
 
 	IF EXISTS (SELECT 1 FROM [msdb].[sys].[objects] [O] INNER JOIN [msdb].[sys].[columns] [C] ON [O].[object_id] = [C].[object_id] WHERE SCHEMA_NAME([O].[schema_id]) = N'dbo' AND [O].[name] = N'backupset' AND [C].[name] LIKE N'compressed_backup_size')
@@ -82,11 +82,11 @@ BEGIN
 		EXEC(@cmd);
 
 	IF (@end_datetime IS NULL)
-		SET @end_datetime = GETDATE();
+		SET @end_datetime = SYSDATETIME();
 
-	SELECT [I].[guid] AS [instance_guid]
-		,[D1].[date] AS [backup_start_date]
-		,[D2].[date] AS [backup_finish_date]
+	SELECT [I].[instance_guid]
+		,[D1].[datetimeoffset] AS [backup_start_date]
+		,[D2].[datetimeoffset] AS [backup_finish_date]
 		,[O].[database_name]
 		,[O].[backup_type]
 		,[O].[is_copy_only]
@@ -101,13 +101,14 @@ BEGIN
 		,[O].[is_password_protected]
 		,[C].[column_value] AS [backup_frequency_hour]
 	FROM @output [O]
-		CROSS APPLY [get].[check_configuration]('database', [O].[database_name], 'backup_frequency_hour') [C]
-		CROSS APPLY [get].[datetime_with_offset]([O].[backup_start_date]) [D1]
-		CROSS APPLY [get].[datetime_with_offset]([O].[backup_finish_date]) [D2]
-		CROSS APPLY [get].[instance_guid]() [I]
+		CROSS APPLY [system].[udf_get_instance_guid]() [I]
+		CROSS APPLY [system].[udf_get_datetimeoffset]([O].[backup_start_date]) [D1]
+		CROSS APPLY [system].[udf_get_datetimeoffset]([O].[backup_finish_date]) [D2]
 	WHERE [backup_start_date] BETWEEN @start_datetime AND @end_datetime
 	ORDER BY [backup_start_date], [backup_finish_date];
 
-	IF (@update_last_execution_datetime = 1)
-		UPDATE [setting].[procedure_list] SET [last_execution_datetime] = @end_datetime WHERE [procedure_id] = @@PROCID;
+	IF (@update_execution_timestamp = 1)
+		UPDATE [collector].[tbl_execution_timestamp] 
+		SET [last_execution] = @end_datetime 
+		WHERE [object_name] = OBJECT_NAME(@@PROCID);
 END;

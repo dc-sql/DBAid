@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [dbo].[usp_delete_system_history]
+CREATE PROCEDURE [system].[usp_delete_system_history]
 	@job_olderthan_day INT = 92,
 	@backup_olderthan_day INT = 92,
 	@dbmail_olderthan_day INT = 92,

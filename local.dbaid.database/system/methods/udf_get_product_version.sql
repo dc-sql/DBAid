@@ -1,4 +1,4 @@
-﻿CREATE FUNCTION [dbo].[udf_get_product_version]()
+﻿CREATE FUNCTION [system].[udf_get_product_version]()
 RETURNS TABLE
 WITH ENCRYPTION
 RETURN(

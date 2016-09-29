@@ -4,19 +4,17 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [log].[job_history]
+CREATE PROCEDURE [collector].[usp_get_agentjob_history]
 (
-	@start_datetime DATETIME = NULL,
-	@end_datetime DATETIME = NULL,
+	@start_datetime DATETIME2 = NULL,
+	@end_datetime DATETIME2 = NULL,
 	@sanitize BIT = 0,
-	@update_last_execution_datetime BIT = 0
+	@update_execution_timestamp BIT = 0
 )
 WITH ENCRYPTION, EXECUTE AS 'dbo'
 AS
 BEGIN
 	SET NOCOUNT ON;
-
-	DECLARE @report_datetime DATETIME;
 
 	DECLARE @jobhistory TABLE ([instance_id] INT
 		,[job_id] UNIQUEIDENTIFIER
@@ -38,17 +36,15 @@ BEGIN
 	
 	IF (@start_datetime IS NULL)
 	BEGIN
-		SELECT @start_datetime=ISNULL([last_execution_datetime], DATEADD(DAY,-1,GETDATE())) 
-		FROM [setting].[procedure_list] WHERE [procedure_id] = @@PROCID;
+		SELECT @start_datetime=ISNULL([last_execution], DATEADD(DAY,-1,GETDATE())) 
+		FROM [collector].[tbl_execution_timestamp] WHERE [object_name] = OBJECT_NAME(@@PROCID);
 	END
 
 	INSERT INTO @jobhistory 
 		EXEC [msdb].[dbo].[sp_help_jobhistory] @mode=N'FULL'
 
-	SET @report_datetime = GETDATE();
-
 	IF (@end_datetime IS NULL)
-		SET @end_datetime = @report_datetime;
+		SET @end_datetime = SYSDATETIME();
 
 	;WITH JobHistory
 	AS
@@ -80,21 +76,23 @@ BEGIN
 					AND [H].[sql_message_id] = [M].[message_id]
 		WHERE [H].[run_status] NOT IN (1, 4)
 	) 
-	SELECT [I].[guid] AS [instance_guid]
-		,[D1].[date] AS [run_datetime]
-		,[job_name]
-		,[step_id]
-		,[step_name]
-		,[E].[string] AS [error_message]
-		,[run_status]
-		,[run_duration_sec]
+	SELECT [I].[instance_guid]
+		,[D1].[datetimeoffset] AS [run_datetime]
+		,[H].[job_name]
+		,[H].[step_id]
+		,[H].[step_name]
+		,[E].[clean_string] AS [error_message]
+		,[H].[run_status]
+		,[H].[run_duration_sec]
 	FROM [JobHistory] [H]
-		CROSS APPLY [get].[instance_guid]() [I]
-		CROSS APPLY [get].[clean_string]([error_message]) [E]
-		CROSS APPLY [get].[datetime_with_offset]([H].[run_datetime]) [D1]
-	WHERE [run_datetime] BETWEEN @start_datetime AND @end_datetime
+		CROSS APPLY [system].[udf_get_instance_guid]() [I]
+		CROSS APPLY [system].[udf_get_clean_string]([H].[error_message]) [E]
+		CROSS APPLY [system].[udf_get_datetimeoffset]([H].[run_datetime]) [D1]
+	WHERE [H].[run_datetime] BETWEEN @start_datetime AND @end_datetime
 	ORDER BY [H].[run_datetime];
 
-	IF (@update_last_execution_datetime = 1)
-		UPDATE [setting].[procedure_list] SET [last_execution_datetime] = @end_datetime WHERE [procedure_id] = @@PROCID;
+	IF (@update_execution_timestamp = 1)
+		UPDATE [collector].[tbl_execution_timestamp] 
+		SET [last_execution] = @end_datetime 
+		WHERE [object_name] = OBJECT_NAME(@@PROCID);
 END;

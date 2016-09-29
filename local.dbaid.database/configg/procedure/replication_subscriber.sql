@@ -20,7 +20,7 @@ BEGIN
 								,[subscriber_db] NVARCHAR(128)
 								,[publication] NVARCHAR(128));
 
-	INSERT INTO @db_subscription EXEC [dbo].[foreach_db] N'SELECT ''?'' FROM [?].[INFORMATION_SCHEMA].[TABLES] [T] INNER JOIN [sys].[databases] [D] ON ''?'' = [D].[name] WHERE [TABLE_NAME]=''MSreplication_subscriptions'' AND [D].[is_distributor]=0';
+	INSERT INTO @db_subscription EXEC [system].[usp_execute_foreach_db] N'SELECT ''?'' FROM [?].[INFORMATION_SCHEMA].[TABLES] [T] INNER JOIN [sys].[databases] [D] ON ''?'' = [D].[name] WHERE [TABLE_NAME]=''MSreplication_subscriptions'' AND [D].[is_distributor]=0';
 
 	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
 

@@ -1,4 +1,4 @@
-﻿CREATE FUNCTION [dbo].[udf_get_instance_tag]()
+﻿CREATE FUNCTION [system].[udf_get_instance_tag]()
 RETURNS @returntable TABLE
 (
 	[instance_tag] NVARCHAR(256)

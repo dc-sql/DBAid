@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [check].[checkdb]
+CREATE PROCEDURE [checkmk].[usp_check_checkdb]
 WITH ENCRYPTION, EXECUTE AS 'dbo'
 AS
 BEGIN
@@ -36,7 +36,7 @@ BEGIN
 		[db_name] NVARCHAR(128) NULL
 	);
 
-	EXECUTE [dbo].[foreach_db] N'USE [?];
+	EXECUTE [system].[usp_execute_foreach_db] N'USE [?];
 		INSERT #dbccinfo ([parent_object], [object], [field], [value])
 		EXEC (''DBCC DBINFO() WITH TABLERESULTS, NO_INFOMSGS'');
 		UPDATE #dbccinfo SET [db_name] = N''?'' WHERE [db_name] IS NULL;';

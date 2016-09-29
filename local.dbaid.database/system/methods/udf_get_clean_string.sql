@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE FUNCTION [dbo].[udf_get_clean_string](@dirty_string NVARCHAR(MAX))
+CREATE FUNCTION [system].[udf_get_clean_string](@dirty_string NVARCHAR(MAX))
 RETURNS TABLE
 WITH ENCRYPTION
 RETURN(
@@ -18,7 +18,7 @@ RETURN(
 							REPLACE(
 								REPLACE(@dirty_string,'  ',' ')
 							,'  ', ' ')
-						,CHAR(9), '')
+						,CHAR(9),'')
 					,CHAR(10),'')
 				,CHAR(13),'')
 			,'","','";"')

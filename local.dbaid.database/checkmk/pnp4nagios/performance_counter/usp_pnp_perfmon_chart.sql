@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [chart].[performace_counter]
+CREATE PROCEDURE [checkmk].[usp_pnp_perfmon_chart]
 WITH ENCRYPTION
 AS
 BEGIN

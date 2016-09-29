@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [dbo].[usp_execute_foreach_db]
+CREATE PROCEDURE [system].[usp_execute_foreach_db]
 (
 	@cmd NVARCHAR(MAX)
 )

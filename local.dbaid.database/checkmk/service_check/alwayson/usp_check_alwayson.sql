@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [check].[alwayson]
+CREATE PROCEDURE [checkmk].[usp_check_alwayson]
 WITH ENCRYPTION, EXECUTE AS 'dbo'
 AS
 BEGIN

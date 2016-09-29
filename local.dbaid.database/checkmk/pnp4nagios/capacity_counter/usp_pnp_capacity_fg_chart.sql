@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [checkmk].[capacity_filegroup] 
+CREATE PROCEDURE [checkmk].[usp_pnp_capacity_fg_chart] 
 WITH ENCRYPTION
 AS
 BEGIN
@@ -35,7 +35,7 @@ BEGIN
 		EXEC(N'EXEC xp_fixeddrives');
 
 	INSERT INTO @file_info
-		EXEC [dbo].[foreach_db] 'USE [?]; 
+		EXEC [system].[usp_execute_foreach_db] 'USE [?]; 
 			SELECT DB_ID() AS [database_id]
 				,ISNULL([FG].[data_space_id],0)
 				,[FG].[name]
@@ -51,20 +51,18 @@ BEGIN
 			WHERE [M].[type] IN (0,1)'; 
 
 	INSERT INTO @file_info
-		SELECT [F].[database_id]
+		SELECT [database_id]
 			,NULL AS [filegroup_id]
 			,NULL AS [filegroup_name]
 			,NULL AS [filegroup_is_readonly]
-			,[F].[file_id]
-			,[F].[type_desc]
-			,SUBSTRING([F].[physical_name],1,1) AS [drive]
-			,CAST([F].[size]/128.00 AS NUMERIC(20,2)) AS [size_used_mb]
-			,CAST([F].[size]/128.00 AS NUMERIC(20,2)) AS [size_reserved_mb]
-		FROM [setting].[check_database] [C]
-			INNER JOIN [sys].[master_files] [F]
-				ON [C].[database_id] = [F].[database_id]
-		WHERE [F].[database_id] NOT IN (SELECT [database_id] FROM @file_info)
-			AND [F].[type] IN (0,1);
+			,[file_id]
+			,[type_desc]
+			,SUBSTRING([physical_name],1,1) AS [drive]
+			,CAST([size]/128.00 AS NUMERIC(20,2)) AS [size_used_mb]
+			,CAST([size]/128.00 AS NUMERIC(20,2)) AS [size_reserved_mb]
+		FROM [sys].[master_files]
+		WHERE [database_id] NOT IN (SELECT [database_id] FROM @file_info)
+			AND [type] IN (0,1);
 
 	INSERT INTO @space_info
 		SELECT [DB].[database_id]
@@ -177,9 +175,9 @@ BEGIN
 			,CASE WHEN [F].[filegroup_is_readonly] = 1 OR [DB].[is_read_only] = 1 THEN SUM([F].[size_reserved_mb])
 				ELSE (SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb]))
 				END AS [max]
-		FROM [setting].[check_database] [C]
+		FROM [checkmk].[tbl_pnp_capacity_fg_config] [C]
 			INNER JOIN [sys].[databases] [DB]
-				ON [C].[database_id] = [DB].[database_id]
+				ON [C].[db_name] = [DB].[name]
 			INNER JOIN @file_info [F]
 				ON [C].[database_id] = [F].[database_id]
 			CROSS APPLY (SELECT SUM([A].[fg_size_available_mb]) AS [fg_size_available_mb]

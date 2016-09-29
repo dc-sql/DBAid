@@ -91,8 +91,7 @@
   <ItemGroup>
     <Folder Include="Properties" />
     <Folder Include="checkmk" />
-    <Folder Include="_dbaid_system" />
-    <Folder Include="_dbaid_system\cache" />
+    <Folder Include="system" />
     <Folder Include="configg" />
     <Folder Include="configg\procedure" />
     <Folder Include="checkmk\service_check" />
@@ -106,12 +105,12 @@
     <Folder Include="checkmk\pnp4nagios" />
     <Folder Include="checkmk\pnp4nagios\performance_counter" />
     <Folder Include="checkmk\pnp4nagios\capacity_counter" />
-    <Folder Include="_dbaid_system\dbo" />
+    <Folder Include="system\methods" />
     <Folder Include="collector" />
-    <Folder Include="collector\log" />
-    <Folder Include="collector\audit" />
     <Folder Include="wmiload" />
-    <Folder Include="_dbaid_system\control" />
+    <Folder Include="system\module_cmd" />
+    <Folder Include="audit" />
+    <Folder Include="local_cache" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="configg\procedure\agent_job.sql" />
@@ -135,47 +134,49 @@
     <Build Include="configg\procedure\security.sql" />
     <Build Include="configg\procedure\server_object.sql" />
     <Build Include="configg\procedure\service.sql" />
-    <Build Include="checkmk\service_check\alwayson\alwayson.sql" />
-    <Build Include="checkmk\service_check\database\database.sql" />
-    <Build Include="checkmk\service_check\backup\backup.sql" />
-    <Build Include="checkmk\service_check\checkdb\checkdb.sql" />
-    <Build Include="checkmk\service_check\agentjob\job.sql" />
-    <Build Include="checkmk\service_check\agentjob\longrunningjob.sql" />
-    <Build Include="checkmk\service_check\mirroring\mirroring.sql" />
-    <Build Include="checkmk\service_check\logshipping\logshipping.sql" />
-    <Build Include="checkmk\pnp4nagios\performance_counter\chart_performace_counter.sql" />
-    <Build Include="checkmk\pnp4nagios\performance_counter\performace_counter.sql" />
-    <Build Include="checkmk\pnp4nagios\capacity_counter\capacity_database.sql" />
-    <Build Include="checkmk\pnp4nagios\capacity_counter\capacity_filegroup.sql" />
-    <Build Include="_dbaid_system\dbo\usp_execute_foreach_db.sql">
+    <Build Include="checkmk\service_check\alwayson\usp_check_alwayson.sql" />
+    <Build Include="checkmk\service_check\database\usp_check_database.sql" />
+    <Build Include="checkmk\service_check\checkdb\usp_check_checkdb.sql" />
+    <Build Include="checkmk\service_check\agentjob\usp_check_job.sql" />
+    <Build Include="checkmk\service_check\agentjob\usp_check_longrunningjob.sql" />
+    <Build Include="checkmk\service_check\mirroring\usp_check_mirroring.sql" />
+    <Build Include="checkmk\service_check\logshipping\usp_check_logshipping.sql" />
+    <Build Include="checkmk\pnp4nagios\performance_counter\tbl_pnp_perfmon_config.sql" />
+    <Build Include="checkmk\pnp4nagios\performance_counter\usp_pnp_perfmon_chart.sql" />
+    <Build Include="checkmk\pnp4nagios\capacity_counter\usp_pnp_capacity_db_chart.sql" />
+    <Build Include="checkmk\pnp4nagios\capacity_counter\usp_pnp_capacity_fg_chart.sql" />
+    <Build Include="system\methods\usp_execute_foreach_db.sql">
       <QuotedIdentifier>ProjectDefault</QuotedIdentifier>
     </Build>
-    <Build Include="_dbaid_system\dbo\usp_delete_system_history.sql" />
+    <Build Include="system\methods\usp_delete_system_history.sql" />
     <Build Include="checkmk\dbaid_inventory.sql">
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>
-    <Build Include="collector\log\backup_history.sql" />
-    <Build Include="collector\log\errorlog.sql" />
-    <Build Include="collector\log\job_history.sql" />
-    <Build Include="collector\audit\cis_benchmark.sql" />
-    <Build Include="collector\audit\sql_password.sql" />
-    <Build Include="_dbaid_system\dbo\udf_get_clean_string.sql" />
-    <Build Include="_dbaid_system\dbo\udf_get_datetime_with_offset.sql" />
-    <Build Include="_dbaid_system\dbo\udf_get_instance_guid.sql" />
-    <Build Include="_dbaid_system\dbo\udf_get_instance_tag.sql" />
-    <Build Include="_dbaid_system\dbo\udf_get_product_version.sql" />
-    <Build Include="_dbaid_system\sec_schemas.sql" />
+    <Build Include="system\methods\udf_get_clean_string.sql" />
+    <Build Include="system\methods\udf_get_datetimeoffset.sql" />
+    <Build Include="system\methods\udf_get_instance_guid.sql" />
+    <Build Include="system\methods\udf_get_instance_tag.sql" />
+    <Build Include="system\methods\udf_get_product_version.sql" />
+    <Build Include="system\_sec_schema.sql" />
     <Build Include="wmiload\tbl_wmi_object.sql" />
     <Build Include="wmiload\udt_wmi_object.sql" />
     <Build Include="wmiload\usp_insert_wmi_object.sql" />
     <Build Include="wmiload\tbl_wmi_query.sql" />
-    <Build Include="_dbaid_system\cache\tbl_database_capacity.sql" />
-    <Build Include="_dbaid_system\tbl_default.sql" />
-    <Build Include="_dbaid_system\control\tbl_module_cmd.sql" />
-    <Build Include="_dbaid_system\control\udf_get_module_cmd.sql" />
+    <Build Include="system\tbl_parameter_default.sql" />
+    <Build Include="system\module_cmd\tbl_module_cmd.sql" />
+    <Build Include="system\module_cmd\udf_get_module_cmd.sql" />
+    <Build Include="audit\cis_benchmark.sql" />
+    <Build Include="audit\sql_password.sql" />
+    <Build Include="collector\usp_get_backup_history.sql" />
+    <Build Include="collector\usp_get_errorlog_history.sql" />
+    <Build Include="collector\usp_get_agentjob_history.sql" />
+    <Build Include="collector\tbl_execution_timestamp.sql" />
+    <Build Include="local_cache\tbl_database_capacity.sql" />
+    <Build Include="checkmk\pnp4nagios\capacity_counter\tbl_pnp_capacity_fg_config.sql" />
+    <Build Include="checkmk\service_check\backup\usp_check_backup.sql" />
   </ItemGroup>
   <ItemGroup>
-    <PostDeploy Include="_dbaid_system\_post_script.sql" />
+    <PostDeploy Include="system\_post_script.sql" />
   </ItemGroup>
   <ItemGroup>
     <SqlCmdVariable Include="PublicKey">
@@ -191,7 +192,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <PreDeploy Include="_dbaid_system\_pre_script.sql" />
+    <PreDeploy Include="system\_pre_script.sql" />
   </ItemGroup>
   <ItemGroup>
     <ArtifactReference Include="$(DacPacRootPath)\Extensions\Microsoft\SQLDB\Extensions\SqlServer\100\SqlSchemas\master.dacpac">
@@ -206,6 +207,9 @@
       <DatabaseVariableLiteralValue>msdb</DatabaseVariableLiteralValue>
       <Private>False</Private>
     </ArtifactReference>
+  </ItemGroup>
+  <ItemGroup>
+    <RefactorLog Include="client.dbaid.database.refactorlog" />
   </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>

@@ -52,7 +52,7 @@ BEGIN
 		EXEC [master].[dbo].[sp_validatelogins];
 
 	INSERT INTO @database_roles
-	EXEC [dbo].[foreach_db] 'USE [?];WITH [membership] ([row],[user_id],[role_id],[nest_id])
+	EXEC [system].[usp_execute_foreach_db] 'USE [?];WITH [membership] ([row],[user_id],[role_id],[nest_id])
 							AS
 							(
 								SELECT ROW_NUMBER() OVER(ORDER BY [user].[principal_id]) AS [row]

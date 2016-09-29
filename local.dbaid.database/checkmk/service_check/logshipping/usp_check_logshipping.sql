@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [check].[logshipping]
+CREATE PROCEDURE [checkmk].[usp_check_logshipping]
 WITH ENCRYPTION, EXECUTE AS 'dbo'
 AS
 BEGIN

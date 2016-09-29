@@ -42,7 +42,7 @@ BEGIN
 		DROP TABLE #__guest;		
 	CREATE TABLE #__guest (id INT, [name] NVARCHAR(128), [permission_name] NVARCHAR(128))
 
-	EXEC [dbo].[foreach_db] N'USE [?]; INSERT INTO #__guest 
+	EXEC [system].[usp_execute_foreach_db] N'USE [?]; INSERT INTO #__guest 
 						SELECT DB_ID() AS DBName, 
 							[dpr].[name], 
 							[dpe].[permission_name] 
