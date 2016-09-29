@@ -208,9 +208,6 @@
       <Private>False</Private>
     </ArtifactReference>
   </ItemGroup>
-  <ItemGroup>
-    <RefactorLog Include="client.dbaid.database.refactorlog" />
-  </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>
     </PostBuildEvent>
