@@ -137,8 +137,7 @@
     <Build Include="checkmk\service_check\alwayson\usp_check_alwayson.sql" />
     <Build Include="checkmk\service_check\database\usp_check_database.sql" />
     <Build Include="checkmk\service_check\checkdb\usp_check_checkdb.sql" />
-    <Build Include="checkmk\service_check\agentjob\usp_check_job.sql" />
-    <Build Include="checkmk\service_check\agentjob\usp_check_longrunningjob.sql" />
+    <Build Include="checkmk\service_check\agentjob\usp_check_agentjob.sql" />
     <Build Include="checkmk\service_check\mirroring\usp_check_mirroring.sql" />
     <Build Include="checkmk\service_check\logshipping\usp_check_logshipping.sql" />
     <Build Include="checkmk\pnp4nagios\performance_counter\tbl_pnp_perfmon_config.sql" />
@@ -174,6 +173,7 @@
     <Build Include="local_cache\tbl_database_capacity.sql" />
     <Build Include="checkmk\pnp4nagios\capacity_counter\tbl_pnp_capacity_fg_config.sql" />
     <Build Include="checkmk\service_check\backup\usp_check_backup.sql" />
+    <Build Include="checkmk\service_check\agentjob\tbl_config_agentjob.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="system\_post_script.sql" />

@@ -56,7 +56,7 @@ BEGIN
 		SELECT
 			[property]
 			,[value]
-		FROM [dbo].[wmi_service_property]
+		FROM [wmiload].[tbl_wmi_object]
 		WHERE 
 		[class_object] LIKE '%ServerNetworkProtocol%' OR [class_object] LIKE '%ServerSettingsGeneralFlag%'
 		OR [property] IN ('VERSION','SPLEVEL','IsClustered','IsIntegratedSecurityOnly')
