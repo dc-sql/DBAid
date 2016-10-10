@@ -10,6 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
 	DECLARE @check TABLE([message] NVARCHAR(4000)
 						,[state] NVARCHAR(8));
 
@@ -60,4 +62,6 @@ BEGIN
 	ELSE IF (SELECT COUNT(*) FROM @check) < 1
 		INSERT INTO @check VALUES(N'Logshipping is currently not configured.',N'NA');
 	SELECT [message], [state] FROM @check;
+
+	REVERT;
 END

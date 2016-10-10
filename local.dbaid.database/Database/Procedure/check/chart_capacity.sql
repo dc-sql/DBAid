@@ -40,7 +40,7 @@ BEGIN
 	END
 	ELSE
 	BEGIN */
-		SET @cmd = N'EXEC xp_fixeddrives';
+	SET @cmd = N'EXEC xp_fixeddrives';
 	--END
 
 	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
@@ -63,9 +63,6 @@ BEGIN
 				LEFT JOIN [sys].[filegroups] [FG]
 					ON [M].[data_space_id] = [FG].[data_space_id]
 			WHERE [M].[type] IN (0,1)'; 
-	
-	REVERT;
-	REVERT;
 
 	INSERT INTO @file_info
 		SELECT [F].[database_id]
@@ -249,4 +246,7 @@ BEGIN
 		+ N';;;;' AS [pnp]
 	FROM Dataset
 	ORDER BY [database_id], [data_space];
+
+	REVERT;
+	REVERT;
 END;

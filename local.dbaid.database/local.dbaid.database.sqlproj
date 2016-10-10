@@ -91,7 +91,6 @@
     <Folder Include="Properties" />
     <Folder Include="Database" />
     <Folder Include="Database\DatabaseTrigger" />
-    <Folder Include="Database\NotificationServices" />
     <Folder Include="Database\Security" />
     <Folder Include="Database\Function" />
     <Folder Include="Database\Procedure" />
@@ -103,24 +102,19 @@
     <Folder Include="Database\Procedure\check" />
     <Folder Include="Database\View" />
     <Folder Include="Database\Table" />
-    <Folder Include="Database\Procedure\process" />
     <Folder Include="Database\Procedure\fact" />
     <Folder Include="OlaHallengren" />
     <Folder Include="express_scheduled_task_templates" />
     <Folder Include="Database\Procedure\Health" />
-    <Folder Include="Database\Procedure\audit" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="Database\DatabaseTrigger\trg_stop_ddl_modification.sql" />
     <Build Include="Database\Security\roles.sql" />
     <Build Include="Database\Security\schemas.sql" />
-    <Build Include="Database\NotificationServices\notification_services.sql" />
     <Build Include="Database\Procedure\log\log_job.sql" />
     <Build Include="Database\Procedure\log\log_backup.sql" />
     <Build Include="Database\Procedure\log\log_error.sql" />
-    <Build Include="Database\Procedure\log\log_audit.sql" />
     <Build Include="Database\Procedure\log\log_maintenance.sql" />
-    <Build Include="Database\Procedure\Maintenance\maintenance_cleanup_auditevent.sql" />
     <Build Include="Database\Procedure\Deprecated\deprecated_Backup.sql" />
     <Build Include="Database\Procedure\Deprecated\deprecated_ErrorLog.sql" />
     <Build Include="Database\Procedure\Deprecated\deprecated_Job.sql" />
@@ -132,7 +126,6 @@
       </SuppressTSqlWarnings>
       <QuotedIdentifier>ProjectDefault</QuotedIdentifier>
     </Build>
-    <Build Include="Database\NotificationServices\event_queues.sql" />
     <Build Include="Database\Procedure\check\check_database.sql" />
     <Build Include="Database\Procedure\check\check_job.sql" />
     <Build Include="Database\Procedure\check\check_mirroring.sql">
@@ -144,25 +137,14 @@
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>
     <Build Include="Database\Table\deprecated_tbparameters.sql" />
-    <Build Include="Database\Table\audit_event.sql" />
-    <Build Include="Database\Table\audit_login.sql" />
     <Build Include="Database\Table\dbo_procedure.sql" />
     <Build Include="Database\Table\dbo_static_parameter.sql" />
-    <Build Include="Database\Procedure\Maintenance\maintenance_reset_auditlogin.sql">
-      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
-    </Build>
     <Build Include="Database\View\info_agentjob.sql" />
     <Build Include="Database\View\info_databasefile.sql" />
     <Build Include="Database\View\info_maintenanceplan.sql" />
     <Build Include="Database\View\info_service.sql" />
     <Build Include="Database\View\info_instance.sql" />
     <Build Include="Database\View\info_serverobject.sql" />
-    <Build Include="Database\NotificationServices\service_routes.sql" />
-    <Build Include="Database\Table\dbo_stage_audit_login.sql" />
-    <Build Include="Database\Procedure\Maintenance\maintenance_cleanup_msdbtransmissionqueue.sql" />
-    <Build Include="Database\Procedure\dbo\dbo_toggle_audit_service.sql">
-      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
-    </Build>
     <Build Include="Database\Procedure\check\chart_perfcounter.sql" />
     <Build Include="Database\Table\dbo_config_perfcounter.sql" />
     <Build Include="Database\Table\dbo_config_database.sql" />
@@ -171,13 +153,6 @@
     <Build Include="Database\Function\dbo_instanceguid.sql" />
     <Build Include="Database\Function\dbo_getobjectconfig.sql" />
     <Build Include="Database\Function\dbo_getserviceinfo.sql" />
-    <Build Include="Database\Procedure\process\process_stageauditlogin.sql" />
-    <Build Include="Database\Procedure\process\process_blockqueue.sql" />
-    <Build Include="Database\Procedure\process\process_databasequeue.sql" />
-    <Build Include="Database\Procedure\process\process_deadlockqueue.sql" />
-    <Build Include="Database\Procedure\process\process_loginqueue.sql" />
-    <Build Include="Database\Procedure\process\process_mirrorqueue.sql" />
-    <Build Include="Database\Procedure\process\process_serverqueue.sql" />
     <Build Include="Database\Procedure\Maintenance\maintenance_check_config.sql">
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>
@@ -254,7 +229,7 @@
     <Build Include="Database\Procedure\fact\fact_logshipping_primary.sql" />
     <Build Include="Database\Procedure\fact\fact_logshipping_secondary.sql" />
     <Build Include="Database\Procedure\Health\running_queries.sql" />
-    <Build Include="Database\Procedure\audit\audit_cis_benchmark.sql" />
+    <Build Include="Database\Procedure\fact\fact_cis_benchmark.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Database\Script.PostDeployment.sql" />

@@ -11,15 +11,6 @@ EXEC [health].[running_queries];
 
 EXEC [msdb].[dbo].[sp_start_job] @job_name = '_dbaid_config_genie';
 
-EXEC [audit].[cis_benchmark];
-
-EXEC [dbo].[toggle_audit_service] 1,1,1,1,1,1;
-EXEC [dbo].[toggle_audit_service] 0,0,0,0,0,0;
-
-EXEC [maintenance].[cleanup_auditevent];
-EXEC [maintenance].[cleanup_msdbtransmissionqueue];
-EXEC [maintenance].[reset_auditlogin];
-
 EXEC [dbo].[foreachdb] N'SELECT ''?'' AS [foreachdb]';
 
 EXEC [maintenance].[cleanup_history] @job_olderthan_day=92,@backup_olderthan_day=92,@cmdlog_olderthan_day=92,@dbmail_olderthan_day=92,@maintplan_olderthan_day=92
@@ -85,6 +76,7 @@ EXEC [fact].[service];
 EXEC [fact].[resource_governor];
 EXEC [fact].[logshipping_primary];
 EXEC [fact].[logshipping_secondary];
+EXEC [fact].[cis_benchmark];
 
 UPDATE [_dbaid].[dbo].[static_parameters]
 SET value = 0

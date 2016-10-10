@@ -17,12 +17,14 @@ SET NOCOUNT ON;
 	DECLARE @not_backup INT;
 	DECLARE @version NUMERIC(18,10) 
 
+	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
 	SET @version = CAST(LEFT(CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max)),CHARINDEX('.',CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max))) - 1) + '.' + REPLACE(RIGHT(CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max)), LEN(CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max))) - CHARINDEX('.',CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max)))),'.','') AS numeric(18,10))
 
 	IF @version >= 11 AND SERVERPROPERTY('IsHadrEnabled') IS NOT NULL
 	BEGIN
 
-		EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
 
 		EXEC [dbo].[sp_executesql] @stmt = N'
 		DECLARE @check TABLE([message] NVARCHAR(4000)
@@ -104,8 +106,7 @@ SET NOCOUNT ON;
 		SELECT [message], [state] 
 		FROM @check;'
 
-		REVERT;
-		REVERT;
+
 	END
 	ELSE
 	BEGIN
@@ -155,4 +156,7 @@ SET NOCOUNT ON;
 		SELECT [message], [state] 
 		FROM @check;
 	END
+
+	REVERT;
+	REVERT;
 END

@@ -10,6 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
 	DECLARE @mailconfiguration TABLE ([paramname] NVARCHAR(256)
 										,[paramvalue] NVARCHAR(256)
 										,[description] NVARCHAR(256));
@@ -67,4 +69,6 @@ BEGIN
 	GROUP BY [PA].[profile_name]
 		,[PP].[profile_principals]
 		,[MA].[mail_accounts];
+
+	REVERT;
 END

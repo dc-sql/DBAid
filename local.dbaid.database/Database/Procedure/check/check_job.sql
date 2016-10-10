@@ -10,6 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
 	DECLARE @check TABLE([message] NVARCHAR(4000)
 						,[state] NVARCHAR(8));
 
@@ -64,4 +66,6 @@ BEGIN
 			,N'NA');
 
 	SELECT [message], [state] FROM @check;
+
+	REVERT;
 END

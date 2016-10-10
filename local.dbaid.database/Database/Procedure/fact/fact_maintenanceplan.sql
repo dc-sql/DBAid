@@ -10,5 +10,9 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
 	SELECT * FROM [info].[maintenanceplan];
+
+	REVERT;
 END

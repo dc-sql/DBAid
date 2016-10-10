@@ -40,8 +40,6 @@ BEGIN
 										Value)
 									EXEC (''DBCC DBINFO() WITH TABLERESULTS, NO_INFOMSGS'');
 									UPDATE #dbccinfo SET [DbName] = N''?'' WHERE [DbName] IS NULL;';
-	REVERT;
-	REVERT;
 
 	;WITH [CheckDB] AS
 	(
@@ -85,4 +83,7 @@ BEGIN
 
 		SELECT [message], [state] 
 		FROM @check
+
+		REVERT;
+		REVERT;
 	END

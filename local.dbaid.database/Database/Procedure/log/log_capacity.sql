@@ -11,6 +11,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
 	DECLARE @check_date CHAR(29);
 
 	DECLARE @fixeddrives TABLE([drive] CHAR(1),
@@ -82,5 +84,7 @@ BEGIN
 			ON DB_ID([DI].database_name) = [MF].database_id AND [DI].[file_type] = [MF].[type_desc] Collate Database_Default AND [DI].[file_name] = [MF].[name]
 		INNER JOIN @drive_info [DR] 
 			ON [DR].[drive] = [DI].[drive] Collate Database_Default
+
+	REVERT;
 
 END

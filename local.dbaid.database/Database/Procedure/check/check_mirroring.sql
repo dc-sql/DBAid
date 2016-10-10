@@ -10,10 +10,10 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
 	DECLARE @check TABLE([message] NVARCHAR(4000)
 						,[state] NVARCHAR(8));
-
-	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
 
 	INSERT INTO @check
 	SELECT N'database=' + QUOTENAME([D].[name]) COLLATE Database_Default
@@ -36,4 +36,6 @@ BEGIN
 		INSERT INTO @check VALUES(N'Mirroring is currently not configured.',N'NA');
 
 	SELECT [message], [state] FROM @check;
+
+	REVERT;
 END

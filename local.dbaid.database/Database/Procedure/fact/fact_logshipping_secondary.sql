@@ -10,6 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
 	SELECT [MS].[secondary_server]
 		  ,[MS].[secondary_database]
 		  ,[MS].[secondary_id]
@@ -47,4 +49,6 @@ BEGIN
 		ORDER BY
 			[MS].[secondary_server]
 			,[MS].[secondary_database]
+
+	REVERT;
 END

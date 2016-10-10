@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [audit].[cis_benchmark]
+CREATE PROCEDURE [fact].[cis_benchmark]
 (
 	@policy_filter NVARCHAR(10) = NULL
 )
@@ -15,6 +15,8 @@ AS
 BEGIN
 
 	SET NOCOUNT ON;
+
+	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
 
 	DECLARE @errormessage NVARCHAR(MAX)
 
@@ -227,4 +229,5 @@ BEGIN
 		SELECT * FROM @results
 	END
 
+	REVERT;
 END

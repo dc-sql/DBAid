@@ -9,6 +9,8 @@ WITH ENCRYPTION
 AS
 SET NOCOUNT ON;
 
+EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
 DECLARE @client varchar(128)
 select @client = replace(replace(replace(CAST(serverproperty('servername') as varchar(128))+[setting],'@','_'),'.','_'),'\','#')  from [deprecated].[tbparameters] where [parametername] = 'Client_domain'
 
@@ -24,3 +26,5 @@ select @client as 'Client', Getdate() as 'Checkdate',db.[name], CAST(ROUND(SUM([
      
 	IF (SELECT [value] FROM [dbo].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME()
 		UPDATE [dbo].[procedure] SET [last_execution_datetime] = GETDATE() WHERE [procedure_id] = @@PROCID;
+
+REVERT;

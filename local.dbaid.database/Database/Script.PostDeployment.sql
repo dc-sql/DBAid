@@ -36,97 +36,12 @@ IF NOT EXISTS (SELECT 1 FROM [sys].[server_principals] WHERE LOWER([type]) IN ('
 BEGIN
 	CREATE LOGIN [$(CheckServiceAccount)] FROM WINDOWS WITH DEFAULT_DATABASE=[master];
 END
-
-IF NOT EXISTS (SELECT 1 FROM [sys].[database_principals] WHERE LOWER([name]) = N'$(DatabaseName)' AND LOWER([type]) = 'r')
-	CREATE ROLE [$(DatabaseName)];
-
-IF NOT EXISTS (SELECT 1 FROM [sys].[database_principals] WHERE LOWER([type]) IN ('u','s') AND LOWER(name) = LOWER('$(CollectorServiceAccount)')) 
-	CREATE USER [$(CollectorServiceAccount)] FOR LOGIN [$(CollectorServiceAccount)];
-
-IF NOT EXISTS (SELECT 1 FROM [sys].[database_principals] WHERE LOWER([type]) IN ('u','s') AND LOWER(name) = LOWER('$(CheckServiceAccount)')) 
-	CREATE USER [$(CheckServiceAccount)] FOR LOGIN [$(CheckServiceAccount)];
 GO
 
 /* Instance Security */
-GRANT VIEW ANY DEFINITION							TO [$(CollectorServiceAccount)];
-GRANT VIEW ANY DATABASE								TO [$(CollectorServiceAccount)];
-GRANT VIEW SERVER STATE								TO [$(CollectorServiceAccount)];
 GRANT IMPERSONATE ON LOGIN::[$(DatabaseName)_sa]	TO [$(CollectorServiceAccount)];
-
-GRANT VIEW ANY DEFINITION							TO [$(CheckServiceAccount)];
-GRANT VIEW ANY DATABASE								TO [$(CheckServiceAccount)];
-GRANT VIEW SERVER STATE								TO [$(CheckServiceAccount)];
 GRANT IMPERSONATE ON LOGIN::[$(DatabaseName)_sa]	TO [$(CheckServiceAccount)];
-
-/* Role security */
-GRANT EXECUTE ON [dbo].[xp_logevent]			TO [public];
-GRANT EXECUTE ON [dbo].[xp_enumerrorlogs]		TO [$(DatabaseName)];
-GRANT EXECUTE ON [dbo].[xp_readerrorlog]		TO [$(DatabaseName)];
-GRANT EXECUTE ON [dbo].[sp_readerrorlog]		TO [$(DatabaseName)];
-GRANT EXECUTE ON [dbo].[xp_fixeddrives]			TO [$(DatabaseName)];
-GRANT EXECUTE ON [dbo].[xp_logininfo]			TO [$(DatabaseName)];
-GRANT EXECUTE ON [dbo].[xp_sqlagent_enum_jobs]	TO [$(DatabaseName)];
-GRANT EXECUTE ON [dbo].[sp_validatelogins]		TO [$(DatabaseName)];
-GRANT EXECUTE ON [dbo].[sp_executesql]			TO [$(DatabaseName)];
-GRANT EXECUTE ON [dbo].[xp_instance_regread]	TO [$(DatabaseName)];
-
-EXEC sp_addsrvrolemember @loginame=N'$(CollectorServiceAccount)', @rolename=N'securityadmin';
-EXEC sp_addrolemember @membername=N'$(CollectorServiceAccount)', @rolename=N'$(DatabaseName)';
-EXEC sp_addrolemember @membername=N'$(CheckServiceAccount)', @rolename=N'$(DatabaseName)';
 GO
-
-
-/* #######################################################################################################################################
-#	
-#	Apply permissions to [msdb] database
-#
-####################################################################################################################################### */
-USE [msdb]
-GO
-
-IF NOT EXISTS (SELECT 1 FROM [sys].[database_principals] WHERE LOWER([type]) = 'r' AND LOWER([name]) = '$(DatabaseName)')
-	CREATE ROLE [$(DatabaseName)];
-GO
-IF NOT EXISTS (SELECT 1 FROM [sys].[database_principals] WHERE LOWER([type]) IN ('u','s') AND LOWER(name) = LOWER('$(CollectorServiceAccount)'))
-	CREATE USER [$(CollectorServiceAccount)] FOR LOGIN [$(CollectorServiceAccount)];
-GO
-IF NOT EXISTS (SELECT 1 FROM [sys].[database_principals] WHERE LOWER([type]) IN ('u','s') AND LOWER(name) = LOWER('$(CheckServiceAccount)'))
-	CREATE USER [$(CheckServiceAccount)] FOR LOGIN [$(CheckServiceAccount)];
-GO
-
-GRANT EXECUTE ON [dbo].[sp_help_jobhistory]	TO [$(DatabaseName)];
-GRANT EXECUTE ON [dbo].[sp_help_jobactivity] TO [$(DatabaseName)];
-GRANT EXECUTE ON [dbo].[agent_datetime] TO [$(DatabaseName)];
-GRANT EXECUTE ON [dbo].[sysmail_help_configure_sp] TO [$(DatabaseName)];
-GRANT EXECUTE ON [dbo].[sysmail_help_account_sp] TO [$(DatabaseName)];
-GRANT EXECUTE ON [dbo].[sysmail_help_profileaccount_sp] TO [$(DatabaseName)];
-GRANT EXECUTE ON [dbo].[sysmail_help_principalprofile_sp] TO [$(DatabaseName)];
-
-GRANT SELECT ON [dbo].[log_shipping_monitor_primary] TO [$(DatabaseName)];
-GRANT SELECT ON [dbo].[log_shipping_monitor_secondary] TO [$(DatabaseName)];
-GRANT SELECT ON [dbo].[log_shipping_primary_secondaries] TO [$(DatabaseName)];
-GRANT SELECT ON [dbo].[log_shipping_secondary_databases] TO [$(DatabaseName)];
-GRANT SELECT ON [dbo].[log_shipping_secondary] TO [$(DatabaseName)];
-GRANT SELECT ON [dbo].[sysjobs] TO [$(DatabaseName)];
-GRANT SELECT ON [dbo].[sysjobhistory] TO [$(DatabaseName)];
-GRANT SELECT ON [dbo].[sysjobschedules] TO [$(DatabaseName)];
-GRANT SELECT ON [dbo].[sysschedules] TO [$(DatabaseName)];
-GRANT SELECT ON [dbo].[sysjobactivity] TO [$(DatabaseName)];
-GRANT SELECT ON [dbo].[sysmaintplan_plans] TO [$(DatabaseName)];
-GRANT SELECT ON [dbo].[sysmaintplan_subplans] TO [$(DatabaseName)];
-GRANT SELECT ON [dbo].[sysmaintplan_log] TO [$(DatabaseName)];
-GRANT SELECT ON [dbo].[sysmaintplan_logdetail] TO [$(DatabaseName)];
-GRANT SELECT ON [dbo].[sysproxies] TO [$(DatabaseName)];
-GRANT SELECT ON [dbo].[sysjobsteps] TO [$(DatabaseName)];
-GRANT SELECT ON [dbo].[sysmail_server] TO [$(DatabaseName)];
-GRANT SELECT ON [dbo].[sysoperators] TO [$(DatabaseName)];
-GO
-
-EXEC sp_addrolemember @membername=N'$(DatabaseName)', @rolename=N'SQLAgentReaderRole';
-EXEC sp_addrolemember @membername=N'$(CollectorServiceAccount)', @rolename=N'$(DatabaseName)';
-EXEC sp_addrolemember @membername=N'$(CheckServiceAccount)', @rolename=N'$(DatabaseName)';
-GO
-
 
 /* #######################################################################################################################################
 #	
@@ -269,10 +184,6 @@ IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'DEFAULT_D
 	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
 		VALUES(N'DEFAULT_ALWAYSON_ROLE','CRITICAL',N'Default alwayson availablility group role change alert');
 
-IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'NAGIOS_EVENTHISTORY_TIMESPAN_MIN')
-	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
-		VALUES(N'NAGIOS_EVENTHISTORY_TIMESPAN_MIN',10,N'The number of minutes to show audit.event data to Nagios. After this number the events are filtered out.');
-
 IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'SANITIZE_DATASET')
 	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
 		VALUES(N'SANITIZE_DATASET',1,N'This specifies if log data should be sanitized before being written out. This will hide sensitive data, such as account and Network info');
@@ -309,18 +220,6 @@ ENABLE TRIGGER [dbo].[trg_stop_staticparameter_change] ON [dbo].[static_paramete
 GO
 
 /* General perf counters */
-IF NOT EXISTS(SELECT 1 FROM [dbo].[config_perfcounter] WHERE [object_name] = N'%:Broker Activation' AND [counter_name] = N'Tasks Running' AND [instance_name]=N'_Total')
-	INSERT INTO [dbo].[config_perfcounter]([object_name],[counter_name],[instance_name]) 
-		VALUES(N'%:Broker Activation', N'Tasks Running', N'_Total');
-
-IF NOT EXISTS(SELECT 1 FROM [dbo].[config_perfcounter] WHERE [object_name] = N'%:Broker Activation' AND [counter_name] = N'Tasks Started/sec' AND [instance_name]=N'_Total')
-	INSERT INTO [dbo].[config_perfcounter]([object_name],[counter_name],[instance_name])
-		VALUES(N'%:Broker Activation',N'Tasks Started/sec',N'_Total');
-
-IF NOT EXISTS(SELECT 1 FROM [dbo].[config_perfcounter] WHERE [object_name] = N'%:Broker Statistics' AND [counter_name] = N'Activation Errors Total' AND [instance_name] IS NULL)
-	INSERT INTO [dbo].[config_perfcounter]([object_name],[counter_name],[instance_name])
-		VALUES(N'%:Broker Statistics',N'Activation Errors Total',NULL);
-
 IF NOT EXISTS(SELECT 1 FROM [dbo].[config_perfcounter] WHERE [object_name] = N'%:Buffer Manager' AND [counter_name] = N'Page life expectancy' AND [instance_name] IS NULL)
 	INSERT INTO [dbo].[config_perfcounter]([object_name],[counter_name],[instance_name])
 		VALUES(N'%:Buffer Manager',N'Page life expectancy',NULL);
@@ -464,58 +363,6 @@ IF (SELECT COUNT([parametername]) FROM [deprecated].[tbparameters] WHERE [parame
 ENABLE TRIGGER [trg_stop_ddl_modification] ON DATABASE;
 GO
 
-
-/* #######################################################################################################################################
-#	
-#	Create database drop trigger in [master].
-#
-####################################################################################################################################### */
-USE [master]
-GO
-
-CREATE TRIGGER [$(DatabaseName)_protect]
-ON ALL SERVER 
-WITH ENCRYPTION
-FOR DROP_DATABASE, ALTER_DATABASE, CREATE_DATABASE
-AS
-BEGIN
-	SET NOCOUNT ON;
-	SET ANSI_PADDING ON;
-
-	DECLARE @user_name NVARCHAR(128);
-	DECLARE @database_name NVARCHAR(128);
-	DECLARE @event_type NVARCHAR(128);
-	DECLARE @message NVARCHAR(500);
-
-	SELECT @user_name= ORIGINAL_LOGIN();
-	SELECT @database_name = ISNULL(EVENTDATA().value('(/EVENT_INSTANCE/DatabaseName)[1]','NVARCHAR(128)'), N'{UNKNOWN}');
-	SELECT @event_type = ISNULL(EVENTDATA().value('(/EVENT_INSTANCE/EventType)[1]','NVARCHAR(128)'), N'{UNKNOWN}');
-
-	IF @event_type IN (N'DROP_DATABASE',N'ALTER_DATABASE')
-	BEGIN
-		IF @database_name=N'$(DatabaseName)'
-			AND EXISTS (SELECT * FROM [sys].[server_event_notifications] WHERE name IN ('DDL_SERVER_LEVEL_EVENTS','AUDIT_LOGIN','BLOCKED_PROCESS_REPORT','DEADLOCK_GRAPH','DATABASE_MIRRORING_STATE_CHANGE','DDL_DATABASE_SECURITY_EVENTS'))
-		BEGIN
-				RAISERROR ('You must disable the "Notification Event Services" before you DROP/ALTER the database. Please execute [$(DatabaseName)].[dbo].[Toggle_Audit_Service] passing 0 for each parameter.',10, 1);
-				ROLLBACK;
-				RETURN;
-		END
-		
-		IF @event_type = N'DROP_DATABASE' 
-		BEGIN
-			SET @message=N'Database ' + QUOTENAME(@database_name) + N' dropped by user ' + QUOTENAME(@user_name);
-			EXEC [master].[dbo].[xp_logevent] 54321, @message, 'WARNING';
-		END
-	END
-	ELSE IF @event_type IN (N'CREATE_DATABASE')
-	BEGIN
-		SET @message=N'Database ' + QUOTENAME(@database_name) + N' created by user ' + QUOTENAME(@user_name);
-		EXEC [master].[dbo].[xp_logevent] 54321, @message, 'WARNING';
-	END
-END
-GO
-
-
 /* #######################################################################################################################################
 #	
 #	Create agent job to process login audits in staging in [msdb].
@@ -541,7 +388,7 @@ IF ((SELECT LOWER(CAST(SERVERPROPERTY('Edition') AS NVARCHAR(128)))) LIKE '%expr
 ELSE
 BEGIN
 	INSERT INTO @jobs
-	SELECT [job_id] FROM [msdb].[dbo].[sysjobs] WHERE [name] IN  (N'$(DatabaseName)_service_load','$(DatabaseName)_ProcessStageAuditLogin');
+	SELECT [job_id] FROM [msdb].[dbo].[sysjobs] WHERE [name] IN  (N'$(DatabaseName)_service_load','$(DatabaseName)_ProcessStageAuditLogin','$(DatabaseName)_process_login');
 
 	WHILE (EXISTS (SELECT [job_id] FROM @jobs))
 	BEGIN
@@ -558,28 +405,6 @@ BEGIN
 				@type=N'LOCAL',
 				@name=N'_dbaid maintenance';
 
-	SET @jobId = NULL;
-
-	IF NOT EXISTS (SELECT [job_id] FROM [msdb].[dbo].[sysjobs_view] WHERE [name] = N'$(DatabaseName)_process_login')
-	BEGIN
-		BEGIN TRANSACTION
-			EXEC [msdb].[dbo].[sp_add_job] @job_name=N'$(DatabaseName)_process_login',@enabled=0, @category_name=N'_dbaid maintenance', 
-				@description=N'Processes the login auditing staging table in the [$(DatabaseName)] database.',
-				@owner_login_name=N'$(DatabaseName)_sa',@job_id=@jobId OUTPUT;
-
-			EXEC [msdb].[dbo].[sp_add_jobstep] @job_id=@jobId, @step_name=N'Process',
-				@step_id=1,@cmdexec_success_code=0,@on_success_action=1,@on_success_step_id=0,@on_fail_action=2,
-				@on_fail_step_id=0,@subsystem=N'TSQL',@command=N'EXEC [process].[stageauditlogin] @batch_size=1000',@database_name=N'$(DatabaseName)';
-
-			EXEC [msdb].[dbo].[sp_update_job] @job_id=@jobId,@start_step_id=1;
-
-			EXEC [msdb].[dbo].[sp_add_jobschedule] @job_id=@jobId,@name=N'$(DatabaseName)_every_5min',
-				@enabled=1,@freq_type=4,@freq_interval=1,@freq_subday_type=4,@freq_subday_interval=5,@freq_relative_interval=0,@freq_recurrence_factor=0,
-				@active_start_date=20140101,@active_end_date=99991231,@active_start_time=0,@active_end_time=235959;
-
-			EXEC [msdb].[dbo].[sp_add_jobserver] @job_id=@jobId,@server_name=N'(local)';
-		COMMIT TRANSACTION
-	END
 	SET @jobId = NULL;
 
 	IF NOT EXISTS (SELECT [job_id] FROM [msdb].[dbo].[sysjobs_view] WHERE [name] = N'$(DatabaseName)_config_genie')

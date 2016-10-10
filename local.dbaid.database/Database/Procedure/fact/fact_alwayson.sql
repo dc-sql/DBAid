@@ -9,6 +9,7 @@ WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;
+	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
 
 	IF SERVERPROPERTY('IsHadrEnabled') IS NOT NULL
 	BEGIN
@@ -53,4 +54,6 @@ BEGIN
 																WHERE [listener_id] = [DNS].[listener_id]
 																FOR XML PATH(''ip'')) AS [listener_ip_addresses]) [IP]';
 	END
+
+	REVERT;
 END

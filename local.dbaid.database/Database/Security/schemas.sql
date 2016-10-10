@@ -18,16 +18,11 @@ CREATE SCHEMA [control];
 GO
 CREATE SCHEMA [info];
 GO
-CREATE SCHEMA [audit];
-GO
 CREATE SCHEMA [process];
 GO
 CREATE SCHEMA [deprecated];
 GO
 CREATE SCHEMA [health];
-GO
-
-GRANT SELECT ON SCHEMA::[audit] TO [audit] AS [dbo];
 GO
 
 GRANT EXECUTE ON SCHEMA::[log] TO [admin] AS [dbo];

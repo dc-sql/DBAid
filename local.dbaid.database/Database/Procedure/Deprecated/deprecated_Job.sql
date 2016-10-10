@@ -9,6 +9,8 @@ WITH ENCRYPTION
 AS
 SET NOCOUNT ON;
 
+EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
 DECLARE @cmd NVARCHAR(3000)
 
 DECLARE @name_Length INT, @step_ID_Length INT, @step_Name_Length INT,
@@ -68,4 +70,7 @@ Select [Servername] ,replace([Job_Name],'"','''') as [Job_Name] ,[Step_ID],repla
 
 	IF (SELECT [value] FROM [dbo].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME()
 		UPDATE [dbo].[procedure] SET [last_execution_datetime] = GETDATE() WHERE [procedure_id] = @@PROCID;
+
+REVERT;
+
 GO
