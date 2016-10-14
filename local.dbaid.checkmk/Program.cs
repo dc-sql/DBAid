@@ -14,6 +14,8 @@ namespace local.dbaid.checkmk
         private const string mssqlControlCheck = "[control].[check]";
         private const string mssqlControlChart = "[control].[chart]";
         private const string mssqlEditionCheck = "SELECT * FROM [dbo].[cleanstring](@@VERSION)";
+        private const string isClustered = "SELECT SERVERPROPERTY('IsClustered')";
+        private const string netBIOSname = "SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS')";
 
         static int Main(string[] args)
         {
@@ -22,6 +24,8 @@ namespace local.dbaid.checkmk
             int defaultCmdTimout = int.Parse(ConfigurationManager.AppSettings["default_cmd_timeout_sec"]);
 
             ConnectionStringSettingsCollection settings = ConfigurationManager.ConnectionStrings;
+
+            string machinename = Environment.MachineName;
 
             foreach (ConnectionStringSettings connStr in settings)
             {
@@ -33,6 +37,15 @@ namespace local.dbaid.checkmk
 
                 try
                 {
+                    //check if clustered and primary
+                    string isClusteredResult = Query.Select(cs, isClustered, defaultCmdTimout).Rows[0][0].ToString();
+                    string netBIOSnameResult = Query.Select(cs, netBIOSname, defaultCmdTimout).Rows[0][0].ToString();
+
+                    if (machinename != netBIOSnameResult && isClusteredResult == "1")
+                    {
+                        continue;
+                    }
+
                     // refresh check configuration
                     Query.Execute(cs, mssqlConfigCheck, defaultCmdTimout);
 
@@ -58,7 +71,14 @@ namespace local.dbaid.checkmk
                     {
                         foreach (DataRow dr in dt.Rows)
                         {
-                            rds.Tables.Add(Query.Execute(cs, dr[0].ToString(), defaultCmdTimout));
+                            try
+                            {
+                                rds.Tables.Add(Query.Execute(cs, dr[0].ToString(), defaultCmdTimout));
+                            }
+                            catch
+                            {
+                                continue;
+                            }
                         }
                     }
 
