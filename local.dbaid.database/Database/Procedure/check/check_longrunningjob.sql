@@ -64,7 +64,7 @@ BEGIN
 	END 
 
 	IF (SELECT COUNT(*) FROM @check) < 1
-		INSERT INTO @check VALUES(N'Job(s) not currently executing.',N'NA');
+		INSERT INTO @check VALUES(N'Job(s) not currently executing above max runtime threshold.',N'NA');
 
 	SELECT [message], [state] FROM @check;
 
