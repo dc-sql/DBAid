@@ -10,32 +10,11 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-	DECLARE @check_config TABLE([config_name] NVARCHAR(128), [item_name] NVARCHAR(128), [check_value] SQL_VARIANT, [check_change_alert] VARCHAR(10));
-	DECLARE @check_output TABLE([message] NVARCHAR(4000),[state] NVARCHAR(8));
-
-	DECLARE @preferred_backup TABLE ([db_name] NVARCHAR(128), [preferred_backup] BIT);
 	DECLARE @full_backup INT, @diff_backup INT, @log_backup INT, @major_version INT, @cluster NVARCHAR(128);
+	DECLARE @check_output TABLE([message] NVARCHAR(4000),[state] NVARCHAR(8));
+	DECLARE @preferred_backup TABLE ([db_name] NVARCHAR(128), [preferred_backup] BIT);
 	
-	SELECT @major_version = [major] FROM [get].[product_version]();
-
-	INSERT INTO @check_config
-		SELECT [config_name]
-			,[item_name]
-			,[check_value]
-			,[check_change_alert]
-		FROM [get].[check_configuration](OBJECT_NAME(@@PROCID), NULL, NULL);
-
-	SELECT @full_backup=COUNT(*) 
-	FROM [get].[check_configuration](OBJECT_NAME(@@PROCID), N'full_backup_frequency_hour', NULL) 
-	WHERE [check_value] IS NOT NULL
-
-	SELECT @diff_backup=COUNT(*) 
-	FROM [get].[check_configuration](OBJECT_NAME(@@PROCID), N'diff_backup_frequency_hour', NULL) 
-	WHERE [check_value] IS NOT NULL
-
-	SELECT @log_backup=COUNT(*) 
-	FROM [get].[check_configuration](OBJECT_NAME(@@PROCID), N'log_backup_frequency_hour', NULL) 
-	WHERE [check_value] IS NOT NULL
+	SELECT @major_version = [major] FROM [system].[udf_get_product_version]();
 
 	IF @major_version >= 11
 	BEGIN
@@ -44,29 +23,46 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		;WITH [Backup]
-		AS (
+		;WITH [FullBackup]
+		AS 
+		(
 			SELECT [CC].[config_name] 
 				,[CC].[ci_name]
 				,CAST([CC].[check_value] AS NUMERIC(5,2)) AS [check_value]
-				,[CC].[check_change_alert]
+				,[C].[check_full_state]
 				,[DB].[create_date] AS [db_create_date]
 				,[B].[backup_finish_date]
 				,[B].[type]
-				,ROW_NUMBER() OVER (PARTITION BY [CC].[config_name], [CC].[ci_name] ORDER BY [B].[backup_finish_date] DESC) AS [row]
+				,ROW_NUMBER() OVER (PARTITION BY [DB].[name], [B].[type] ORDER BY [B].[backup_finish_date] DESC) AS [row]
 			FROM [sys].[databases] [DB] 
 				LEFT JOIN [msdb].[dbo].[backupset] [B]
 					ON [DB].[name] = [B].[database_name]
-				LEFT JOIN @check_config [CC]
-					ON CASE [B].[type]
-						WHEN 'D' THEN 'full_backup_frequency_hour'
-						WHEN 'I' THEN 'diff_backup_frequency_hour'
-						WHEN 'L' THEN 'log_backup_frequency_hour' END = [CC].[config_name] COLLATE Database_Default
-					AND [B].[database_name] = [CC].[ci_name] COLLATE Database_Default
+				INNER JOIN [checkmk].[tbl_config_backup] [C]
+					ON [DB].[name] = [C].[db_name]
 				OUTER APPLY(SELECT [preferred_backup] FROM @preferred_backup WHERE [db_name] = [CC].[ci_name]) AS [AG_backup]
-			WHERE [CC].[check_value] IS NOT NULL
-				AND ([AG_backup].[preferred_backup] = 1 OR [AG_backup].[preferred_backup] IS NULL)
+			WHERE ([AG_backup].[preferred_backup] = 1 OR [AG_backup].[preferred_backup] IS NULL)
 		)
+		,[DiffBackup]
+		AS 
+		(
+			SELECT [CC].[config_name] 
+				,[CC].[ci_name]
+				,CAST([CC].[check_value] AS NUMERIC(5,2)) AS [check_value]
+				,[C].[check_full_state]
+				,[DB].[create_date] AS [db_create_date]
+				,[B].[backup_finish_date]
+				,[B].[type]
+				,ROW_NUMBER() OVER (PARTITION BY [DB].[name], [B].[type] ORDER BY [B].[backup_finish_date] DESC) AS [row]
+			FROM [sys].[databases] [DB] 
+				LEFT JOIN [msdb].[dbo].[backupset] [B]
+					ON [DB].[name] = [B].[database_name]
+				INNER JOIN [checkmk].[tbl_config_backup] [C]
+					ON [DB].[name] = [C].[db_name]
+				OUTER APPLY(SELECT [preferred_backup] FROM @preferred_backup WHERE [db_name] = [CC].[ci_name]) AS [AG_backup]
+			WHERE ([AG_backup].[preferred_backup] = 1 OR [AG_backup].[preferred_backup] IS NULL)
+		)
+
+
 		INSERT INTO @check_output
 			SELECT 'database=' 
 				+ QUOTENAME([ci_name])

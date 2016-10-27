@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE TABLE [checkmk].[tbl_pnp_perfmon_config]
+CREATE TABLE [checkmk].[tbl_pnp_config_perfmon]
 (
 	[object_name] NVARCHAR(128) NULL
 	,[counter_name] NVARCHAR(128) NULL

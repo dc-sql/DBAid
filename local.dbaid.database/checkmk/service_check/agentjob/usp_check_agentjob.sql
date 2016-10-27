@@ -33,11 +33,11 @@ BEGIN
 	WHERE [enabled] = 1
 
 	SELECT @runtimejob=COUNT(*)
-	FROM [checkmk].[tbl_check_agentjob_config]
+	FROM [checkmk].[tbl_config_agentjob]
 	WHERE [is_check_runtime_enabled] = 1
 
 	SELECT @statusjob=COUNT(*)
-	FROM [checkmk].[tbl_check_agentjob_config]
+	FROM [checkmk].[tbl_config_agentjob]
 	WHERE [is_check_status_enabled] = 1
 
 	IF NOT ((SELECT LOWER(CAST(SERVERPROPERTY('Edition') AS NVARCHAR(128)))) LIKE '%express%')
@@ -81,7 +81,7 @@ BEGIN
 		FROM [job_data] [J]
 			LEFT JOIN @xpresults [X]
 				ON [J].[job_id] = [X].[job_id]
-			INNER JOIN [checkmk].[tbl_check_agentjob_config] [C]
+			INNER JOIN [checkmk].[tbl_config_agentjob] [C]
 				ON [J].[name] = [C].[job_name]
 		WHERE [J].[row] = 1
 			AND ([J].[run_status] = 0 OR [X].[running] = 1)

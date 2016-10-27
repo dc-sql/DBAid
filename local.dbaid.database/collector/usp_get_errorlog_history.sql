@@ -81,35 +81,30 @@ BEGIN
 	)
 	INSERT INTO #__SeverityError([log_date],[source],[message_header],[message])
 		SELECT [A].[log_date]
-			,CASE WHEN [BMSG].[clean_string] LIKE '%found % errors and repaired % errors%'
-				THEN N'DBCC'
-				WHEN [BMSG].[clean_string] LIKE 'SQL Server has encountered%' 
-				THEN N'SQL'
-				ELSE [A].[source] 
-				END AS [source]
-			,CASE WHEN [BMSG].[clean_string] LIKE '%found % errors and repaired % errors%'
-				THEN N'ERROR'
-				WHEN [BMSG].[clean_string] LIKE 'SQL Server has encountered%' 
-				THEN N'WARNING'
-				ELSE [AMSG].[clean_string] 
-				END AS [message_header]
-			,CASE WHEN @sanitize=0 
-				THEN [BMSG].[clean_string] 
-				ELSE [M].[text] 
-				END AS [message]
+			,CASE WHEN [B].[message] LIKE N'%found % errors and repaired % errors%'
+					OR [B].[message] LIKE N'SQL Server has encountered%' 
+					OR [B].[message] LIKE N'Error:%Severity:%State:%(Params:%)%'
+					THEN N'SQL Server'
+				ELSE [A].[source] END AS [source]
+            ,CASE WHEN [B].[message] LIKE N'%found % errors and repaired % errors%'
+					THEN N'ERROR:DBCC'
+				WHEN [B].[message] LIKE N'SQL Server has encountered%' 
+					THEN N'WARNING:Encountered'
+				WHEN [B].[message] LIKE N'Error:%Severity:%State:%(Params:%)%'
+					THEN SUBSTRING([B].[message], 0, CHARINDEX(N'.', [B].[message])+1)
+				ELSE [A].[message] END AS [message_header]
+			,[B].[message] AS [message]
 		FROM ErrorSet [A]
 			INNER JOIN ErrorSet [B]
 				ON [A].[id]+1 = [B].[id]
-			INNER JOIN [master].[sys].[messages] [M]
-				ON [M].[language_id] = CAST(SERVERPROPERTY('LCID') AS INT)
-					AND CAST(SUBSTRING([A].[message],8,CHARINDEX(',',[A].[message])-8) AS INT) = [M].[message_id]
-			CROSS APPLY [system].[udf_get_clean_string]([A].[message]) [AMSG]
-			CROSS APPLY [system].[udf_get_clean_string]([B].[message]) [BMSG]
-		WHERE [A].[message] LIKE 'Error:%Severity:%State:%'
-			OR ([B].[message] LIKE '%found % errors and repaired % errors%' 
-				AND [B].[message] NOT LIKE '%found 0 errors and repaired 0 errors%')
-			OR [B].[message] LIKE 'SQL Server has encountered%'
-		ORDER BY [A].[id] ASC;
+		WHERE [A].[message] LIKE N'Error:%Severity:%State:%'
+			AND [A].[message] NOT LIKE N'Error:%Severity:%State:%(Params:%)%'
+			OR ([B].[message] LIKE N'%found % errors and repaired % errors%'
+				AND [B].[message] NOT LIKE N'%found 0 errors and repaired 0 errors%')
+			OR [B].[message] LIKE N'SQL Server has encountered%'
+			OR [B].[message] LIKE N'Error:%Severity:%State:%(Params:%)%'
+        ORDER BY [A].[id] ASC;
+
 	
 	SELECT [I].[instance_guid]
 		,[D1].[datetimeoffset] AS [log_date]

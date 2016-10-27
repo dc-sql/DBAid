@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [checkmk].[usp_pnp_capacity_fg_chart] 
+CREATE PROCEDURE [checkmk].[usp_pnp_chart_capacity_fg] 
 WITH ENCRYPTION
 AS
 BEGIN

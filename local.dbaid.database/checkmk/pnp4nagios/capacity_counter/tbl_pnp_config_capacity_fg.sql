@@ -1,4 +1,4 @@
-﻿CREATE TABLE [checkmk].[tbl_pnp_capacity_fg_config] 
+﻿CREATE TABLE [checkmk].[tbl_pnp_config_capacity_fg] 
 (
 	[db_name] NVARCHAR(128) NOT NULL PRIMARY KEY,
 	[capacity_warning_percent_free] NUMERIC(5,2) NOT NULL DEFAULT 20.00,

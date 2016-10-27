@@ -140,10 +140,10 @@
     <Build Include="checkmk\service_check\agentjob\usp_check_agentjob.sql" />
     <Build Include="checkmk\service_check\mirroring\usp_check_mirroring.sql" />
     <Build Include="checkmk\service_check\logshipping\usp_check_logshipping.sql" />
-    <Build Include="checkmk\pnp4nagios\performance_counter\tbl_pnp_perfmon_config.sql" />
-    <Build Include="checkmk\pnp4nagios\performance_counter\usp_pnp_perfmon_chart.sql" />
-    <Build Include="checkmk\pnp4nagios\capacity_counter\usp_pnp_capacity_db_chart.sql" />
-    <Build Include="checkmk\pnp4nagios\capacity_counter\usp_pnp_capacity_fg_chart.sql" />
+    <Build Include="checkmk\pnp4nagios\performance_counter\tbl_pnp_config_perfmon.sql" />
+    <Build Include="checkmk\pnp4nagios\performance_counter\usp_pnp_chart_perfmon.sql" />
+    <Build Include="checkmk\pnp4nagios\capacity_counter\usp_pnp_chart_capacity_db.sql" />
+    <Build Include="checkmk\pnp4nagios\capacity_counter\usp_pnp_chart_capacity_fg.sql" />
     <Build Include="system\methods\usp_execute_foreach_db.sql">
       <QuotedIdentifier>ProjectDefault</QuotedIdentifier>
     </Build>
@@ -171,8 +171,9 @@
     <Build Include="collector\usp_get_agentjob_history.sql" />
     <Build Include="collector\tbl_execution_timestamp.sql" />
     <Build Include="local_cache\tbl_database_capacity.sql" />
-    <Build Include="checkmk\pnp4nagios\capacity_counter\tbl_pnp_capacity_fg_config.sql" />
+    <Build Include="checkmk\pnp4nagios\capacity_counter\tbl_pnp_config_capacity_fg.sql" />
     <Build Include="checkmk\service_check\backup\usp_check_backup.sql" />
+    <Build Include="checkmk\service_check\backup\tbl_config_backup.sql" />
     <Build Include="checkmk\service_check\agentjob\tbl_config_agentjob.sql" />
   </ItemGroup>
   <ItemGroup>

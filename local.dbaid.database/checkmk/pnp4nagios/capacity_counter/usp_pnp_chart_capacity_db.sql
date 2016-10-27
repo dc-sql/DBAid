@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [checkmk].[usp_pnp_capacity_db_chart]
+CREATE PROCEDURE [checkmk].[usp_pnp_chart_capacity_db]
 WITH ENCRYPTION, EXECUTE AS 'dbo'
 AS
 BEGIN
