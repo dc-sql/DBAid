@@ -140,7 +140,7 @@ BEGIN
 													END AS [subscription_type]
 											FROM [' + @db_name + '].[dbo].[syssubscriptions]
 											WHERE [srvid] >= 0
-											FOR XML PATH(''subscriber'')) AS [subscribers]) [B]';
+											FOR XML PATH(''subscriber''), ROOT(''table'')) AS [subscribers]) [B]';
 		
 		INSERT INTO @publications
 			EXEC sp_executesql @stmt = @sql_cmd;
