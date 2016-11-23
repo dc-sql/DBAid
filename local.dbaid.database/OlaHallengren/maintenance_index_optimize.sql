@@ -11,38 +11,39 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-20 Jun 2016
-Added support for SQL Server 2016
+07 Oct 2016
+Fixed a bug in DatabaseIntegrityCheck and IndexOptimize when running on Azure SQL Database.
 */
 
 CREATE PROCEDURE [maintenance].[index_optimize]
 (
-	@Databases nvarchar(max),
-  @FragmentationLow nvarchar(max) = NULL,
-  @FragmentationMedium nvarchar(max) = 'INDEX_REORGANIZE,INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE',
-  @FragmentationHigh nvarchar(max) = 'INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE',
-  @FragmentationLevel1 int = 5,
-  @FragmentationLevel2 int = 30,
-  @PageCountLevel int = 1000,
-  @SortInTempdb nvarchar(max) = 'N',
-  @MaxDOP int = NULL,
-  @FillFactor int = NULL,
-  @PadIndex nvarchar(max) = NULL,
-  @LOBCompaction nvarchar(max) = 'Y',
-  @UpdateStatistics nvarchar(max) = NULL,
-  @OnlyModifiedStatistics nvarchar(max) = 'N',
-  @StatisticsSample int = NULL,
-  @StatisticsResample nvarchar(max) = 'N',
-  @PartitionLevel nvarchar(max) = 'Y',
-  @MSShippedObjects nvarchar(max) = 'N',
-  @Indexes nvarchar(max) = NULL,
-  @TimeLimit int = NULL,
-  @Delay int = NULL,
-  @WaitAtLowPriorityMaxDuration int = NULL,
-  @WaitAtLowPriorityAbortAfterWait nvarchar(max) = NULL,
-  @LockTimeout int = NULL,
-  @LogToTable nvarchar(max) = 'N',
-  @Execute nvarchar(max) = 'Y'
+	@Databases nvarchar(max) = NULL,
+	@FragmentationLow nvarchar(max) = NULL,
+	@FragmentationMedium nvarchar(max) = 'INDEX_REORGANIZE,INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE',
+	@FragmentationHigh nvarchar(max) = 'INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE',
+	@FragmentationLevel1 int = 5,
+	@FragmentationLevel2 int = 30,
+	@PageCountLevel int = 1000,
+	@SortInTempdb nvarchar(max) = 'N',
+	@MaxDOP int = NULL,
+	@FillFactor int = NULL,
+	@PadIndex nvarchar(max) = NULL,
+	@LOBCompaction nvarchar(max) = 'Y',
+	@UpdateStatistics nvarchar(max) = NULL,
+	@OnlyModifiedStatistics nvarchar(max) = 'N',
+	@StatisticsSample int = NULL,
+	@StatisticsResample nvarchar(max) = 'N',
+	@PartitionLevel nvarchar(max) = 'Y',
+	@MSShippedObjects nvarchar(max) = 'N',
+	@Indexes nvarchar(max) = NULL,
+	@TimeLimit int = NULL,
+	@Delay int = NULL,
+	@WaitAtLowPriorityMaxDuration int = NULL,
+	@WaitAtLowPriorityAbortAfterWait nvarchar(max) = NULL,
+	@AvailabilityGroups nvarchar(max) = NULL,
+	@LockTimeout int = NULL,
+	@LogToTable nvarchar(max) = 'N',
+	@Execute nvarchar(max) = 'Y'
 )
 WITH ENCRYPTION
 
@@ -80,6 +81,7 @@ BEGIN
   DECLARE @CurrentAvailabilityGroup nvarchar(max)
   DECLARE @CurrentAvailabilityGroupRole nvarchar(max)
   DECLARE @CurrentDatabaseMirroringRole nvarchar(max)
+  DECLARE @CurrentIsReadOnly bit
 
   DECLARE @CurrentCommand01 nvarchar(max)
   DECLARE @CurrentCommand02 nvarchar(max)
@@ -134,6 +136,8 @@ BEGIN
   DECLARE @CurrentAction nvarchar(max)
   DECLARE @CurrentMaxDOP int
   DECLARE @CurrentUpdateStatistics nvarchar(max)
+  DECLARE @CurrentStatisticsSample int
+  DECLARE @CurrentStatisticsResample nvarchar(max)
   DECLARE @CurrentComment nvarchar(max)
   DECLARE @CurrentExtendedInfo xml
   DECLARE @CurrentDelay datetime
@@ -141,9 +145,16 @@ BEGIN
   DECLARE @tmpDatabases TABLE (ID int IDENTITY,
                                DatabaseName nvarchar(max),
                                DatabaseType nvarchar(max),
+                               AvailabilityGroup bit,
                                Selected bit,
                                Completed bit,
                                PRIMARY KEY(Selected, Completed, ID))
+
+  DECLARE @tmpAvailabilityGroups TABLE (ID int IDENTITY PRIMARY KEY,
+                                        AvailabilityGroupName nvarchar(max),
+                                        Selected bit)
+
+  DECLARE @tmpDatabasesAvailabilityGroups TABLE (DatabaseName nvarchar(max), AvailabilityGroupName nvarchar(max))
 
   DECLARE @tmpIndexesStatistics TABLE (ID int IDENTITY,
                                        SchemaID int,
@@ -166,7 +177,11 @@ BEGIN
 
   DECLARE @SelectedDatabases TABLE (DatabaseName nvarchar(max),
                                     DatabaseType nvarchar(max),
+                                    AvailabilityGroup nvarchar(max),
                                     Selected bit)
+
+  DECLARE @SelectedAvailabilityGroups TABLE (AvailabilityGroupName nvarchar(max),
+                                             Selected bit)
 
   DECLARE @SelectedIndexes TABLE (DatabaseName nvarchar(max),
                                   SchemaName nvarchar(max),
@@ -203,9 +218,9 @@ BEGIN
   SET @StartTime = CONVERT(datetime,CONVERT(nvarchar,GETDATE(),120),120)
 
   SET @StartMessage = 'Date and time: ' + CONVERT(nvarchar,@StartTime,120) + CHAR(13) + CHAR(10)
-  SET @StartMessage = @StartMessage + 'Server: ' + CAST(SERVERPROPERTY('ServerName') AS nvarchar) + CHAR(13) + CHAR(10)
-  SET @StartMessage = @StartMessage + 'Version: ' + CAST(SERVERPROPERTY('ProductVersion') AS nvarchar) + CHAR(13) + CHAR(10)
-  SET @StartMessage = @StartMessage + 'Edition: ' + CAST(SERVERPROPERTY('Edition') AS nvarchar) + CHAR(13) + CHAR(10)
+  SET @StartMessage = @StartMessage + 'Server: ' + CAST(SERVERPROPERTY('ServerName') AS nvarchar(max)) + CHAR(13) + CHAR(10)
+  SET @StartMessage = @StartMessage + 'Version: ' + CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max)) + CHAR(13) + CHAR(10)
+  SET @StartMessage = @StartMessage + 'Edition: ' + CAST(SERVERPROPERTY('Edition') AS nvarchar(max)) + CHAR(13) + CHAR(10)
   SET @StartMessage = @StartMessage + 'Procedure: ' + QUOTENAME(DB_NAME(DB_ID())) + '.' + (SELECT QUOTENAME(schemas.name) FROM sys.schemas schemas INNER JOIN sys.objects objects ON schemas.[schema_id] = objects.[schema_id] WHERE [object_id] = @@PROCID) + '.' + QUOTENAME(OBJECT_NAME(@@PROCID)) + CHAR(13) + CHAR(10)
   SET @StartMessage = @StartMessage + 'Parameters: @Databases = ' + ISNULL('''' + REPLACE(@Databases,'''','''''') + '''','NULL')
   SET @StartMessage = @StartMessage + ', @FragmentationLow = ' + ISNULL('''' + REPLACE(@FragmentationLow,'''','''''') + '''','NULL')
@@ -230,6 +245,7 @@ BEGIN
   SET @StartMessage = @StartMessage + ', @Delay = ' + ISNULL(CAST(@Delay AS nvarchar),'NULL')
   SET @StartMessage = @StartMessage + ', @WaitAtLowPriorityMaxDuration = ' + ISNULL(CAST(@WaitAtLowPriorityMaxDuration AS nvarchar),'NULL')
   SET @StartMessage = @StartMessage + ', @WaitAtLowPriorityAbortAfterWait = ' + ISNULL('''' + REPLACE(@WaitAtLowPriorityAbortAfterWait,'''','''''') + '''','NULL')
+  SET @StartMessage = @StartMessage + ', @AvailabilityGroups = ' + ISNULL('''' + REPLACE(@AvailabilityGroups,'''','''''') + '''','NULL')
   SET @StartMessage = @StartMessage + ', @LockTimeout = ' + ISNULL(CAST(@LockTimeout AS nvarchar),'NULL')
   SET @StartMessage = @StartMessage + ', @LogToTable = ' + ISNULL('''' + REPLACE(@LogToTable,'''','''''') + '''','NULL')
   SET @StartMessage = @StartMessage + ', @Execute = ' + ISNULL('''' + REPLACE(@Execute,'''','''''') + '''','NULL') + CHAR(13) + CHAR(10)
@@ -279,7 +295,13 @@ BEGIN
   --// Select databases                                                                           //--
   ----------------------------------------------------------------------------------------------------
 
-  SET @Databases = REPLACE(@Databases, ', ', ',');
+  SET @Databases = REPLACE(@Databases, CHAR(10), '')
+  SET @Databases = REPLACE(@Databases, CHAR(13), '')
+
+  WHILE CHARINDEX(', ',@Databases) > 0 SET @Databases = REPLACE(@Databases,', ',',')
+  WHILE CHARINDEX(' ,',@Databases) > 0 SET @Databases = REPLACE(@Databases,' ,',',')
+
+  SET @Databases = LTRIM(RTRIM(@Databases));
 
   WITH Databases1 (StartPosition, EndPosition, DatabaseItem) AS
   (
@@ -300,36 +322,56 @@ BEGIN
          CASE WHEN DatabaseItem LIKE '-%' THEN 0 ELSE 1 END AS Selected
   FROM Databases1
   ),
-  Databases3 (DatabaseItem, DatabaseType, Selected) AS
+  Databases3 (DatabaseItem, DatabaseType, AvailabilityGroup, Selected) AS
   (
-  SELECT CASE WHEN DatabaseItem IN('ALL_DATABASES','SYSTEM_DATABASES','USER_DATABASES') THEN '%' ELSE DatabaseItem END AS DatabaseItem,
+  SELECT CASE WHEN DatabaseItem IN('ALL_DATABASES','SYSTEM_DATABASES','USER_DATABASES','AVAILABILITY_GROUP_DATABASES') THEN '%' ELSE DatabaseItem END AS DatabaseItem,
          CASE WHEN DatabaseItem = 'SYSTEM_DATABASES' THEN 'S' WHEN DatabaseItem = 'USER_DATABASES' THEN 'U' ELSE NULL END AS DatabaseType,
+         CASE WHEN DatabaseItem = 'AVAILABILITY_GROUP_DATABASES' THEN 1 ELSE NULL END AvailabilityGroup,
          Selected
   FROM Databases2
   ),
-  Databases4 (DatabaseName, DatabaseType, Selected) AS
+  Databases4 (DatabaseName, DatabaseType, AvailabilityGroup, Selected) AS
   (
   SELECT CASE WHEN LEFT(DatabaseItem,1) = '[' AND RIGHT(DatabaseItem,1) = ']' THEN PARSENAME(DatabaseItem,1) ELSE DatabaseItem END AS DatabaseItem,
          DatabaseType,
+         AvailabilityGroup,
          Selected
   FROM Databases3
   )
-  INSERT INTO @SelectedDatabases (DatabaseName, DatabaseType, Selected)
+  INSERT INTO @SelectedDatabases (DatabaseName, DatabaseType, AvailabilityGroup, Selected)
   SELECT DatabaseName,
          DatabaseType,
+         AvailabilityGroup,
          Selected
   FROM Databases4
   OPTION (MAXRECURSION 0)
 
-  INSERT INTO @tmpDatabases (DatabaseName, DatabaseType, Selected, Completed)
-  SELECT [name] AS DatabaseName,
-         CASE WHEN name IN('master','msdb','model') THEN 'S' ELSE 'U' END AS DatabaseType,
-         0 AS Selected,
-         0 AS Completed
-  FROM sys.databases
-  WHERE [name] <> 'tempdb'
-  AND source_database_id IS NULL
-  ORDER BY [name] ASC
+  IF @Version >= 11 AND SERVERPROPERTY('EngineEdition') <> 5
+  BEGIN
+    INSERT INTO @tmpDatabases (DatabaseName, DatabaseType, AvailabilityGroup, Selected, Completed)
+    SELECT [name] AS DatabaseName,
+           CASE WHEN name IN('master','msdb','model') THEN 'S' ELSE 'U' END AS DatabaseType,
+           CASE WHEN name IN (SELECT availability_databases_cluster.database_name FROM sys.availability_databases_cluster availability_databases_cluster) THEN 1 ELSE 0 END AS AvailabilityGroup,
+           0 AS Selected,
+           0 AS Completed
+    FROM sys.databases
+    WHERE [name] <> 'tempdb'
+    AND source_database_id IS NULL
+    ORDER BY [name] ASC
+  END
+  ELSE
+  BEGIN
+    INSERT INTO @tmpDatabases (DatabaseName, DatabaseType, AvailabilityGroup, Selected, Completed)
+    SELECT [name] AS DatabaseName,
+           CASE WHEN name IN('master','msdb','model') THEN 'S' ELSE 'U' END AS DatabaseType,
+           NULL AS AvailabilityGroup,
+           0 AS Selected,
+           0 AS Completed
+    FROM sys.databases
+    WHERE [name] <> 'tempdb'
+    AND source_database_id IS NULL
+    ORDER BY [name] ASC
+  END
 
   UPDATE tmpDatabases
   SET tmpDatabases.Selected = SelectedDatabases.Selected
@@ -337,6 +379,7 @@ BEGIN
   INNER JOIN @SelectedDatabases SelectedDatabases
   ON tmpDatabases.DatabaseName LIKE REPLACE(SelectedDatabases.DatabaseName,'_','[_]')
   AND (tmpDatabases.DatabaseType = SelectedDatabases.DatabaseType OR SelectedDatabases.DatabaseType IS NULL)
+  AND (tmpDatabases.AvailabilityGroup = SelectedDatabases.AvailabilityGroup OR SelectedDatabases.AvailabilityGroup IS NULL)
   WHERE SelectedDatabases.Selected = 1
 
   UPDATE tmpDatabases
@@ -345,11 +388,117 @@ BEGIN
   INNER JOIN @SelectedDatabases SelectedDatabases
   ON tmpDatabases.DatabaseName LIKE REPLACE(SelectedDatabases.DatabaseName,'_','[_]')
   AND (tmpDatabases.DatabaseType = SelectedDatabases.DatabaseType OR SelectedDatabases.DatabaseType IS NULL)
+  AND (tmpDatabases.AvailabilityGroup = SelectedDatabases.AvailabilityGroup OR SelectedDatabases.AvailabilityGroup IS NULL)
   WHERE SelectedDatabases.Selected = 0
 
-  IF @Databases IS NULL OR NOT EXISTS(SELECT * FROM @SelectedDatabases) OR EXISTS(SELECT * FROM @SelectedDatabases WHERE DatabaseName IS NULL OR DatabaseName = '')
+  IF @Databases IS NOT NULL AND (NOT EXISTS(SELECT * FROM @SelectedDatabases) OR EXISTS(SELECT * FROM @SelectedDatabases WHERE DatabaseName IS NULL OR DatabaseName = ''))
   BEGIN
     SET @ErrorMessage = 'The value for the parameter @Databases is not supported.' + CHAR(13) + CHAR(10) + ' '
+    RAISERROR(@ErrorMessage,16,1) WITH NOWAIT
+    SET @Error = @@ERROR
+  END
+
+  ----------------------------------------------------------------------------------------------------
+  --// Select availability groups                                                                 //--
+  ----------------------------------------------------------------------------------------------------
+
+  IF @AvailabilityGroups IS NOT NULL AND @Version >= 11
+  BEGIN
+
+    SET @AvailabilityGroups = REPLACE(@AvailabilityGroups, CHAR(10), '')
+    SET @AvailabilityGroups = REPLACE(@AvailabilityGroups, CHAR(13), '')
+
+    WHILE CHARINDEX(', ',@AvailabilityGroups) > 0 SET @AvailabilityGroups = REPLACE(@AvailabilityGroups,', ',',')
+    WHILE CHARINDEX(' ,',@AvailabilityGroups) > 0 SET @AvailabilityGroups = REPLACE(@AvailabilityGroups,' ,',',')
+
+    SET @AvailabilityGroups = LTRIM(RTRIM(@AvailabilityGroups));
+
+    WITH AvailabilityGroups1 (StartPosition, EndPosition, AvailabilityGroupItem) AS
+    (
+    SELECT 1 AS StartPosition,
+           ISNULL(NULLIF(CHARINDEX(',', @AvailabilityGroups, 1), 0), LEN(@AvailabilityGroups) + 1) AS EndPosition,
+           SUBSTRING(@AvailabilityGroups, 1, ISNULL(NULLIF(CHARINDEX(',', @AvailabilityGroups, 1), 0), LEN(@AvailabilityGroups) + 1) - 1) AS AvailabilityGroupItem
+    WHERE @AvailabilityGroups IS NOT NULL
+    UNION ALL
+    SELECT CAST(EndPosition AS int) + 1 AS StartPosition,
+           ISNULL(NULLIF(CHARINDEX(',', @AvailabilityGroups, EndPosition + 1), 0), LEN(@AvailabilityGroups) + 1) AS EndPosition,
+           SUBSTRING(@AvailabilityGroups, EndPosition + 1, ISNULL(NULLIF(CHARINDEX(',', @AvailabilityGroups, EndPosition + 1), 0), LEN(@AvailabilityGroups) + 1) - EndPosition - 1) AS AvailabilityGroupItem
+    FROM AvailabilityGroups1
+    WHERE EndPosition < LEN(@AvailabilityGroups) + 1
+    ),
+    AvailabilityGroups2 (AvailabilityGroupItem, Selected) AS
+    (
+    SELECT CASE WHEN AvailabilityGroupItem LIKE '-%' THEN RIGHT(AvailabilityGroupItem,LEN(AvailabilityGroupItem) - 1) ELSE AvailabilityGroupItem END AS AvailabilityGroupItem,
+           CASE WHEN AvailabilityGroupItem LIKE '-%' THEN 0 ELSE 1 END AS Selected
+    FROM AvailabilityGroups1
+    ),
+    AvailabilityGroups3 (AvailabilityGroupItem, Selected) AS
+    (
+    SELECT CASE WHEN AvailabilityGroupItem = 'ALL_AVAILABILITY_GROUPS' THEN '%' ELSE AvailabilityGroupItem END AS AvailabilityGroupItem,
+           Selected
+    FROM AvailabilityGroups2
+    ),
+    AvailabilityGroups4 (AvailabilityGroupName, Selected) AS
+    (
+    SELECT CASE WHEN LEFT(AvailabilityGroupItem,1) = '[' AND RIGHT(AvailabilityGroupItem,1) = ']' THEN PARSENAME(AvailabilityGroupItem,1) ELSE AvailabilityGroupItem END AS AvailabilityGroupItem,
+           Selected
+    FROM AvailabilityGroups3
+    )
+    INSERT INTO @SelectedAvailabilityGroups (AvailabilityGroupName, Selected)
+    SELECT AvailabilityGroupName, Selected
+    FROM AvailabilityGroups4
+    OPTION (MAXRECURSION 0)
+
+    INSERT INTO @tmpAvailabilityGroups (AvailabilityGroupName, Selected)
+    SELECT name AS AvailabilityGroupName,
+           0 AS Selected
+    FROM sys.availability_groups
+
+    UPDATE tmpAvailabilityGroups
+    SET tmpAvailabilityGroups.Selected = SelectedAvailabilityGroups.Selected
+    FROM @tmpAvailabilityGroups tmpAvailabilityGroups
+    INNER JOIN @SelectedAvailabilityGroups SelectedAvailabilityGroups
+    ON tmpAvailabilityGroups.AvailabilityGroupName LIKE REPLACE(SelectedAvailabilityGroups.AvailabilityGroupName,'_','[_]')
+    WHERE SelectedAvailabilityGroups.Selected = 1
+
+    UPDATE tmpAvailabilityGroups
+    SET tmpAvailabilityGroups.Selected = SelectedAvailabilityGroups.Selected
+    FROM @tmpAvailabilityGroups tmpAvailabilityGroups
+    INNER JOIN @SelectedAvailabilityGroups SelectedAvailabilityGroups
+    ON tmpAvailabilityGroups.AvailabilityGroupName LIKE REPLACE(SelectedAvailabilityGroups.AvailabilityGroupName,'_','[_]')
+    WHERE SelectedAvailabilityGroups.Selected = 0
+
+    INSERT INTO @tmpDatabasesAvailabilityGroups (DatabaseName, AvailabilityGroupName)
+    SELECT availability_databases_cluster.database_name, availability_groups.name
+    FROM sys.availability_databases_cluster availability_databases_cluster
+    INNER JOIN sys.availability_groups availability_groups ON availability_databases_cluster.group_id = availability_groups.group_id
+
+    UPDATE tmpDatabases
+    SET Selected = 1
+    FROM @tmpDatabases tmpDatabases
+    INNER JOIN @tmpDatabasesAvailabilityGroups tmpDatabasesAvailabilityGroups ON tmpDatabases.DatabaseName = tmpDatabasesAvailabilityGroups.DatabaseName
+    INNER JOIN @tmpAvailabilityGroups tmpAvailabilityGroups ON tmpDatabasesAvailabilityGroups.AvailabilityGroupName = tmpAvailabilityGroups.AvailabilityGroupName
+    WHERE tmpAvailabilityGroups.Selected = 1
+
+  END
+
+  IF @AvailabilityGroups IS NOT NULL AND (NOT EXISTS(SELECT * FROM @SelectedAvailabilityGroups) OR EXISTS(SELECT * FROM @SelectedAvailabilityGroups WHERE AvailabilityGroupName IS NULL OR AvailabilityGroupName = '') OR @Version < 11)
+  BEGIN
+    SET @ErrorMessage = 'The value for the parameter @AvailabilityGroups is not supported.' + CHAR(13) + CHAR(10) + ' '
+    RAISERROR(@ErrorMessage,16,1) WITH NOWAIT
+    SET @Error = @@ERROR
+  END
+
+  IF (@Databases IS NULL AND @AvailabilityGroups IS NULL)
+  BEGIN
+    SET @ErrorMessage = 'You need to specify one of the parameters @Databases and @AvailabilityGroups.' + CHAR(13) + CHAR(10) + ' '
+    RAISERROR(@ErrorMessage,16,1) WITH NOWAIT
+    SET @Error = @@ERROR
+  END
+
+  IF (@Databases IS NOT NULL AND @AvailabilityGroups IS NOT NULL)
+  BEGIN
+    SET @ErrorMessage = 'You can only specify one of the parameters @Databases and @AvailabilityGroups.' + CHAR(13) + CHAR(10) + ' '
     RAISERROR(@ErrorMessage,16,1) WITH NOWAIT
     SET @Error = @@ERROR
   END
@@ -358,7 +507,13 @@ BEGIN
   --// Select indexes                                                                             //--
   ----------------------------------------------------------------------------------------------------
 
-  SET @Indexes = REPLACE(@Indexes, ', ', ',');
+  SET @Indexes = REPLACE(@Indexes, CHAR(10), '')
+  SET @Indexes = REPLACE(@Indexes, CHAR(13), '')
+
+  WHILE CHARINDEX(', ',@Indexes) > 0 SET @Indexes = REPLACE(@Indexes,', ',',')
+  WHILE CHARINDEX(' ,',@Indexes) > 0 SET @Indexes = REPLACE(@Indexes,' ,',',')
+
+  SET @Indexes = LTRIM(RTRIM(@Indexes));
 
   WITH Indexes1 (StartPosition, EndPosition, IndexItem) AS
   (
@@ -709,12 +864,16 @@ BEGIN
       WHERE database_id = @CurrentDatabaseID
     END
 
+    SELECT @CurrentIsReadOnly = is_read_only
+    FROM sys.databases
+    WHERE name = @CurrentDatabaseName
+
     -- Set database message
     SET @DatabaseMessage = 'Date and time: ' + CONVERT(nvarchar,GETDATE(),120) + CHAR(13) + CHAR(10)
     SET @DatabaseMessage = @DatabaseMessage + 'Database: ' + QUOTENAME(@CurrentDatabaseName) + CHAR(13) + CHAR(10)
     SET @DatabaseMessage = @DatabaseMessage + 'Status: ' + CAST(DATABASEPROPERTYEX(@CurrentDatabaseName,'Status') AS nvarchar) + CHAR(13) + CHAR(10)
     SET @DatabaseMessage = @DatabaseMessage + 'Standby: ' + CASE WHEN DATABASEPROPERTYEX(@CurrentDatabaseName,'IsInStandBy') = 1 THEN 'Yes' ELSE 'No' END + CHAR(13) + CHAR(10)
-    SET @DatabaseMessage = @DatabaseMessage + 'Updateability: ' + CAST(DATABASEPROPERTYEX(@CurrentDatabaseName,'Updateability') AS nvarchar) + CHAR(13) + CHAR(10)
+    SET @DatabaseMessage = @DatabaseMessage + 'Updateability: ' + CASE WHEN @CurrentIsReadOnly = 1 THEN 'READ_ONLY' WHEN  @CurrentIsReadOnly = 0 THEN 'READ_WRITE' END + CHAR(13) + CHAR(10)
     SET @DatabaseMessage = @DatabaseMessage + 'User access: ' + CAST(DATABASEPROPERTYEX(@CurrentDatabaseName,'UserAccess') AS nvarchar) + CHAR(13) + CHAR(10)
     IF @CurrentIsDatabaseAccessible IS NOT NULL SET @DatabaseMessage = @DatabaseMessage + 'Is accessible: ' + CASE WHEN @CurrentIsDatabaseAccessible = 1 THEN 'Yes' ELSE 'No' END + CHAR(13) + CHAR(10)
     SET @DatabaseMessage = @DatabaseMessage + 'Recovery model: ' + CAST(DATABASEPROPERTYEX(@CurrentDatabaseName,'Recovery') AS nvarchar) + CHAR(13) + CHAR(10)
@@ -1172,6 +1331,16 @@ BEGIN
           SET @CurrentUpdateStatistics = 'N'
         END
 
+        SET @CurrentStatisticsSample = @StatisticsSample
+        SET @CurrentStatisticsResample = @StatisticsResample
+
+        -- Memory-optimized tables only supports FULLSCAN and RESAMPLE in SQL Server 2014
+        IF @CurrentIsMemoryOptimized = 1 AND @Version >= 12 AND @Version < 13 AND (@CurrentStatisticsSample <> 100 OR @CurrentStatisticsSample IS NULL)
+        BEGIN
+          SET @CurrentStatisticsSample = NULL
+          SET @CurrentStatisticsResample = 'Y'
+        END
+
         -- Create comment
         IF @CurrentIndexID IS NOT NULL
         BEGIN
@@ -1249,11 +1418,11 @@ BEGIN
           SET @CurrentCommand14 = ''
           IF @LockTimeout IS NOT NULL SET @CurrentCommand14 = 'SET LOCK_TIMEOUT ' + CAST(@LockTimeout * 1000 AS nvarchar) + '; '
           SET @CurrentCommand14 = @CurrentCommand14 + 'UPDATE STATISTICS ' + QUOTENAME(@CurrentDatabaseName) + '.' + QUOTENAME(@CurrentSchemaName) + '.' + QUOTENAME(@CurrentObjectName) + ' ' + QUOTENAME(@CurrentStatisticsName)
-          IF @StatisticsSample IS NOT NULL OR @StatisticsResample = 'Y' OR @CurrentNoRecompute = 1 SET @CurrentCommand14 = @CurrentCommand14 + ' WITH'
-          IF @StatisticsSample = 100 SET @CurrentCommand14 = @CurrentCommand14 + ' FULLSCAN'
-          IF @StatisticsSample IS NOT NULL AND @StatisticsSample <> 100 AND (@CurrentIsMemoryOptimized = 0 OR @CurrentIsMemoryOptimized IS NULL) SET @CurrentCommand14 = @CurrentCommand14 + ' SAMPLE ' + CAST(@StatisticsSample AS nvarchar) + ' PERCENT'
-          IF @StatisticsResample = 'Y' OR (@CurrentIsMemoryOptimized = 1 AND (@StatisticsSample <> 100 OR @StatisticsSample IS NULL)) SET @CurrentCommand14 = @CurrentCommand14 + ' RESAMPLE'
-          IF (@StatisticsSample IS NOT NULL OR @StatisticsResample = 'Y' OR @CurrentIsMemoryOptimized = 1) AND @CurrentNoRecompute = 1 SET @CurrentCommand14 = @CurrentCommand14 + ','
+          IF @CurrentStatisticsSample IS NOT NULL OR @CurrentStatisticsResample = 'Y' OR @CurrentNoRecompute = 1 SET @CurrentCommand14 = @CurrentCommand14 + ' WITH'
+          IF @CurrentStatisticsSample = 100 SET @CurrentCommand14 = @CurrentCommand14 + ' FULLSCAN'
+          IF @CurrentStatisticsSample IS NOT NULL AND @CurrentStatisticsSample <> 100 SET @CurrentCommand14 = @CurrentCommand14 + ' SAMPLE ' + CAST(@CurrentStatisticsSample AS nvarchar) + ' PERCENT'
+          IF @CurrentStatisticsResample = 'Y' SET @CurrentCommand14 = @CurrentCommand14 + ' RESAMPLE'
+          IF (@CurrentStatisticsSample IS NOT NULL OR @CurrentStatisticsResample = 'Y') AND @CurrentNoRecompute = 1 SET @CurrentCommand14 = @CurrentCommand14 + ','
           IF @CurrentNoRecompute = 1 SET @CurrentCommand14 = @CurrentCommand14 + ' NORECOMPUTE'
 
           EXECUTE @CurrentCommandOutput14 = [dbo].[CommandExecute] @Command = @CurrentCommand14, @CommandType = @CurrentCommandType14, @Mode = 2, @DatabaseName = @CurrentDatabaseName, @SchemaName = @CurrentSchemaName, @ObjectName = @CurrentObjectName, @ObjectType = @CurrentObjectType, @IndexName = @CurrentIndexName, @IndexType = @CurrentIndexType, @StatisticsName = @CurrentStatisticsName, @LogToTable = @LogToTable, @Execute = @Execute
@@ -1324,6 +1493,8 @@ BEGIN
         SET @CurrentAction = NULL
         SET @CurrentMaxDOP = NULL
         SET @CurrentUpdateStatistics = NULL
+        SET @CurrentStatisticsSample = NULL
+        SET @CurrentStatisticsResample = NULL
         SET @CurrentComment = NULL
         SET @CurrentExtendedInfo = NULL
 
@@ -1348,6 +1519,7 @@ BEGIN
     SET @CurrentAvailabilityGroup = NULL
     SET @CurrentAvailabilityGroupRole = NULL
     SET @CurrentDatabaseMirroringRole = NULL
+    SET @CurrentIsReadOnly = NULL
 
     SET @CurrentCommand01 = NULL
 
@@ -1370,6 +1542,8 @@ BEGIN
   END
 
   ----------------------------------------------------------------------------------------------------
+REVERT;
 
 END
+
 GO
