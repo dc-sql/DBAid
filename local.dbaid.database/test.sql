@@ -82,7 +82,6 @@ UPDATE [_dbaid].[dbo].[static_parameters]
 SET value = 0
 WHERE name = 'SANITIZE_DATASET'
 
-EXEC [log].[audit];
 EXEC [log].[backup];
 EXEC [log].[error];
 EXEC [log].[job];
@@ -93,7 +92,6 @@ UPDATE [_dbaid].[dbo].[static_parameters]
 SET value = 1
 WHERE name = 'SANITIZE_DATASET'
 
-EXEC [log].[audit];
 EXEC [log].[backup];
 EXEC [log].[error];
 EXEC [log].[job];
@@ -126,8 +124,6 @@ exec sp_start_job @job_name = '_dbaid_integrity_check_user'
 exec sp_start_job @job_name = '_dbaid_log_capacity'
 
 exec sp_start_job @job_name = '_dbaid_maintenance_history'
-
-exec sp_start_job @job_name = '_dbaid_process_login'
 
 exec sp_start_job @job_name = '_dbaid_backup_user_tran'
 
