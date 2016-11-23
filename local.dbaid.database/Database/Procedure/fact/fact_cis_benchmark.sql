@@ -182,9 +182,9 @@ BEGIN
 
 	--5. Auditing and Logging
 	INSERT INTO @results
-	SELECT '5.1','Set the Maximum number of error log files setting to greater than or equal to 12 (Not Scored)' AS [Policy Name], CASE WHEN ISNULL(@NumErrorLogs,6) >= 12 THEN 1 ELSE 0 END AS [score]
+	SELECT '5.1', 'Set the Maximum number of error log files setting to greater than or equal to 12 (Not Scored)' AS [Policy Name], CASE WHEN ISNULL(@NumErrorLogs,6) >= 12 THEN 1 ELSE 0 END AS [score]
 	INSERT INTO @results
-	SELECT '5.2', '5.2 Set the Default Trace Enabled Server Configuration Option to 1 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 1 ELSE 0 END AS [pass] FROM [info].[instance] WHERE [name] = 'default trace enabled'
+	SELECT '5.2', 'Set the Default Trace Enabled Server Configuration Option to 1 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 1 ELSE 0 END AS [pass] FROM [info].[instance] WHERE [name] = 'default trace enabled'
 	INSERT INTO @results
 	SELECT '5.3', 'Set Login Auditing to failed logins (Not Scored)' AS [Policy Name], CASE [value] WHEN 'failure' THEN 1 ELSE 0 END AS [pass] FROM @loginfo_cmd_list
 	INSERT INTO @results
