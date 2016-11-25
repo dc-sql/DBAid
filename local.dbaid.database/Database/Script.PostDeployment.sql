@@ -144,10 +144,6 @@ IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'PROGRAM_N
 	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
 		VALUES(N'PROGRAM_NAME','(>^,^)> (SQL Team PS Collector Agent) <(^,^<)',N'This is the program name the central collector will use. Procedure last execute dates will only be updated when an applicaiton connects using this program name.');
 
-IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'AUDIT_EVENT_RETENTION_DAY')
-	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
-		VALUES(N'AUDIT_EVENT_RETENTION_DAY',7,N'The number of days to keep audit events in the audit.Event table.');
-
 IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'DEFRAG_LOG_RETENTION_DAY')
 	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
 		VALUES(N'DEFRAG_LOG_RETENTION_DAY',90,N'The number of days to keep index defrag log data.');
@@ -195,12 +191,11 @@ GO
 IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'DEFAULT_BACKUP_FREQ')
 	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
 		VALUES(N'DEFAULT_BACKUP_FREQ',26,N'Default backup frequency in hours.');
-
+GO
 IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'DEFAULT_CHECKDB_FREQ')
 	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
 		VALUES(N'DEFAULT_CHECKDB_FREQ',170,N'Default checkdb frequency in hours.');
 GO
-
 IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'DEFAULT_CHECKDB_STATE')
 	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
 		VALUES(N'DEFAULT_CHECKDB_STATE',N'WARNING',N'Default monitoring checkdb state change alert');
