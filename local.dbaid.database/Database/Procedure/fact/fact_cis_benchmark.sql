@@ -4,6 +4,12 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
+/*
+Copyright (C) 2015 Datacom
+GNU GENERAL PUBLIC LICENSE
+Version 3, 29 June 2007
+*/
+
 CREATE PROCEDURE [fact].[cis_benchmark]
 (
 	@policy_filter NVARCHAR(10) = NULL
@@ -117,53 +123,53 @@ BEGIN
 						AND db_id() > 4;'
 						
 	--setup result table
-	DECLARE @results AS TABLE([cis_id] NVARCHAR(4), [policy_name] NVARCHAR(1024), [pass] INT)
+	DECLARE @results AS TABLE([cis_id] NVARCHAR(4), [policy_name] NVARCHAR(1024), [pass] INT, [value] NVARCHAR(10))
 
 	--2. Surface Area Reduction 
 	INSERT INTO @results
-	SELECT '2.1','Ad Hoc Distributed Queries Server Configuration Option to 0 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 0 ELSE 1 END AS [pass] FROM [info].[instance] WHERE [name] = 'ad hoc distributed queries'
+	SELECT '2.1','2.1 Ad Hoc Distributed Queries Server Configuration Option to 0 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 0 ELSE 1 END AS [pass], CAST([value_in_use] AS NVARCHAR(10)) AS [value] FROM [info].[instance] WHERE [name] = 'ad hoc distributed queries'
 	INSERT INTO @results
-	SELECT '2.2', 'CLR Enabled Server Configuration Option to 0 (Scored) ' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 0 ELSE 1 END AS [pass] FROM [info].[instance] WHERE [name] = 'CLR enabled'
+	SELECT '2.2','2.2 CLR Enabled Server Configuration Option to 0 (Scored) ' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 0 ELSE 1 END AS [pass], CAST([value_in_use] AS NVARCHAR(10)) AS [value] FROM [info].[instance] WHERE [name] = 'CLR enabled'
 	INSERT INTO @results
-	SELECT '2.3', 'Set the Cross DB Ownership Chaining Server Configuration Option to 0 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 0 ELSE 1 END AS [pass] FROM [info].[instance] WHERE [name] = 'Cross db ownership chaining'
+	SELECT '2.3','2.3 Set the Cross DB Ownership Chaining Server Configuration Option to 0 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 0 ELSE 1 END AS [pass], CAST([value_in_use] AS NVARCHAR(10)) AS [value] FROM [info].[instance] WHERE [name] = 'Cross db ownership chaining'
 	INSERT INTO @results
-	SELECT '2.4', 'Set the Database Mail XPs Server Configuration Option to 0 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 0 ELSE 1 END AS [pass] FROM [info].[instance] WHERE [name] = 'Database Mail XPs'
+	SELECT '2.4','2.4 Set the Database Mail XPs Server Configuration Option to 0 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 0 ELSE 1 END AS [pass], CAST([value_in_use] AS NVARCHAR(10)) AS [value] FROM [info].[instance] WHERE [name] = 'Database Mail XPs'
 	INSERT INTO @results
-	SELECT '2.5', 'Set the Ole Automation Procedures Server Configuration Option to 0 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 0 ELSE 1 END AS [pass] FROM [info].[instance] WHERE [name] = 'Ole Automation Procedures'
+	SELECT '2.5','2.5 Set the Ole Automation Procedures Server Configuration Option to 0 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 0 ELSE 1 END AS [pass], CAST([value_in_use] AS NVARCHAR(10)) AS [value] FROM [info].[instance] WHERE [name] = 'Ole Automation Procedures'
 	INSERT INTO @results
-	SELECT '2.6', 'Set the Remote Access Server Configuration Option to 0 (Scored) ' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 0 ELSE 1 END AS [pass] FROM [info].[instance] WHERE [name] = 'Remote access'
+	SELECT '2.6','2.6 Set the Remote Access Server Configuration Option to 0 (Scored) ' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 0 ELSE 1 END AS [pass], CAST([value_in_use] AS NVARCHAR(10)) AS [value] FROM [info].[instance] WHERE [name] = 'Remote access'
 	INSERT INTO @results
-	SELECT '2.7', 'Set the Remote Admin Connections Server Configuration Option to 0 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 0 ELSE 1 END AS [pass] FROM [info].[instance] WHERE [name] = 'Remote admin connections'
+	SELECT '2.7','2.7 Set the Remote Admin Connections Server Configuration Option to 0 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 0 ELSE 1 END AS [pass], CAST([value_in_use] AS NVARCHAR(10)) AS [value] FROM [info].[instance] WHERE [name] = 'Remote admin connections'
 	INSERT INTO @results
-	SELECT '2.8', 'Set the Scan For Startup Procs Server Configuration Option to 0 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 0 ELSE 1 END AS [pass] FROM [info].[instance] WHERE [name] = 'Scan for startup procs'
+	SELECT '2.8','2.8 Set the Scan For Startup Procs Server Configuration Option to 0 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 0 ELSE 1 END AS [pass], CAST([value_in_use] AS NVARCHAR(10)) AS [value] FROM [info].[instance] WHERE [name] = 'Scan for startup procs'
 	INSERT INTO @results
-	SELECT '2.9', 'Set the Trustworthy Database Property to Off (Scored)' AS [Policy Name], CASE WHEN COUNT([database_id]) > 0 THEN 0 ELSE 1 END AS [pass] FROM [master].[sys].[databases] WHERE [is_trustworthy_on] = 1 AND [name] != 'msdb' AND [state] = 0
+	SELECT '2.9','2.9 Set the Trustworthy Database Property to Off (Scored)' AS [Policy Name], CASE WHEN COUNT([database_id]) > 0 THEN 0 ELSE 1 END AS [pass], CAST(COUNT([database_id]) AS NVARCHAR(10)) AS [value]  FROM [master].[sys].[databases] WHERE [is_trustworthy_on] = 1 AND [name] != 'msdb' AND [state] = 0
 	INSERT INTO @results
-	SELECT '2.10', 'Disable Unnecessary SQL Server Protocols – ‘Shared Memory and TCP/IP Protocol is enabled’ (Not Scored)' AS [Policy Name] ,CASE WHEN [value] = 'True' THEN 0 ELSE 1 END AS [score] FROM [info].[service] WHERE [property] = 'Shared Memory'
+	SELECT '2.10','2.10 Disable Unnecessary SQL Server Protocols – ‘Shared Memory and TCP/IP Protocol is enabled’ (Not Scored)' AS [Policy Name] ,CASE WHEN [value] = 'True' THEN 0 ELSE 1 END AS [score], CAST([value] AS NVARCHAR(10)) FROM [info].[service] WHERE [property] = 'Shared Memory'
 	INSERT INTO @results
-	SELECT '2.11','Configure SQL Server to use non-standard ports (Not Scored)' AS [Policy Name], CASE WHEN [value] = '1433' THEN 0 ELSE 1 END AS [score] FROM [info].[service] WHERE [property] = 'TcpPort'
+	SELECT '2.11','2.11 Configure SQL Server to use non-standard ports (Not Scored)' AS [Policy Name], CASE WHEN [value] = '1433' THEN 0 ELSE 1 END AS [score], CAST([value] AS NVARCHAR(10))FROM [info].[service] WHERE [property] = 'TcpPort'
 	INSERT INTO @results
-	SELECT '2.12','Set the Hide Instance option to Yes for Production SQL Server instances (Scored)' AS [Policy Name], CASE WHEN [value] = 'False' THEN 0 ELSE 1 END AS [score] FROM [info].[service] WHERE [property] = 'HideInstance'
+	SELECT '2.12','2.12 Set the Hide Instance option to Yes for Production SQL Server instances (Scored)' AS [Policy Name], CASE WHEN [value] = 'False' THEN 0 ELSE 1 END AS [score], CAST([value] AS NVARCHAR(10)) FROM [info].[service] WHERE [property] = 'HideInstance'
 	INSERT INTO @results
-	SELECT '2.13','Disable the sa Login Account (Scored)' AS [Policy Name], CASE WHEN [is_disabled] = 0 THEN 0 ELSE 1 END AS [score] FROM [master].[sys].[server_principals] WHERE [sid] = 0x01
+	SELECT '2.13','2.13 Disable the sa Login Account (Scored)' AS [Policy Name], CASE WHEN [is_disabled] = 0 THEN 0 ELSE 1 END AS [score], CAST([is_disabled] AS NVARCHAR(10)) AS [value] FROM [master].[sys].[server_principals] WHERE [sid] = 0x01
 	INSERT INTO @results
-	SELECT '2.14','Rename the sa Login Account (Scored)' AS [Policy Name], CASE WHEN [name] = 'sa' THEN 0 ELSE 1 END AS [score] FROM [master].[sys].[server_principals] WHERE [sid] = 0x01
+	SELECT '2.14','2.14 Rename the sa Login Account (Scored)' AS [Policy Name], CASE WHEN [name] = 'sa' THEN 0 ELSE 1 END AS [score], [name] AS [value] FROM [master].[sys].[server_principals] WHERE [sid] = 0x01
 	INSERT INTO @results
-	SELECT '2.15','Set the xp_cmdshell Server Configuration Option to 0 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 0 ELSE 1 END AS [pass] FROM [info].[instance] WHERE [name] = 'xp_cmdshell'
+	SELECT '2.15','2.15 Set the xp_cmdshell Server Configuration Option to 0 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 0 ELSE 1 END AS [pass], CAST([value_in_use] AS NVARCHAR(10)) AS [value] FROM [info].[instance] WHERE [name] = 'xp_cmdshell'
 
 	--3. Authentication and Authorization
 	INSERT INTO @results
-	SELECT '3.1','Set The Server Authentication Property To Windows Authentication mode (Scored)' AS [Policy Name], CASE WHEN [value] = 0 THEN 0 ELSE 1 END AS [score] FROM [info].[service] WHERE [property] = 'IsIntegratedSecurityOnly'
+	SELECT '3.1','3.1 Set The Server Authentication Property To Windows Authentication mode (Scored)' AS [Policy Name], CASE WHEN [value] = 0 THEN 0 ELSE 1 END AS [score], CAST([value] AS NVARCHAR(10)) AS [value] FROM [info].[service] WHERE [property] = 'IsIntegratedSecurityOnly'
 	INSERT INTO @results
-	SELECT '3.2','Revoke CONNECT permissions on the guest user within all SQL Server databases excluding the master, msdb and tempdb (Scored)' AS [Policy Name], CASE WHEN COUNT([id]) != 0 THEN 0 ELSE 1 END AS [score] FROM #__guest WHERE [id] NOT IN (DB_ID('master'),DB_ID('msdb'),DB_ID('tempdb')) 
+	SELECT '3.2','3.2 Revoke CONNECT permissions on the guest user within all SQL Server databases excluding the master, msdb and tempdb (Scored)' AS [Policy Name], CASE WHEN COUNT([id]) != 0 THEN 0 ELSE 1 END AS [score], CAST(COUNT([id]) AS NVARCHAR(10)) AS [value] FROM #__guest WHERE [id] NOT IN (DB_ID('master'),DB_ID('msdb'),DB_ID('tempdb')) 
 	INSERT INTO @results
-	SELECT '3.3','Drop Orphaned Users From SQL Server Databases (Scored)' AS [Policy Name], CASE WHEN COUNT([DbName]) != 0 THEN 0 ELSE 1 END AS [score] FROM #__orphan 
+	SELECT '3.3','3.3 Drop Orphaned Users From SQL Server Databases (Scored)' AS [Policy Name], CASE WHEN COUNT([DbName]) != 0 THEN 0 ELSE 1 END AS [score], CAST(COUNT([DbName]) AS NVARCHAR(10)) AS [value] FROM #__orphan 
 
 	--4. Password Policies
 	INSERT INTO @results
-	SELECT '4.1','Set the MUST_CHANGE Option to ON for All SQL Authenticated Logins (Not Scored)' AS [Policy Name], CASE WHEN EXISTS (SELECT 1 FROM [master].[sys].[sql_logins] WHERE [is_policy_checked] != 1 OR [is_expiration_checked] != 1) THEN 0 ELSE 1 END AS [score] 
+	SELECT '4.1','4.1 Set the MUST_CHANGE Option to ON for All SQL Authenticated Logins (Not Scored)' AS [Policy Name], CASE WHEN EXISTS (SELECT 1 FROM [master].[sys].[sql_logins] WHERE [is_policy_checked] != 1 OR [is_expiration_checked] != 1) THEN 0 ELSE 1 END AS [score], (SELECT CAST(COUNT([sid]) AS NVARCHAR(10)) FROM [master].[sys].[sql_logins] WHERE [is_policy_checked] != 1 OR [is_expiration_checked] != 1) AS [value]
 	INSERT INTO @results
-	SELECT '4.2','Set the CHECK_EXPIRATION Option to ON for All SQL Authenticated Logins Within the Sysadmin Role (Scored)' AS [Policy Name], 
+	SELECT '4.2','4.2 Set the CHECK_EXPIRATION Option to ON for All SQL Authenticated Logins Within the Sysadmin Role (Scored)' AS [Policy Name], 
 	CASE WHEN EXISTS (
 		SELECT 1
 		FROM [sys].[sql_logins] AS l
@@ -176,33 +182,48 @@ BEGIN
 		ON [l].[principal_id] = [p].[grantee_principal_id]
 		WHERE [p].[type] = 'CL' AND [p].[state] IN ('G', 'W')
 		AND [l].[is_expiration_checked] <> 1
-	) THEN 0 ELSE 1 END AS [score] 
+	) THEN 0 ELSE 1 END AS [score],
+	(SELECT
+	CAST((SELECT COUNT([name])
+			FROM [sys].[sql_logins] AS l
+			WHERE IS_SRVROLEMEMBER('sysadmin',[name]) = 1
+			AND [l].[is_expiration_checked] <> 1)
+		+
+		(SELECT COUNT([name])
+			FROM [sys].[sql_logins] AS l
+			INNER JOIN [sys].[server_permissions] AS p
+			ON [l].[principal_id] = [p].[grantee_principal_id]
+			WHERE [p].[type] = 'CL' AND [p].[state] IN ('G', 'W')
+			AND [l].[is_expiration_checked] <> 1) 
+		AS NVARCHAR(10))
+	AS [value])
+
 	INSERT INTO @results
-	SELECT '4.3','Set the CHECK_POLICY Option to ON for All SQL Authenticated Logins (Scored)' AS [Policy Name], CASE WHEN EXISTS (SELECT 1 FROM [master].[sys].[sql_logins] WHERE [is_policy_checked] != 1) THEN 0 ELSE 1 END AS [score] 
+	SELECT '4.3','4.3 Set the CHECK_POLICY Option to ON for All SQL Authenticated Logins (Scored)' AS [Policy Name], CASE WHEN EXISTS (SELECT 1 FROM [master].[sys].[sql_logins] WHERE [is_policy_checked] != 1) THEN 0 ELSE 1 END AS [score], (SELECT CAST(COUNT([name]) AS NVARCHAR(10)) AS [value] FROM [master].[sys].[sql_logins] WHERE [is_policy_checked] != 1)
 
 	--5. Auditing and Logging
 	INSERT INTO @results
-	SELECT '5.1', 'Set the Maximum number of error log files setting to greater than or equal to 12 (Not Scored)' AS [Policy Name], CASE WHEN ISNULL(@NumErrorLogs,6) >= 12 THEN 1 ELSE 0 END AS [score]
+	SELECT '5.1', '5.1 Set the Maximum number of error log files setting to greater than or equal to 12 (Not Scored)' AS [Policy Name], CASE WHEN ISNULL(@NumErrorLogs,6) >= 12 THEN 1 ELSE 0 END AS [score], ISNULL(@NumErrorLogs,6) AS [value]
 	INSERT INTO @results
-	SELECT '5.2', 'Set the Default Trace Enabled Server Configuration Option to 1 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 1 ELSE 0 END AS [pass] FROM [info].[instance] WHERE [name] = 'default trace enabled'
+	SELECT '5.2', '5.2 Set the Default Trace Enabled Server Configuration Option to 1 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 1 ELSE 0 END AS [pass], CAST([value_in_use] AS NVARCHAR(10)) AS [value] FROM [info].[instance] WHERE [name] = 'default trace enabled'
 	INSERT INTO @results
-	SELECT '5.3', 'Set Login Auditing to failed logins (Not Scored)' AS [Policy Name], CASE [value] WHEN 'failure' THEN 1 ELSE 0 END AS [pass] FROM @loginfo_cmd_list
+	SELECT '5.3', '5.3 Set Login Auditing to failed logins (Not Scored)' AS [Policy Name], CASE [value] WHEN 'failure' THEN 1 ELSE 0 END AS [pass], [value] FROM @loginfo_cmd_list
 	INSERT INTO @results
-	SELECT '5.4', 'Use SQL Server Audit to capture both failed and successful logins (Not Scored)' AS [Policy Name], 0 AS [pass]
+	SELECT '5.4', '5.4 Use SQL Server Audit to capture both failed and successful logins (Not Scored)' AS [Policy Name], 0 AS [pass], '0' AS [value]
 
 	--6. Application Development
 	INSERT INTO @results
-	SELECT '6.2', 'Set the CLR Assembly Permission Set to SAFE_ACCESS for All CLR Assemblies (Scored)' AS [Policy Name], CASE [count] WHEN 0 THEN 1 ELSE 0 END AS [pass] FROM #__clr_assembly
+	SELECT '6.2', '6.2 Set the CLR Assembly Permission Set to SAFE_ACCESS for All CLR Assemblies (Scored)' AS [Policy Name], CASE [count] WHEN 0 THEN 1 ELSE 0 END AS [pass], CAST([count] AS NVARCHAR(10)) AS [value] FROM #__clr_assembly
 
 	--7. Encryption
 	INSERT INTO @results
-	SELECT '7.1', 'Ensure Symmetric Key encryption algorithm is AES_128 or higher in non-system databases (Scored)' AS [Policy Name], CASE WHEN EXISTS (SELECT 1 FROM #__symmetric) THEN 0 ELSE 1 END AS [score]
+	SELECT '7.1', '7.1 Ensure Symmetric Key encryption algorithm is AES_128 or higher in non-system databases (Scored)' AS [Policy Name], CASE WHEN EXISTS (SELECT 1 FROM #__symmetric) THEN 0 ELSE 1 END AS [score], (SELECT CAST(COUNT([db_id]) AS NVARCHAR(10)) FROM #__symmetric) AS [value]
 	INSERT INTO @results
-	SELECT '7.2', 'Ensure asymmetric key size is greater than or equal to 2048 in nonsystem databases (Scored)' AS [Policy Name], CASE WHEN EXISTS (SELECT 1 FROM #__asymmetric) THEN 0 ELSE 1 END AS [score]
+	SELECT '7.2', '7.2 Ensure asymmetric key size is greater than or equal to 2048 in nonsystem databases (Scored)' AS [Policy Name], CASE WHEN EXISTS (SELECT 1 FROM #__asymmetric) THEN 0 ELSE 1 END AS [score], (SELECT CAST(COUNT([db_id]) AS NVARCHAR(10)) FROM #__asymmetric) AS [value]
 
 	--8. Appendix: Additional Considerations - WIP
 	INSERT INTO @results
-	SELECT '8.1', 'SQL Server Browser Service Disabled (Not Scored)' AS [Policy Name], 0 AS [pass]
+	SELECT '8.1', '8.1 SQL Server Browser Service Disabled (Not Scored)' AS [Policy Name], 0 AS [pass], '0' AS [value]
 	
 	--results
 	DECLARE @audit_total INT
@@ -214,19 +235,19 @@ BEGIN
 	SELECT @audit_notscored = COUNT([pass]) FROM @results WHERE [policy_name] LIKE '%(Not Scored)%'
 
 	INSERT INTO @results
-	SELECT '', 'Total Score = '+CAST(@audit_result AS NVARCHAR(2)) +'/'+CAST(@audit_total AS NVARCHAR(2)) + '  Failed = '+(CAST(@audit_total - @audit_result AS NVARCHAR(2)))+ '  Not Scored = '+CAST(@audit_notscored AS NVARCHAR(2)), @audit_result
+	SELECT '', 'Total Score = '+CAST(@audit_result AS NVARCHAR(2)) +'/'+CAST(@audit_total AS NVARCHAR(2)) + '  Failed = '+(CAST(@audit_total - @audit_result AS NVARCHAR(2)))+ '  Not Scored = '+CAST(@audit_notscored AS NVARCHAR(2)), @audit_result, ''
 
 	IF (LOWER(@policy_filter) = 'failed')
 	BEGIN
-		SELECT * from @results WHERE [policy_name] NOT LIKE '%Not Scored%' AND [pass] = 0 OR [policy_name] LIKE 'Total Score%'
+		SELECT [policy_name], [pass], [value] from @results WHERE [policy_name] NOT LIKE '%Not Scored%' AND [pass] = 0 OR [policy_name] LIKE 'Total Score%'
 	END
 	ELSE IF (LOWER(@policy_filter) = 'notscored')
 	BEGIN
-		SELECT * FROM @results WHERE [policy_name] LIKE '%Not Scored%'
+		SELECT [policy_name], [pass], [value] FROM @results WHERE [policy_name] LIKE '%Not Scored%'
 	END
 	ELSE
 	BEGIN
-		SELECT * FROM @results
+		SELECT [policy_name], [pass], [value] FROM @results
 	END
 
 	REVERT;
