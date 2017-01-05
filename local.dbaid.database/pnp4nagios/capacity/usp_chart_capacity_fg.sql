@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [checkmk].[usp_pnp_chart_capacity_fg] 
+CREATE PROCEDURE [pnp4nagios].[usp_chart_capacity_fg] 
 WITH ENCRYPTION
 AS
 BEGIN
@@ -175,7 +175,7 @@ BEGIN
 			,CASE WHEN [F].[filegroup_is_readonly] = 1 OR [DB].[is_read_only] = 1 THEN SUM([F].[size_reserved_mb])
 				ELSE (SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb]))
 				END AS [max]
-		FROM [checkmk].[tbl_pnp_capacity_fg_config] [C]
+		FROM [pnp4nagios].[tbl_pnp_capacity_fg_config] [C]
 			INNER JOIN [sys].[databases] [DB]
 				ON [C].[db_name] = [DB].[name]
 			INNER JOIN @file_info [F]

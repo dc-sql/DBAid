@@ -14,6 +14,8 @@ CREATE SCHEMA [configg];
 GO
 CREATE SCHEMA [collector];
 GO
+CREATE SCHEMA [pnp4nagios];
+GO
 CREATE SCHEMA [system];
 GO
 CREATE SCHEMA [wmiload];

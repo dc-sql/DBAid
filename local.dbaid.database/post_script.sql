@@ -20,7 +20,7 @@ USE [$(DatabaseName)];
 GO
 
 /* Insert static variables */
-MERGE INTO [setting].[default_parameters] AS [Target] 
+MERGE INTO [setting].[tbl_parameter_default] AS [Target] 
 USING (SELECT N'INSTANCE_GUID', NEWID()
 	UNION SELECT N'SANITIZE_DATASET',1
 	UNION SELECT N'PUBLIC_ENCRYPTION_KEY',N'$(PublicKey)'
@@ -33,7 +33,7 @@ WHEN NOT MATCHED BY TARGET THEN
 GO
 
 /* General perf counters */
-MERGE INTO [setting].[performance_counter] AS [Target] 
+MERGE INTO [checkmk].[tbl_pnp_config_perfmon] AS [Target] 
 USING (VALUES(N'%:Broker Activation', N'Tasks Running', N'_Total')
 	,(N'%:Broker Activation',N'Tasks Started/sec',N'_Total')
 	,(N'%:Broker Statistics',N'Activation Errors Total',NULL)
@@ -70,7 +70,7 @@ WHEN NOT MATCHED BY TARGET THEN
 GO
 
 /* General perf counters */
-MERGE INTO [setting].[wmi_service_queries] AS [Target] 
+MERGE INTO [wmiload].[tbl_wmi_query] AS [Target] 
 USING (VALUES('SELECT DisplayName,BinaryPath,Description,HostName,ServiceName,StartMode,StartName FROM SqlService WHERE DisplayName LIKE ''%' + @@SERVICENAME + '%''')
 	,('SELECT InstanceName,ProtocolDisplayName,Enabled FROM ServerNetworkProtocol WHERE InstanceName LIKE ''%' + @@SERVICENAME + '%''')
 	,('SELECT InstanceName,PropertyName,PropertyStrVal FROM ServerNetworkProtocolProperty WHERE IPAddressName = ''IPAll'' AND InstanceName LIKE ''%' + @@SERVICENAME + '%''')
@@ -89,7 +89,7 @@ WHEN NOT MATCHED BY TARGET THEN
 GO
 
 /* execute dbaid inventory */
-EXEC [dbo].[dbaid_inventory];
+EXEC [checkmk].[usp_inventory];
 GO
 
 /* set database to _dbaid_sa owner */

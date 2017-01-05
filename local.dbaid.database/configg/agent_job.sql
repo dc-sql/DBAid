@@ -14,7 +14,7 @@ BEGIN
 		,[JO].[name] AS [job_name]
 		,SUSER_SNAME([JO].[owner_sid]) AS [job_owner]
 		,[JO].[enabled] AS [job_enabled]
-		,[job_desc].[string] AS [job_desc]
+		,[job_desc].[clean_string] AS [job_desc]
 		,CAST((SELECT [step].[step_id]
 				,[step].[step_name]
 				,[step].[subsystem]
@@ -50,7 +50,7 @@ BEGIN
 		LEFT JOIN [msdb].[dbo].[sysoperators] [SOP]
 			ON [JO].[notify_page_operator_id] = [SOP].[id]
 				AND [SOP].[enabled] = 1
-		CROSS APPLY [get].[clean_string]([JO].[description]) [job_desc]
+		CROSS APPLY [system].[udf_get_clean_string]([JO].[description]) [job_desc]
 		CROSS APPLY (SELECT(SELECT [S].[enabled] AS [schedule_enabled]
 		,CASE
 			WHEN [J].[job_id] IS NULL THEN 'Unscheduled'

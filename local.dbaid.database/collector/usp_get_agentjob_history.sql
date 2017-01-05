@@ -11,7 +11,7 @@ CREATE PROCEDURE [collector].[usp_get_agentjob_history]
 	@sanitize BIT = 0,
 	@update_execution_timestamp BIT = 0
 )
-WITH ENCRYPTION, EXECUTE AS 'dbo'
+WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;

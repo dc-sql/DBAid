@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE [audit].[sql_password]
+﻿CREATE PROCEDURE [audit].[usp_sql_password]
 WITH ENCRYPTION
 AS
 BEGIN

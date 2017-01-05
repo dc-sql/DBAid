@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [dbo].[dbaid_inventory]
+CREATE PROCEDURE [checkmk].[usp_inventory]
 WITH ENCRYPTION
 AS
 BEGIN
