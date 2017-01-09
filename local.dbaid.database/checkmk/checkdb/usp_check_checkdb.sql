@@ -10,35 +10,33 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-	DECLARE @check_config TABLE([config_name] NVARCHAR(128), [item_name] NVARCHAR(128), [check_value] SQL_VARIANT, [check_change_alert] VARCHAR(10));
-	DECLARE @check_output TABLE([message] NVARCHAR(4000),[state] NVARCHAR(8));
+	DECLARE @dbcheckdb INT
+		,@dbnotcheckdb INT;
 
-	DECLARE @dbcheckdb INT, @dbnotcheckdb INT;
+	DECLARE @check_output TABLE
+		([message] NVARCHAR(4000)
+		,[state] NVARCHAR(8));
 
-	SELECT @dbcheckdb=COUNT(*) FROM [setting].[check_database] WHERE [check_integrity_since_hour] > 0;
-	SELECT @dbnotcheckdb=COUNT(*) FROM [setting].[check_database] WHERE [check_integrity_since_hour] = 0;
-	
-	INSERT INTO @check_config
-		SELECT [config_name]
-			,[item_name]
-			,[check_value]
-			,[check_change_alert]
-		FROM [get].[check_configuration](OBJECT_NAME(@@PROCID), NULL, NULL);
+	SELECT @dbcheckdb=COUNT(*) 
+	FROM [setting].[check_database] 
+	WHERE [check_integrity_since_hour] > 0;
+
+	SELECT @dbnotcheckdb=COUNT(*) 
+	FROM [setting].[check_database]
+	 WHERE [check_integrity_since_hour] = 0;
 
 	IF OBJECT_ID('tempdb..#dbccinfo') IS NOT NULL 
-	DROP TABLE #dbccinfo;
+		DROP TABLE #dbccinfo;
 
-	CREATE TABLE #dbccinfo (
-		[parent_object] NVARCHAR(255),
-		[object] NVARCHAR(255),
-		[field] NVARCHAR(255),
-		[value] NVARCHAR(255),
-		[db_name] NVARCHAR(128) NULL
-	);
+	CREATE TABLE #dbccinfo 
+		([parent_object] NVARCHAR(255)
+		,[object] NVARCHAR(255)
+		,[field] NVARCHAR(255)
+		,[value] NVARCHAR(255)
+		,[db_name] NVARCHAR(128) NULL);
 
 	EXECUTE [system].[usp_execute_foreach_db] N'USE [?];
-		INSERT #dbccinfo ([parent_object], [object], [field], [value])
-		EXEC (''DBCC DBINFO() WITH TABLERESULTS, NO_INFOMSGS'');
+		INSERT #dbccinfo ([parent_object], [object], [field], [value]) EXEC (''DBCC DBINFO() WITH TABLERESULTS, NO_INFOMSGS'');
 		UPDATE #dbccinfo SET [db_name] = N''?'' WHERE [db_name] IS NULL;';
 
 	;WITH [DbccDataSet] AS

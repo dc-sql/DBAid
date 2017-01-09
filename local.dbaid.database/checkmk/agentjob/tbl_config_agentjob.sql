@@ -6,7 +6,7 @@
 	[max_runtime_minutes] INT NOT NULL DEFAULT 180, 
 	[is_check_status_enabled] BIT NOT NULL DEFAULT 1,
 	[is_check_runtime_enabled] BIT NOT NULL DEFAULT 1,
-    CONSTRAINT [CK_tbl_config_agentjob_state] 
-		CHECK ([check_status_state] IN ('WARNING','CRITICAL') 
-			AND [check_runtime_state] IN ('WARNING','CRITICAL'))
+    CONSTRAINT [ck_tbl_config_agentjob_state] 
+		CHECK ([alert_status_state] IN ('WARNING','CRITICAL') 
+			AND [alert_runtime_state] IN ('WARNING','CRITICAL'))
 )

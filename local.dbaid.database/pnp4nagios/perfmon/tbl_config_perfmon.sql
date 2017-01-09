@@ -19,4 +19,4 @@ CREATE TABLE [pnp4nagios].[tbl_config_perfmon]
 ) 
 GO
 
-CREATE UNIQUE CLUSTERED INDEX [ix_performance_counter_1_2_3_unique] ON [checkmk].[tbl_pnp_perfmon_config] ([object_name], [counter_name], [instance_name])
+CREATE UNIQUE CLUSTERED INDEX [ix_performance_counter_1_2_3_unique] ON [pnp4nagios].[tbl_config_perfmon] ([object_name], [counter_name], [instance_name])
