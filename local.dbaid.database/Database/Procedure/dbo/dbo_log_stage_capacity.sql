@@ -63,9 +63,6 @@ BEGIN
 					LEFT JOIN [sys].[filegroups] [FG]
 						ON [M].[data_space_id] = [FG].[data_space_id]
 				WHERE [M].[type] IN (0,1)'; 
-
-	REVERT;
-	REVERT;
 	
 	
 	INSERT INTO [$(DatabaseName)].[dbo].[stage_capacity]
@@ -96,4 +93,7 @@ BEGIN
 	DELETE FROM [dbo].[stage_capacity] WHERE CAST(LEFT([check_date], 23) AS DATETIME) < DATEADD(MONTH, @retention_months, GETDATE());
 
 	PRINT CAST(@@ROWCOUNT AS VARCHAR(20)) + ' rows deleted.';
+
+	REVERT;
+
 END

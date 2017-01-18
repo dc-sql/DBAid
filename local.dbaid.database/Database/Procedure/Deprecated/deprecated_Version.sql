@@ -9,7 +9,9 @@ WITH ENCRYPTION
 AS
 
 SET NOCOUNT ON;
- 
+
+EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
 Declare @sender varchar(228)
 Declare @subjectname varchar(128)
 
@@ -20,4 +22,7 @@ select @subjectname as 'Servername',getdate() as 'Checkdate',@@version as 'Versi
 
 	IF (SELECT [value] FROM [dbo].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME()
 		UPDATE [dbo].[procedure] SET [last_execution_datetime] = GETDATE() WHERE [procedure_id] = @@PROCID;
+
+REVERT;
+
 GO

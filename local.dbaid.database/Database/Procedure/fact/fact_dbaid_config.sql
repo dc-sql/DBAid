@@ -62,5 +62,6 @@ BEGIN
 						,DEFAULT_CHECKDB_STATE
 						,DEFAULT_BACKUP_STATE)
 	) AS [pivot]
+
 END
 

@@ -22,5 +22,4 @@ BEGIN
 	WHERE [mirroring].[mirroring_guid] IS NOT NULL;
 
 	REVERT;
-	REVERT;
 END

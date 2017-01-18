@@ -16,6 +16,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
 	DECLARE @loginfo_sid VARBINARY(85);
 	DECLARE @loginfo_cmd VARCHAR(200);
 	DECLARE @loginfo_cmd_list TABLE([group_sid] VARBINARY(85), [logininfo_cmd] VARCHAR(200));
@@ -120,5 +122,7 @@ BEGIN
 			ON [login].[sid] = [database_role].[user_sid]
 	WHERE ([login].[type] NOT IN ('R') OR [login].[name] IS NULL)
 	ORDER BY [login].[name];
+
+	REVERT;
 END
 GO

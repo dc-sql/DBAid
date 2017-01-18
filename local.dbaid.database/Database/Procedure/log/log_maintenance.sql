@@ -15,6 +15,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
 	DECLARE @report_datetime DATETIME;
 		
 	IF (@start_datetime IS NULL)
@@ -64,7 +66,10 @@ BEGIN
 		IF (@@ERROR <> 0)
 		BEGIN
 			ROLLBACK TRANSACTION;
+			REVERT;
 			RETURN 1;
 		END
 	COMMIT TRANSACTION
+
+	REVERT;
 END;

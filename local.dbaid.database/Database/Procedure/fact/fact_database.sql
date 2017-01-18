@@ -10,6 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
 	DECLARE @cmd NVARCHAR(MAX);
 	DECLARE @columns NVARCHAR(MAX);
 	DECLARE @colist AS TABLE(col NVARCHAR(128));
@@ -32,4 +34,6 @@ BEGIN
 	SET @cmd = N'SELECT ' + @columns + N' FROM [master].[sys].[databases];';
 
 	EXEC(@cmd);
+
+	REVERT;
 END

@@ -10,6 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
 	SELECT [database_name]
       ,[file_name]
       ,[type_desc]
@@ -19,4 +21,6 @@ BEGIN
       ,[auto_grow]
       ,[is_read_only] 
 	FROM [info].[databasefile]
+
+	REVERT;
 END

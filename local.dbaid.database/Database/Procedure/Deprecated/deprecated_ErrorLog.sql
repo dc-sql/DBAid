@@ -10,6 +10,8 @@ AS
 
 SET NOCOUNT ON;
 
+EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
 DECLARE @mindate DATETIME;
 DECLARE @loop INT;
 Declare @client varchar(128)
@@ -101,4 +103,7 @@ drop table #errfound
 
 IF (SELECT [value] FROM [dbo].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME()
 			UPDATE [dbo].[procedure] SET [last_execution_datetime] = GETDATE() WHERE [procedure_id] = @@PROCID;
+
+REVERT;
+
 GO

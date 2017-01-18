@@ -35,8 +35,7 @@ BEGIN
 				ON [D].[database_id] = [M].[database_id]
 		WHERE [D].[database_id] NOT IN (SELECT [database_id] FROM [dbo].[config_database]);
 
-	REVERT;
-	REVERT;
+
 
 	/* Add new agent jobs into check */
 	INSERT INTO [dbo].[config_job]
@@ -100,10 +99,12 @@ BEGIN
 	DELETE FROM [dbo].[config_job]
 	WHERE [job_id] NOT IN (SELECT [job_id] FROM [msdb].[dbo].[sysjobs]);
 
+	REVERT;
 END
+
+
 
 GO
 GRANT EXECUTE
-    ON OBJECT::[maintenance].[check_config] TO [monitor]
-    AS [dbo];
+    ON OBJECT::[maintenance].[check_config] TO [monitor] AS [dbo];
 

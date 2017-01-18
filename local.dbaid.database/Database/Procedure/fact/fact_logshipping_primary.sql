@@ -9,6 +9,9 @@ WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;
+
+	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
 	SELECT [primary_id]
       ,[primary_server]
       ,[primary_database]
@@ -16,5 +19,7 @@ BEGIN
       ,[threshold_alert]
       ,[threshold_alert_enabled]
       ,[history_retention_period]
-	FROM [msdb].[dbo].[log_shipping_monitor_primary]
+	FROM [msdb].[dbo].[log_shipping_monitor_primary];
+
+	REVERT;
 END

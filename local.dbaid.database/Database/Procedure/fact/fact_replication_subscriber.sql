@@ -10,6 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
 	DECLARE @sql_cmd NVARCHAR(4000);
 	DECLARE @db_publication TABLE([db_name] NVARCHAR(128));
 	DECLARE @db_subscription TABLE([db_name] NVARCHAR(128));
@@ -21,8 +23,6 @@ BEGIN
 								,[publication] NVARCHAR(128));
 
 	INSERT INTO @db_subscription EXEC [dbo].[foreachdb] N'SELECT ''?'' FROM [?].[INFORMATION_SCHEMA].[TABLES] [T] INNER JOIN [sys].[databases] [D] ON ''?'' = [D].[name] WHERE [TABLE_NAME]=''MSreplication_subscriptions'' AND [D].[is_distributor]=0';
-
-	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
 
 	WHILE (SELECT COUNT([db_name]) FROM @db_subscription) > 0
 	BEGIN
@@ -36,7 +36,6 @@ BEGIN
 		DELETE FROM @db_subscription WHERE [db_name] = @db_name;
 	END
 
-	REVERT;
 	REVERT;
 
 	SELECT * FROM @subscription;

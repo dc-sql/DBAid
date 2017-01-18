@@ -9,6 +9,8 @@ WITH ENCRYPTION
 AS
 SET NOCOUNT ON;
 
+EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
 DECLARE @client varchar(128)
 DECLARE @dbname VARCHAR(200)
 
@@ -70,4 +72,7 @@ ORDER BY [Status]
 
 IF (SELECT [value] FROM [dbo].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME()
 			UPDATE [dbo].[procedure] SET [last_execution_datetime] = GETDATE() WHERE [procedure_id] = @@PROCID;
+
+REVERT;
+
 GO

@@ -10,6 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
 	IF ((SELECT SUBSTRING(CAST(SERVERPROPERTY('ProductVersion') AS NVARCHAR), 1, CHARINDEX('.',  CAST(SERVERPROPERTY('ProductVersion') AS NVARCHAR)) - 1)) != 9)
 	BEGIN
 		EXEC sp_executesql @stmt = N'SELECT
@@ -24,4 +26,6 @@ BEGIN
 						ON [SM].[object_id] = [RC].[classifier_function_id]
 							FOR XML PATH(''Classifier'')) AS XML) AS [Classifier]'
 	END
+
+	REVERT;
 END

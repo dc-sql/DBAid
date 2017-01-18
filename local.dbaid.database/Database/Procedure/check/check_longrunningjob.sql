@@ -10,6 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
 	DECLARE @check TABLE([message] NVARCHAR(4000)
 						,[state] NVARCHAR(8));
 
@@ -62,7 +64,9 @@ BEGIN
 	END 
 
 	IF (SELECT COUNT(*) FROM @check) < 1
-		INSERT INTO @check VALUES(N'Job(s) not currently executing.',N'NA');
+		INSERT INTO @check VALUES(N'Job(s) not currently executing above max runtime threshold.',N'NA');
 
 	SELECT [message], [state] FROM @check;
+
+	REVERT;
 END

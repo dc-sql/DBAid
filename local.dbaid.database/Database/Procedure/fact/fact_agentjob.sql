@@ -10,6 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
 	SELECT [job_name]
 		,[job_owner]
 		,[job_enabled]
@@ -22,4 +24,6 @@ BEGIN
 		,[job_modified]
 		,[schedule_detail]
 	FROM [info].[agentjob];
+
+	REVERT;
 END

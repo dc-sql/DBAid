@@ -26,6 +26,8 @@ BEGIN
 							,[cntr_type] INT
 							,[ms_ticks] BIGINT);
 
+	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
 	INSERT INTO @sample1
 		SELECT ROW_NUMBER() OVER (ORDER BY [S].[object_name],[S].[cntr_type],[S].[counter_name],[S].[instance_name]) AS [rownum]
 			,[S].[object_name]
@@ -116,4 +118,6 @@ BEGIN
 			,[S1].[counter_name]
 			,[S1].[instance_name]
 	OPTION(RECOMPILE);
+
+	REVERT;
 END
