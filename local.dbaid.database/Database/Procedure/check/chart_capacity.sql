@@ -207,7 +207,6 @@ BEGIN
 			,SUM([F].[size_reserved_mb]) AS [reserved]
 			,CASE WHEN [F].[filegroup_is_readonly] = 1 OR [DB].[is_read_only] = 1 THEN SUM([F].[size_reserved_mb])
 				ELSE (SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb]))
-				--
 				END AS [max]
 			,MAX([S].[fg_size_available_mb]) AS [fg_size_available_mb]
 		FROM [dbo].[config_database] [C]
@@ -245,9 +244,8 @@ BEGIN
 			,[C].[capacity_critical_percent_free]
 			,[C].[capacity_warning_percent_free]
 	)
-	SELECT 
-	
-	CAST([used] AS NUMERIC(20,2)) AS [val]
+	SELECT	
+		CAST([used] AS NUMERIC(20,2)) AS [val]
 		,CAST([warning] AS NUMERIC(20,2)) AS [warn]
 		,CAST([critical] AS NUMERIC(20,2)) AS [crit]
 		,N''''
