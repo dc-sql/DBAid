@@ -28,7 +28,10 @@ BEGIN
 	DECLARE @space_info AS TABLE([database_id] INT,
 								[file_id] INT,
 								[size_available_mb] NUMERIC(20,2),
-								[disk_available_mb] NUMERIC(20,2));
+								[disk_available_mb] NUMERIC(20,2),
+								[max_size] INT,
+								[growth] INT,
+								[is_percent_growth] INT);
 	
 	-- Sometimes dm_os_volume_stats doesn't return disk volume information due to wonky permissions in the OS. Using xp_fixeddrives for now.
 	/* IF EXISTS (SELECT * FROM sys.system_objects WHERE [name] = N'dm_os_volume_stats')
@@ -123,7 +126,8 @@ BEGIN
 								WHEN [MF].[is_percent_growth] = 0 
 									THEN 
 										CASE 
-											WHEN ([MF].[max_size]/128.00) > [C].[mb_free] /* When maximum file size is greater than AvailableFreeSpaceMB */
+											--WHEN ([MF].[max_size]/128.00) > [C].[mb_free] /* When maximum file size is greater than AvailableFreeSpaceMB */  --this seems weird
+											  WHEN (([MF].[max_size]/128.00) - [FI].[size_reserved_mb]) > [C].[mb_free]
 												THEN /* Then calculate using disk AvailableFreeSpaceMB */
 													CASE
 														WHEN ([MF].[growth]/128.00) > [C].[mb_free] /* When file growth is greater than disk AvailableFreeSpaceMB */
@@ -131,7 +135,8 @@ BEGIN
 														WHEN ([MF].[growth]/128.00) <= [C].[mb_free] /* When file growth is less than equal to disk AvailableFreeSpaceMB */
 															THEN [C].[mb_free] /* Then return disk AvailableFreeSpaceMB */
 													END
-											WHEN ([MF].[max_size]/128.00) < [C].[mb_free] /* When maximum file size is less than disk AvailableFreeSpaceMB */
+											--WHEN ([MF].[max_size]/128.00) < [C].[mb_free] /* When maximum file size is less than disk AvailableFreeSpaceMB */
+											 WHEN (([MF].[max_size]/128.00) - [FI].[size_reserved_mb]) < [C].[mb_free]
 												THEN /* Then calculate using maximum file size */
 													CASE
 														WHEN ([MF].[growth]/128.00) > (([MF].[max_size]/128.00)-([MF].[size]/128.00)) /* When file growth is greater than file max size */
@@ -140,10 +145,12 @@ BEGIN
 															THEN ([MF].[max_size]/128.00)-[FI].[size_used_mb] /* Then calculate available space from max file size minus used space*/
 													END
 										END
+										
 								WHEN [MF].[is_percent_growth] = 1 
 									THEN 
 										CASE 
-											WHEN ([MF].[max_size]/128.00) > [C].[mb_free]
+											--WHEN ([MF].[max_size]/128.00) > [C].[mb_free]
+											  WHEN (([MF].[max_size]/128.00) - [FI].[size_reserved_mb]) > [C].[mb_free]
 												THEN
 													CASE
 														WHEN ([MF].[size]/128.00)*([MF].[growth]/100.00) > [C].[mb_free]
@@ -151,7 +158,8 @@ BEGIN
 														WHEN ([MF].[size]/128.00)*([MF].[growth]/100.00) < [C].[mb_free]
 															THEN [C].[mb_free]
 													END
-											WHEN ([MF].[max_size]/128.00) < [C].[mb_free]
+											--WHEN ([MF].[max_size]/128.00) < [C].[mb_free]
+											WHEN (([MF].[max_size]/128.00) - [FI].[size_reserved_mb]) < [C].[mb_free]
 												THEN
 													CASE
 														WHEN ([MF].[size]/128.00)*([MF].[growth]/100.00) >= (([MF].[max_size]/128.00)-([MF].[size]/128.00))
@@ -162,8 +170,16 @@ BEGIN
 										END
 							END
 					END
-			END AS NUMERIC(20,2)) AS [size_available_mb]
+			END  AS NUMERIC(20,2)) AS [size_available_mb]
 			,CAST([C].[mb_free] AS NUMERIC(20,2)) AS [disk_available_mb]
+			,CASE
+				WHEN 
+					[MF].[max_size] = -1 AND [MF].[growth] = 0 THEN [FI].[size_reserved_mb]
+				ELSE
+					[MF].[max_size]
+				END AS [max_size]
+			,[MF].[growth]
+			,[MF].[is_percent_growth]
 		FROM sys.databases [DB]
 			INNER JOIN sys.master_files [MF]
 				ON [DB].[database_id] = [MF].[database_id]
@@ -191,17 +207,23 @@ BEGIN
 			,SUM([F].[size_reserved_mb]) AS [reserved]
 			,CASE WHEN [F].[filegroup_is_readonly] = 1 OR [DB].[is_read_only] = 1 THEN SUM([F].[size_reserved_mb])
 				ELSE (SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb]))
+				--
 				END AS [max]
-			--,MAX([S].[fg_size_available_mb]) AS [fg_size_available_mb]
+			,MAX([S].[fg_size_available_mb]) AS [fg_size_available_mb]
 		FROM [dbo].[config_database] [C]
 			INNER JOIN [sys].[databases] [DB]
 				ON [C].[database_id] = [DB].[database_id]
 			INNER JOIN @file_info [F]
 				ON [C].[database_id] = [F].[database_id]
 			CROSS APPLY (SELECT SUM([A].[fg_size_available_mb]) AS [fg_size_available_mb]
-						FROM (SELECT CASE WHEN SUM([SI].[size_available_mb]) >= MAX([SI].[disk_available_mb]) 
+						FROM (SELECT CASE WHEN 
+											--SUM([SI].[size_available_mb]) >= MAX([SI].[disk_available_mb])
+											(SUM([SI].[max_size]/128.00)-SUM([FI].[size_reserved_mb])) >= MAX([SI].[disk_available_mb]) --When the potential max size of the database if greater than the disk free
+												 OR (SUM([SI].[growth]) > 0 ) AND (MIN([SI].[max_size]) < 0) --Or check if growth is unlimited.
 											THEN MAX([SI].[disk_available_mb]) + (SUM([FI].[size_reserved_mb])-SUM([FI].[size_used_mb]))
-											ELSE SUM([SI].[size_available_mb]) END AS [fg_size_available_mb]
+											--THEN SUM([SI].[size_available_mb]) 
+											ELSE SUM([SI].[size_available_mb]) 
+											END AS [fg_size_available_mb]
 								FROM @space_info [SI]
 									INNER JOIN @file_info [FI]
 										ON [SI].[database_id] = [FI].[database_id]
@@ -211,7 +233,8 @@ BEGIN
 								GROUP BY [FI].[database_id]
 									,[FI].[filegroup_id]
 									,[FI].[file_type]
-									,[FI].[drive]) [A]) [S]([fg_size_available_mb])
+									,[FI].[drive]
+									) [A]) [S]([fg_size_available_mb])
 		GROUP BY [C].[database_id]
 			,[C].[db_name]
 			,[DB].[is_read_only]
@@ -222,7 +245,9 @@ BEGIN
 			,[C].[capacity_critical_percent_free]
 			,[C].[capacity_warning_percent_free]
 	)
-	SELECT CAST([used] AS NUMERIC(20,2)) AS [val]
+	SELECT 
+	
+	CAST([used] AS NUMERIC(20,2)) AS [val]
 		,CAST([warning] AS NUMERIC(20,2)) AS [warn]
 		,CAST([critical] AS NUMERIC(20,2)) AS [crit]
 		,N''''
@@ -247,6 +272,5 @@ BEGIN
 	FROM Dataset
 	ORDER BY [database_id], [data_space];
 
-	REVERT;
 	REVERT;
 END;
