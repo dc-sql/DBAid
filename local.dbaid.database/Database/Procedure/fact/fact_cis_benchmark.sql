@@ -156,7 +156,9 @@ BEGIN
 	SELECT '2.14','2.14 Rename the sa Login Account (Scored)' AS [Policy Name], CASE WHEN [name] = 'sa' THEN 0 ELSE 1 END AS [score], [name] AS [value] FROM [master].[sys].[server_principals] WHERE [sid] = 0x01
 	INSERT INTO @results
 	SELECT '2.15','2.15 Set the xp_cmdshell Server Configuration Option to 0 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 0 ELSE 1 END AS [pass], CAST([value_in_use] AS NVARCHAR(10)) AS [value] FROM [info].[instance] WHERE [name] = 'xp_cmdshell'
-
+	INSERT INTO @results
+	SELECT '2.16','2.16 Ensure ''AUTO_CLOSE OFF'' is set on contained databases (Scored)' AS [Policy Name], CASE WHEN EXISTS (SELECT 1 FROM [sys].[databases] WHERE [containment] <> 0 and [is_auto_close_on] = 1) THEN 0 ELSE 1 END AS [pass], (SELECT COUNT([is_auto_close_on]) FROM [sys].[databases] WHERE [containment] <> 0 and [is_auto_close_on] = 1) AS [value]
+	
 	--3. Authentication and Authorization
 	INSERT INTO @results
 	SELECT '3.1','3.1 Set The Server Authentication Property To Windows Authentication mode (Scored)' AS [Policy Name], CASE WHEN [value] = 0 THEN 0 ELSE 1 END AS [score], CAST([value] AS NVARCHAR(10)) AS [value] FROM [info].[service] WHERE [property] = 'IsIntegratedSecurityOnly'
