@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Security;
 using System.Security.Cryptography;
 using System.IO;
 using System.IO.Compression;
@@ -7,10 +8,6 @@ namespace dbaid.common
 {
     public class Crypto
     {
-        //  Call this function to remove the key from memory after use for security
-        [System.Runtime.InteropServices.DllImport("KERNEL32.DLL", EntryPoint = "RtlZeroMemory")]
-        public static extern bool ZeroMemory(IntPtr Destination, int Length);
-
         private static void CopyStream(Stream input, Stream output)
         {
             byte[] buffer = new byte[4096];
@@ -22,9 +19,9 @@ namespace dbaid.common
             }
         }
 
-        public static void encrypt(String publicKey, MemoryStream dataStream, string filepath)
+        public static void Encrypt(String publicKey, MemoryStream dataStream, string filePath)
         {
-            if (dataStream.Length == 0 || String.IsNullOrEmpty(publicKey) || !Directory.Exists(Path.GetDirectoryName(filepath)))
+            if (dataStream.Length == 0 || String.IsNullOrEmpty(publicKey) || !Directory.Exists(Path.GetDirectoryName(filePath)))
             {
                 throw new ArgumentException("Bad parameters supplied to encrypt method");
             }
@@ -56,7 +53,7 @@ namespace dbaid.common
 
                 // Create Memmory buffer stream, Crypto Stream, and GZip Stream.
                 //using (MemoryStream msOutBuff = new MemoryStream())
-                using (FileStream fsOut = new FileStream(filepath, FileMode.Create, FileAccess.Write))
+                using (FileStream fsOut = new FileStream(filePath, FileMode.Create, FileAccess.Write))
                 using (CryptoStream csEncrypt = new CryptoStream(fsOut, symmetricKey.CreateEncryptor(), CryptoStreamMode.Write))
                 using (DeflateStream dsCompress = new DeflateStream(csEncrypt, CompressionMode.Compress))
                 {
@@ -73,9 +70,9 @@ namespace dbaid.common
             }
         }
 
-        public static void decrypt(String privateKey, MemoryStream dataStream, string filepath)
+        public static void Decrypt(String privateKey, MemoryStream dataStream, string filePath)
         {
-            if (dataStream.Length == 0 || String.IsNullOrEmpty(privateKey) || !Directory.Exists(Path.GetDirectoryName(filepath)))
+            if (dataStream.Length == 0 || String.IsNullOrEmpty(privateKey) || !Directory.Exists(Path.GetDirectoryName(filePath)))
             {
                 throw new ArgumentException("Bad parameters supplied to decrypt method");
             }
@@ -116,7 +113,7 @@ namespace dbaid.common
                 symmetricKey.Key = rsa.Decrypt(keyEncrypted, false);
                 symmetricKey.IV = rsa.Decrypt(ivEncrypted, false);
 
-                using (FileStream fsOut = new FileStream(filepath, FileMode.Create, FileAccess.ReadWrite))
+                using (FileStream fsOut = new FileStream(filePath, FileMode.Create, FileAccess.ReadWrite))
                 using (CryptoStream csDecrypt = new CryptoStream(dataStream, symmetricKey.CreateDecryptor(), CryptoStreamMode.Read))
                 using (DeflateStream dsDecompress = new DeflateStream(csDecrypt, CompressionMode.Decompress))
                 {

@@ -123,7 +123,7 @@ namespace server.dbaid.extractor
                     {
                         using (MemoryStream ms = new MemoryStream(File.ReadAllBytes(fileToProcess)))
                         {
-                            Crypto.decrypt(privateKey, ms, fileToProcess.Replace(ext, ".decrypted.xml"));
+                            Crypto.Decrypt(privateKey, ms, fileToProcess.Replace(ext, ".decrypted.xml"));
                         }
                     }
                     catch (Exception ex)
