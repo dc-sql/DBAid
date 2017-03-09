@@ -85,6 +85,21 @@ BEGIN
 							[dpr].[name] = ''guest'' 
 							AND [dpe].[permission_name] = ''CONNECT''';
 
+	--get contained database access
+	IF OBJECT_ID('tempdb..#__contained') IS NOT NULL
+		DROP TABLE #__contained;		
+	CREATE TABLE #__contained ([name] NVARCHAR(128) NULL)
+
+	EXEC foreachdb N'USE [?]; 
+					INSERT INTO #__contained 
+					SELECT 
+						[name]
+					FROM [sys].[database_principals]
+					WHERE 
+						[name] NOT IN (''dbo'',''Information_Schema'',''sys'',''guest'')
+						AND [type] IN (''U'',''S'',''G'')
+						AND [authentication_type] = 2';
+
 	--get errorlog count
 	DECLARE @NumErrorLogs INT
 	    EXEC [master].[dbo].[xp_instance_regread] N'HKEY_LOCAL_MACHINE', N'Software\Microsoft\MSSQLServer\MSSQLServer', N'NumErrorLogs', @NumErrorLogs OUTPUT
@@ -166,6 +181,8 @@ BEGIN
 	SELECT '3.2','3.2 Revoke CONNECT permissions on the guest user within all SQL Server databases excluding the master, msdb and tempdb (Scored)' AS [Policy Name], CASE WHEN COUNT([id]) != 0 THEN 0 ELSE 1 END AS [score], CAST(COUNT([id]) AS NVARCHAR(10)) AS [value] FROM #__guest WHERE [id] NOT IN (DB_ID('master'),DB_ID('msdb'),DB_ID('tempdb')) 
 	INSERT INTO @results
 	SELECT '3.3','3.3 Drop Orphaned Users From SQL Server Databases (Scored)' AS [Policy Name], CASE WHEN COUNT([DbName]) != 0 THEN 0 ELSE 1 END AS [score], CAST(COUNT([DbName]) AS NVARCHAR(10)) AS [value] FROM #__orphan 
+	INSERT INTO @results
+	SELECT '3.4','3.4 Do not use SQL Authentication in contained databases (Scored)' AS [Policy Name], CASE WHEN COUNT([name]) != 0 THEN 0 ELSE 1 END AS [score], CAST(COUNT([name]) AS NVARCHAR(10)) AS [value] FROM #__contained
 
 	--4. Password Policies
 	INSERT INTO @results
