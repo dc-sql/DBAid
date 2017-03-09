@@ -95,45 +95,29 @@
     <Folder Include="configg" />
     <Folder Include="system\methods" />
     <Folder Include="collector" />
-    <Folder Include="wmiload" />
-    <Folder Include="system\module_cmd" />
     <Folder Include="audit" />
-    <Folder Include="pnp4nagios" />
-    <Folder Include="pnp4nagios\capacity" />
-    <Folder Include="pnp4nagios\perfmon" />
   </ItemGroup>
   <ItemGroup>
-    <Build Include="system\methods\usp_execute_foreach_db.sql">
+    <Build Include="system\methods\execute_foreach_db.sql">
       <QuotedIdentifier>ProjectDefault</QuotedIdentifier>
     </Build>
-    <Build Include="system\methods\usp_delete_system_history.sql" />
-    <Build Include="system\methods\udf_get_clean_string.sql" />
-    <Build Include="system\methods\udf_get_datetimeoffset.sql" />
-    <Build Include="system\methods\udf_get_instance_guid.sql" />
-    <Build Include="system\methods\udf_get_instance_tag.sql" />
-    <Build Include="system\methods\udf_get_product_version.sql" />
-    <Build Include="wmiload\tbl_wmi_object.sql" />
-    <Build Include="wmiload\udt_wmi_object.sql" />
-    <Build Include="wmiload\usp_insert_wmi_object.sql" />
-    <Build Include="wmiload\tbl_wmi_query.sql" />
-    <Build Include="system\tbl_parameter_default.sql" />
-    <Build Include="system\module_cmd\tbl_module_cmd.sql" />
-    <Build Include="system\module_cmd\udf_get_module_cmd.sql" />
+    <Build Include="system\methods\delete_system_history.sql" />
+    <Build Include="system\methods\get_clean_string.sql" />
+    <Build Include="system\methods\get_datetimeoffset.sql" />
+    <Build Include="system\methods\get_instance_guid.sql" />
+    <Build Include="system\methods\get_instance_tag.sql" />
+    <Build Include="system\methods\get_product_version.sql" />
+    <Build Include="system\configuration.sql" />
     <Build Include="audit\usp_cis_benchmark.sql" />
     <Build Include="audit\usp_sql_password.sql" />
-    <Build Include="collector\usp_get_backup_history.sql" />
-    <Build Include="collector\usp_get_errorlog_history.sql" />
-    <Build Include="collector\usp_get_agentjob_history.sql" />
-    <Build Include="collector\tbl_execution_timestamp.sql" />
-    <Build Include="configg\agent_job.sql" />
+    <Build Include="collector\get_backup_history.sql" />
+    <Build Include="collector\get_errorlog_history.sql" />
+    <Build Include="collector\get_agentjob_history.sql" />
+    <Build Include="collector\last_execution.sql" />
+    <Build Include="configg\get_instance_agentjobs.sql" />
     <Build Include="checkmk\inventory_procedure.sql">
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>
-    <Build Include="pnp4nagios\capacity\tbl_config_capacity_fg.sql" />
-    <Build Include="pnp4nagios\capacity\usp_chart_capacity_db.sql" />
-    <Build Include="pnp4nagios\capacity\usp_chart_capacity_fg.sql" />
-    <Build Include="pnp4nagios\perfmon\tbl_config_perfmon.sql" />
-    <Build Include="pnp4nagios\perfmon\usp_chart_perfmon.sql" />
     <Build Include="create_schema.sql" />
     <PostDeploy Include="post_script.sql" />
     <PreDeploy Include="pre_script.sql" />
@@ -149,6 +133,11 @@
     <Build Include="checkmk\check_logshipping.sql" />
     <Build Include="checkmk\check_mirroring.sql" />
     <Build Include="checkmk\check_alwayson.sql" />
+    <Build Include="checkmk\chart_capacity_fg.sql" />
+    <Build Include="checkmk\chart_capacity_db.sql" />
+    <Build Include="checkmk\configuration_perfmon.sql" />
+    <Build Include="checkmk\chart_perfmon.sql" />
+    <Build Include="system\methods\get_split_string.sql" />
   </ItemGroup>
   <ItemGroup>
     <SqlCmdVariable Include="PublicKey">
@@ -178,26 +167,21 @@
     </ArtifactReference>
   </ItemGroup>
   <ItemGroup>
-    <Build Include="configg\always_on.sql" />
-    <Build Include="configg\database.sql" />
-    <Build Include="configg\db_file.sql" />
-    <Build Include="configg\db_mail.sql" />
-    <Build Include="configg\dbaid_setting_chart_performace_counter.sql" />
-    <Build Include="configg\dbaid_setting_check_configuration.sql" />
-    <Build Include="configg\dbaid_setting_procedure_list.sql" />
-    <Build Include="configg\dbaid_setting_static_parameter.sql" />
-    <Build Include="configg\dbaid_setting_wmi_service_query.sql" />
-    <Build Include="configg\instance.sql" />
-    <Build Include="configg\logshipping_primary.sql" />
-    <Build Include="configg\logshipping_secondary.sql" />
-    <Build Include="configg\maintenance_plan.sql" />
-    <Build Include="configg\mirroring.sql" />
-    <Build Include="configg\replication_publisher.sql" />
-    <Build Include="configg\replication_subscriber.sql" />
-    <Build Include="configg\resource_governor.sql" />
-    <Build Include="configg\security.sql" />
-    <Build Include="configg\server_object.sql" />
-    <Build Include="configg\service.sql" />
+    <Build Include="configg\get_instance_alwayson_groups.sql" />
+    <Build Include="configg\get_instance_databases.sql" />
+    <Build Include="configg\get_database_files.sql" />
+    <Build Include="configg\get_instance_databasemail_profiles.sql" />
+    <Build Include="configg\get_instance_sysconfigurations.sql" />
+    <Build Include="configg\get_database_logshipping_primary.sql" />
+    <Build Include="configg\get_database_logshipping_secondary.sql" />
+    <Build Include="configg\get_instance_maintenance_plans.sql" />
+    <Build Include="configg\get_database_mirroring.sql" />
+    <Build Include="configg\get_instance_replication_publishers.sql" />
+    <Build Include="configg\get_instance_replication_subscribers.sql" />
+    <Build Include="configg\get_instance_resource_governors.sql" />
+    <Build Include="configg\get_instance_security_principals.sql" />
+    <Build Include="configg\get_instance_server_objects.sql" />
+    <Build Include="configg\get_instance_service_configurations.sql" />
   </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>

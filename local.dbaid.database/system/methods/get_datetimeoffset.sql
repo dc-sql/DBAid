@@ -1,0 +1,15 @@
+﻿/*
+Copyright (C) 2015 Datacom
+GNU GENERAL PUBLIC LICENSE
+Version 3, 29 June 2007
+*/
+
+CREATE FUNCTION [system].[get_datetimeoffset]  
+(
+	@datetime DATETIME2 = NULL
+)
+RETURNS TABLE
+WITH ENCRYPTION
+RETURN(
+	SELECT TODATETIMEOFFSET(@datetime, DATEPART(TZOFFSET, SYSDATETIMEOFFSET())) AS [datetimeoffset]
+)
