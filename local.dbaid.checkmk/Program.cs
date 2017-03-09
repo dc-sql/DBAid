@@ -9,8 +9,6 @@ namespace local.dbaid.checkmk
 {
     class Program
     {
-        private const string mssqlBadge = "mssql";
-        private const string mssqlConfigCheck = "[maintenance].[check_config]";
         private const string mssqlControlCheck = "[control].[check]";
         private const string mssqlControlChart = "[control].[chart]";
         private const string mssqlEditionCheck = "SELECT * FROM [dbo].[cleanstring](@@VERSION)";
@@ -29,14 +27,12 @@ namespace local.dbaid.checkmk
 
                 DataSet cds = new DataSet(); //Command dataset
                 DataSet rds = new DataSet(); //Result dataset
-
+                
                 try
                 {
-                    // refresh check configuration
-                    Query.Execute(cs, mssqlConfigCheck);
-
                     // output service version
-                    Console.WriteLine("0 {0}_{1} - {2}", "mssql", instance, Query.Select(cs, mssqlEditionCheck).Rows[0][0].ToString());
+                    string version = Query.Select(cs, "SELECT * FROM [dbo].[cleanstring](@@VERSION)").Rows[0][0].ToString();
+                    Console.WriteLine("0 {0}_{1} - {2}", "mssql", instance, version);
 
                     if (isCheck == "1")
                     {
@@ -78,7 +74,7 @@ namespace local.dbaid.checkmk
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("2 {0}_{1} - {2}", mssqlBadge, connStr.Name.ToUpper(), e.Message);
+                    Console.WriteLine("2 {0}_{1} - {2}", "mssql", connStr.Name.ToUpper(), e.Message);
 
                     return 2;
                 }

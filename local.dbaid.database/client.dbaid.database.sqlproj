@@ -101,13 +101,6 @@
     <Folder Include="pnp4nagios" />
     <Folder Include="pnp4nagios\capacity" />
     <Folder Include="pnp4nagios\perfmon" />
-    <Folder Include="checkmk\agentjob" />
-    <Folder Include="checkmk\alwayson" />
-    <Folder Include="checkmk\backup" />
-    <Folder Include="checkmk\checkdb" />
-    <Folder Include="checkmk\database" />
-    <Folder Include="checkmk\logshipping" />
-    <Folder Include="checkmk\mirroring" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="system\methods\usp_execute_foreach_db.sql">
@@ -133,7 +126,7 @@
     <Build Include="collector\usp_get_agentjob_history.sql" />
     <Build Include="collector\tbl_execution_timestamp.sql" />
     <Build Include="configg\agent_job.sql" />
-    <Build Include="checkmk\usp_inventory.sql">
+    <Build Include="checkmk\inventory_procedure.sql">
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>
     <Build Include="pnp4nagios\capacity\tbl_config_capacity_fg.sql" />
@@ -144,15 +137,18 @@
     <Build Include="create_schema.sql" />
     <PostDeploy Include="post_script.sql" />
     <PreDeploy Include="pre_script.sql" />
-    <Build Include="checkmk\agentjob\tbl_config_agentjob.sql" />
-    <Build Include="checkmk\agentjob\usp_check_agentjob.sql" />
-    <Build Include="checkmk\alwayson\usp_check_alwayson.sql" />
-    <Build Include="checkmk\backup\tbl_config_backup.sql" />
-    <Build Include="checkmk\backup\usp_check_backup.sql" />
-    <Build Include="checkmk\checkdb\usp_check_checkdb.sql" />
-    <Build Include="checkmk\database\usp_check_database.sql" />
-    <Build Include="checkmk\logshipping\usp_check_logshipping.sql" />
-    <Build Include="checkmk\mirroring\usp_check_mirroring.sql" />
+    <Build Include="checkmk\configuration_procedure.sql" />
+    <Build Include="checkmk\inventory_database.sql" />
+    <Build Include="checkmk\configuration_database.sql" />
+    <Build Include="checkmk\configuration_agentjob.sql" />
+    <Build Include="checkmk\inventory_agentjob.sql" />
+    <Build Include="checkmk\check_agentjob.sql" />
+    <Build Include="checkmk\check_backup.sql" />
+    <Build Include="checkmk\check_checkdb.sql" />
+    <Build Include="checkmk\check_database.sql" />
+    <Build Include="checkmk\check_logshipping.sql" />
+    <Build Include="checkmk\check_mirroring.sql" />
+    <Build Include="checkmk\check_alwayson.sql" />
   </ItemGroup>
   <ItemGroup>
     <SqlCmdVariable Include="PublicKey">
