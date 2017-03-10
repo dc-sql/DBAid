@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "client.dbaid.database", "Local.DBAid.Database\client.dbaid.database.sqlproj", "{30BBB9FF-8CB9-44CB-B27E-D722FA8552E4}"
+Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "database", "Local.DBAid.Database\database.sqlproj", "{30BBB9FF-8CB9-44CB-B27E-D722FA8552E4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "client.dbaid.collector", "Local.DBAid.Collector\client.dbaid.collector.csproj", "{A55B67DB-74C8-4DB1-AAB3-003E8B53531B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "collector", "Local.DBAid.Collector\collector.csproj", "{A55B67DB-74C8-4DB1-AAB3-003E8B53531B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "client.dbaid.checkmk", "local.dbaid.checkmk\client.dbaid.checkmk.csproj", "{117BF6E5-916A-4060-982E-D7B0C1CDA6DD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "checkmk", "local.dbaid.checkmk\checkmk.csproj", "{117BF6E5-916A-4060-982E-D7B0C1CDA6DD}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dbaid.common", "dbaid.common\dbaid.common.csproj", "{A98BE846-DF13-4861-B963-7BAB212E8D4B}"
 EndProject

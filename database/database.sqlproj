@@ -27,12 +27,13 @@
     <AllowSnapshotIsolation>False</AllowSnapshotIsolation>
     <ReadCommittedSnapshot>False</ReadCommittedSnapshot>
     <DacVersion>2.0.0.0</DacVersion>
+    <GenerateSqlClrSymbols>False</GenerateSqlClrSymbols>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <Name>client.dbaid.database</Name>
+    <Name>database</Name>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectVersion>4.1</ProjectVersion>
     <ProjectGuid>{30bbb9ff-8cb9-44cb-b27e-d722fa8552e4}</ProjectGuid>
@@ -40,8 +41,8 @@
     <OutputType>Database</OutputType>
     <RootPath>
     </RootPath>
-    <RootNamespace>dbaid.database</RootNamespace>
-    <AssemblyName>dbaid.database</AssemblyName>
+    <RootNamespace>dbaid</RootNamespace>
+    <AssemblyName>dbaid</AssemblyName>
     <ModelCollation>1033,CI</ModelCollation>
     <DefaultFileStructure>BySchemaAndSchemaType</DefaultFileStructure>
     <DeployToDatabase>True</DeployToDatabase>
@@ -138,16 +139,6 @@
     <Build Include="checkmk\configuration_perfmon.sql" />
     <Build Include="checkmk\chart_perfmon.sql" />
     <Build Include="system\methods\get_split_string.sql" />
-  </ItemGroup>
-  <ItemGroup>
-    <SqlCmdVariable Include="PublicKey">
-      <DefaultValue>Generate public key using CLR project dbaid.keygen</DefaultValue>
-      <Value>$(SqlCmdVar__15)</Value>
-    </SqlCmdVariable>
-    <SqlCmdVariable Include="ServiceLoadExe">
-      <DefaultValue>C:\Datacom\dbaid.configg.exe</DefaultValue>
-      <Value>$(SqlCmdVar__16)</Value>
-    </SqlCmdVariable>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />

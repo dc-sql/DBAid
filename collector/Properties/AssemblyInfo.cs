@@ -5,13 +5,13 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("DBAid Common Method Library")]
+[assembly: AssemblyTitle("DBAid Data Collector")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Datacom")]
 [assembly: AssemblyProduct("DBAid")]
 [assembly: AssemblyCopyright("Copyright © 2015 Datacom")]
-[assembly: AssemblyTrademark("Datacom ™")]
+[assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("303e814d-8491-45d9-8175-3a5e77773f88")]
+[assembly: Guid("70fd5162-18fb-4b3c-912b-a91fecd00451")]
 
 // Version information for an assembly consists of the following four values:
 //
