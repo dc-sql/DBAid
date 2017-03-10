@@ -97,6 +97,9 @@
     <Folder Include="system\methods" />
     <Folder Include="collector" />
     <Folder Include="audit" />
+    <Folder Include="system\security" />
+    <Folder Include="audit\procedures" />
+    <Folder Include="audit\tables" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="system\methods\execute_foreach_db.sql">
@@ -109,8 +112,6 @@
     <Build Include="system\methods\get_instance_tag.sql" />
     <Build Include="system\methods\get_product_version.sql" />
     <Build Include="system\configuration.sql" />
-    <Build Include="audit\usp_cis_benchmark.sql" />
-    <Build Include="audit\usp_sql_password.sql" />
     <Build Include="collector\get_backup_history.sql" />
     <Build Include="collector\get_errorlog_history.sql" />
     <Build Include="collector\get_agentjob_history.sql" />
@@ -119,7 +120,6 @@
     <Build Include="checkmk\inventory_procedure.sql">
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>
-    <Build Include="create_schema.sql" />
     <PostDeploy Include="post_script.sql" />
     <PreDeploy Include="pre_script.sql" />
     <Build Include="checkmk\configuration_procedure.sql" />
@@ -139,6 +139,10 @@
     <Build Include="checkmk\configuration_perfmon.sql" />
     <Build Include="checkmk\chart_perfmon.sql" />
     <Build Include="system\methods\get_split_string.sql" />
+    <Build Include="system\security\schemas.sql" />
+    <Build Include="audit\procedures\get_cis_benchmark.sql" />
+    <Build Include="audit\procedures\get_database_last_access.sql" />
+    <Build Include="audit\tables\database_last_access.sql" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />

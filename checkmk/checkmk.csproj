@@ -74,16 +74,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config.release" />
     <None Include="App.config" />
     <None Include="PNP4nagios_php_templates\mssql_capacity.php" />
     <None Include="PNP4nagios_php_templates\mssql_perfcounter.php" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\dbaid.common\dbaid.common.csproj">
-      <Project>{a98be846-df13-4861-b963-7bab212e8d4b}</Project>
-      <Name>dbaid.common</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

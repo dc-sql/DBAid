@@ -69,25 +69,6 @@ WHEN NOT MATCHED BY TARGET THEN
 			[Source].[instance_name]);
 GO
 
-/* General perf counters */
-MERGE INTO [wmiload].[tbl_wmi_query] AS [Target] 
-USING (VALUES('SELECT DisplayName,BinaryPath,Description,HostName,ServiceName,StartMode,StartName FROM SqlService WHERE DisplayName LIKE ''%' + @@SERVICENAME + '%''')
-	,('SELECT InstanceName,ProtocolDisplayName,Enabled FROM ServerNetworkProtocol WHERE InstanceName LIKE ''%' + @@SERVICENAME + '%''')
-	,('SELECT InstanceName,PropertyName,PropertyStrVal FROM ServerNetworkProtocolProperty WHERE IPAddressName = ''IPAll'' AND InstanceName LIKE ''%' + @@SERVICENAME + '%''')
-	,('SELECT ServiceName,PropertyName,PropertyNumValue,PropertyStrValue FROM SqlServiceAdvancedProperty WHERE ServiceName LIKE ''%' + @@SERVICENAME + '%''')
-	,('SELECT InstanceName,FlagName,FlagValue FROM ServerSettingsGeneralFlag WHERE InstanceName LIKE ''%' + @@SERVICENAME + '%''')
-	,('SELECT * FROM Win32_OperatingSystem')
-	,('SELECT Caption FROM Win32_TimeZone')
-	,('SELECT * FROM win32_processor')
-	,('SELECT Domain, Manufacturer, Model, PrimaryOwnerName, TotalPhysicalMemory FROM Win32_computerSystem')
-	,('SELECT ServiceName, Caption, DHCPEnabled, DNSDomain, IPAddress, MACAddress FROM Win32_NetworkAdapterConfiguration WHERE IPEnabled = ''TRUE''')
-	,('SELECT DriveLetter, Label, DeviceID, DriveType, FileSystem, Capacity, BlockSize, Compressed, IndexingEnabled FROM Win32_Volume WHERE SystemVolume <> ''TRUE'' AND DriveType <> 4 AND DriveType <> 5')
-) AS [Source] ([query])  
-ON [Target].[query] = [Source].[query] 
-WHEN NOT MATCHED BY TARGET THEN  
-	INSERT ([query]) VALUES ([Source].[query]);
-GO
-
 /* execute dbaid inventory */
 EXEC [checkmk].[usp_inventory];
 GO

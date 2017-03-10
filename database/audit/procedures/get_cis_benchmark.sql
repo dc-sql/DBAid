@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [audit].[usp_cis_benchmark]
+CREATE PROCEDURE [audit].[get_cis_benchmark]
 WITH ENCRYPTION, EXECUTE AS 'dbo'
 AS
 BEGIN
@@ -42,7 +42,7 @@ BEGIN
 		DROP TABLE #__guest;		
 	CREATE TABLE #__guest (id INT, [name] NVARCHAR(128), [permission_name] NVARCHAR(128))
 
-	EXEC [system].[usp_execute_foreach_db] N'USE [?]; INSERT INTO #__guest 
+	EXEC [system].[execute_foreach_db] N'USE [?]; INSERT INTO #__guest 
 						SELECT DB_ID() AS DBName, 
 							[dpr].[name], 
 							[dpe].[permission_name] 
@@ -53,14 +53,13 @@ BEGIN
 							[dpr].[name] = ''guest'' 
 							AND [dpe].[permission_name] = ''CONNECT''';
 
-		SELECT
-			[property]
-			,[value]
-		FROM [wmiload].[tbl_wmi_object]
-		WHERE 
-		[class_object] LIKE '%ServerNetworkProtocol%' OR [class_object] LIKE '%ServerSettingsGeneralFlag%'
-		OR [property] IN ('VERSION','SPLEVEL','IsClustered','IsIntegratedSecurityOnly')
-	UNION
+	--	SELECT [property]
+	--		,[value]
+	--	FROM [wmiload].[tbl_wmi_object]
+	--	WHERE 
+	--	[class_object] LIKE '%ServerNetworkProtocol%' OR [class_object] LIKE '%ServerSettingsGeneralFlag%'
+	--	OR [property] IN ('VERSION','SPLEVEL','IsClustered','IsIntegratedSecurityOnly')
+	--UNION
 		SELECT  [name]
 			,[value_in_use]
 		FROM [sys].[configurations]

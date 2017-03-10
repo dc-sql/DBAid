@@ -84,14 +84,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config.release" />
     <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\dbaid.common\dbaid.common.csproj">
-      <Project>{a98be846-df13-4861-b963-7bab212e8d4b}</Project>
-      <Name>dbaid.common</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
