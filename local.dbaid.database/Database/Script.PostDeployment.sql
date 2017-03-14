@@ -420,6 +420,13 @@ BEGIN
 
 	SET @jobId = NULL;
 
+	--upgrade code, remove job from older version, uses different paramters
+	IF ((SELECT TOP (1) CAST(SUBSTRING([version], 0, CHARINDEX('.', [version], 0)) AS INT) FROM [_dbaid].[dbo].[version] ORDER BY [installdate] DESC) <= 4)
+	BEGIN
+		   EXEC msdb.dbo.sp_delete_job @job_name=N'$(DatabaseName)_maintenance_history', @delete_unused_schedule=1
+	END
+
+
 	IF NOT EXISTS (SELECT [job_id] FROM [msdb].[dbo].[sysjobs_view] WHERE [name] = N'$(DatabaseName)_maintenance_history')
 	BEGIN
 		BEGIN TRANSACTION
