@@ -41,8 +41,6 @@ EXEC [maintenance].[check_config];
 REVERT;
 REVERT;
 
-DISABLE TRIGGER [trg_stop_ddl_modification] ON DATABASE;
-DISABLE TRIGGER [trg_stop_staticparameter_change] ON [dbo].[static_parameters];
 
 EXECUTE AS LOGIN = N'low-priv-acct-admin';
 
@@ -101,8 +99,6 @@ EXEC [log].[capacity];
 REVERT;
 REVERT;
 
-ENABLE TRIGGER [trg_stop_staticparameter_change] ON [dbo].[static_parameters];
-ENABLE TRIGGER [trg_stop_ddl_modification] ON DATABASE;
 
 TRUNCATE TABLE [dbo].[service];
 

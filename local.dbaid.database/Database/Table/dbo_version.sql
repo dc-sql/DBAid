@@ -12,14 +12,3 @@ CREATE TABLE [dbo].[version]
 )
 
 GO
-
-CREATE TRIGGER [dbo].[trg_stop_version_change]
-ON [dbo].[version]
-WITH ENCRYPTION
-INSTEAD OF INSERT, UPDATE, DELETE
-AS
-BEGIN
-	RAISERROR('Please do not modify the version table! This table is automatically updated. Regards the Wellington SQL DBA Team.',14,1) WITH LOG;
-	ROLLBACK;
-END;
-GO

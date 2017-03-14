@@ -21,14 +21,3 @@ GRANT SELECT
     ON OBJECT::[dbo].[static_parameters] TO [monitor]
     AS [dbo];
 GO
-
-CREATE TRIGGER [dbo].[trg_stop_staticparameter_change]
-ON [dbo].[static_parameters]
-WITH ENCRYPTION
-INSTEAD OF INSERT, UPDATE, DELETE
-AS
-BEGIN
-	RAISERROR('Please do not modify the static parameters unless you know what you are doing! Your changes may cause issues with the application. Regards the Wellington SQL DBA Team.',14,1) WITH LOG;
-	ROLLBACK;
-END;
-GO

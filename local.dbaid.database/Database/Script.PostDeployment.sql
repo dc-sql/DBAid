@@ -96,12 +96,9 @@ IF (SELECT COUNT(name) FROM [sys].[extended_properties] WHERE [class] = 0 AND [n
 ELSE EXEC sp_updateextendedproperty @name = N'Deployed', @value = @date;
 GO
 
-DISABLE TRIGGER [dbo].[trg_stop_version_change] ON [dbo].[version];
-GO
 INSERT INTO [dbo].[version]([version]) VALUES('$(Version)');
 GO
-ENABLE TRIGGER [dbo].[trg_stop_version_change] ON [dbo].[version];
-GO
+
 /* Insert procedure list in db */
 INSERT INTO [dbo].[procedure] ([procedure_id],[schema_name],[procedure_name],[description],[is_enabled],[last_execution_datetime])
 	SELECT [O].[object_id] AS [procedure_id]
@@ -133,8 +130,6 @@ GO
 
 
 /* Insert static variables */
-DISABLE TRIGGER [dbo].[trg_stop_staticparameter_change] ON [dbo].[static_parameters];
-GO
 
 IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'GUID')
 	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
@@ -209,9 +204,6 @@ GO
 IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'CAPACITY_CACHE_RETENTION_MONTH')
 	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
 		VALUES(N'CAPACITY_CACHE_RETENTION_MONTH',3,N'Number of months to retain capacity cache data in log.capacity');
-GO
-
-ENABLE TRIGGER [dbo].[trg_stop_staticparameter_change] ON [dbo].[static_parameters];
 GO
 
 /* General perf counters */
@@ -354,8 +346,6 @@ IF (SELECT COUNT([parametername]) FROM [deprecated].[tbparameters] WHERE [parame
 	INSERT INTO [deprecated].[tbparameters] ([parametername],[setting],[status],[comments])
 		VALUES('Client_domain','$(ClientDomain)',NULL,'Client domain for email addresses');
 
-/* Enable trigger to stop ddl statements */
-ENABLE TRIGGER [trg_stop_ddl_modification] ON DATABASE;
 GO
 
 /* #######################################################################################################################################
@@ -778,7 +768,6 @@ BEGIN TRANSACTION
 	IF (@rc <> 0) GOTO PROBLEM;
 
 	/* Restore [dbo].[static_parameters] data */
-	DISABLE TRIGGER [dbo].[trg_stop_staticparameter_change] ON [dbo].[static_parameters];
 
 	SET @backupsql = N'UPDATE [$(DatabaseName)].[dbo].[static_parameters]
 						SET [value] = [C].[value]
@@ -789,12 +778,9 @@ BEGIN TRANSACTION
 	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_static_parameters') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
 
-	ENABLE TRIGGER [dbo].[trg_stop_staticparameter_change] ON [dbo].[static_parameters];
-
 	IF (@rc <> 0) GOTO PROBLEM;
 
 	/* Restore [dbo].[version] data */
-	DISABLE TRIGGER [dbo].[trg_stop_version_change] ON [dbo].[version];
 
 	SET @backupsql = N'INSERT INTO [$(DatabaseName)].[dbo].[version]
 						SELECT [version],[installer],[installdate]
@@ -802,8 +788,6 @@ BEGIN TRANSACTION
 						WHERE [version] COLLATE Database_Default NOT IN (SELECT [version] FROM [$(DatabaseName)].[dbo].[version])';
 	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_version') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
-
-	ENABLE TRIGGER [dbo].[trg_stop_version_change] ON [dbo].[version];
 
 	IF (@rc <> 0) GOTO PROBLEM;
 

@@ -86,19 +86,36 @@ BEGIN
 							AND [dpe].[permission_name] = ''CONNECT''';
 
 	--get contained database access
-	IF OBJECT_ID('tempdb..#__contained') IS NOT NULL
-		DROP TABLE #__contained;		
-	CREATE TABLE #__contained ([name] NVARCHAR(128) NULL)
+	IF OBJECT_ID('tempdb..#__contained_auth') IS NOT NULL
+		DROP TABLE #__contained_auth;		
+	CREATE TABLE #__contained_auth ([name] NVARCHAR(128) NULL)
 
-	EXEC foreachdb N'USE [?]; 
-					INSERT INTO #__contained 
-					SELECT 
-						[name]
-					FROM [sys].[database_principals]
-					WHERE 
-						[name] NOT IN (''dbo'',''Information_Schema'',''sys'',''guest'')
-						AND [type] IN (''U'',''S'',''G'')
-						AND [authentication_type] = 2';
+	IF OBJECT_ID('tempdb..#__contained') IS NOT NULL
+	DROP TABLE #__contained;		
+	CREATE TABLE #__contained ([pass] INT NULL, [value] INT NULL)
+
+	IF @Version >= 11
+	BEGIN
+		EXEC foreachdb N'USE [?]; 
+						INSERT INTO #__contained_auth 
+						SELECT 
+							[name]
+						FROM [sys].[database_principals]
+						WHERE 
+							[name] NOT IN (''dbo'',''Information_Schema'',''sys'',''guest'')
+							AND [type] IN (''U'',''S'',''G'')
+							AND [authentication_type] = 2';
+
+		SET @SQLString =  N'INSERT INTO #__contained 
+							SELECT
+							CASE 
+								WHEN EXISTS (SELECT 1 FROM [sys].[databases] WHERE [containment] <> 0 and [is_auto_close_on] = 1) THEN 0 
+								ELSE 1 
+							END AS [pass], 
+							(SELECT COUNT([is_auto_close_on]) FROM [sys].[databases] WHERE [containment] <> 0 and [is_auto_close_on] = 1) AS [value]'
+
+		EXECUTE sp_executesql @SQLString
+	END
 
 	--get errorlog count
 	DECLARE @NumErrorLogs INT
@@ -172,7 +189,7 @@ BEGIN
 	INSERT INTO @results
 	SELECT '2.15','2.15 Set the xp_cmdshell Server Configuration Option to 0 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 0 ELSE 1 END AS [pass], CAST([value_in_use] AS NVARCHAR(10)) AS [value] FROM [info].[instance] WHERE [name] = 'xp_cmdshell'
 	INSERT INTO @results
-	SELECT '2.16','2.16 Ensure ''AUTO_CLOSE OFF'' is set on contained databases (Scored)' AS [Policy Name], CASE WHEN EXISTS (SELECT 1 FROM [sys].[databases] WHERE [containment] <> 0 and [is_auto_close_on] = 1) THEN 0 ELSE 1 END AS [pass], (SELECT COUNT([is_auto_close_on]) FROM [sys].[databases] WHERE [containment] <> 0 and [is_auto_close_on] = 1) AS [value]
+	SELECT '2.16','2.16 Ensure ''AUTO_CLOSE OFF'' is set on contained databases (Scored)' AS [Policy Name], [pass], [value] FROM #__contained;
 	
 	--3. Authentication and Authorization
 	INSERT INTO @results
@@ -182,7 +199,7 @@ BEGIN
 	INSERT INTO @results
 	SELECT '3.3','3.3 Drop Orphaned Users From SQL Server Databases (Scored)' AS [Policy Name], CASE WHEN COUNT([DbName]) != 0 THEN 0 ELSE 1 END AS [score], CAST(COUNT([DbName]) AS NVARCHAR(10)) AS [value] FROM #__orphan 
 	INSERT INTO @results
-	SELECT '3.4','3.4 Do not use SQL Authentication in contained databases (Scored)' AS [Policy Name], CASE WHEN COUNT([name]) != 0 THEN 0 ELSE 1 END AS [score], CAST(COUNT([name]) AS NVARCHAR(10)) AS [value] FROM #__contained
+	SELECT '3.4','3.4 Do not use SQL Authentication in contained databases (Scored)' AS [Policy Name], CASE WHEN COUNT([name]) != 0 THEN 0 ELSE 1 END AS [score], CAST(COUNT([name]) AS NVARCHAR(10)) AS [value] FROM #__contained_auth
 
 	--4. Password Policies
 	INSERT INTO @results

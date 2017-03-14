@@ -90,7 +90,6 @@
   <ItemGroup>
     <Folder Include="Properties" />
     <Folder Include="Database" />
-    <Folder Include="Database\DatabaseTrigger" />
     <Folder Include="Database\Security" />
     <Folder Include="Database\Function" />
     <Folder Include="Database\Procedure" />
@@ -109,7 +108,6 @@
     <Folder Include="who_is_active" />
   </ItemGroup>
   <ItemGroup>
-    <Build Include="Database\DatabaseTrigger\trg_stop_ddl_modification.sql" />
     <Build Include="Database\Security\roles.sql" />
     <Build Include="Database\Security\schemas.sql" />
     <Build Include="Database\Procedure\log\log_job.sql" />
