@@ -155,7 +155,7 @@ BEGIN
 						AND db_id() > 4;'
 						
 	--setup result table
-	DECLARE @results AS TABLE([cis_id] NVARCHAR(4), [policy_name] NVARCHAR(1024), [pass] INT, [value] NVARCHAR(10))
+	DECLARE @results AS TABLE([cis_id] NVARCHAR(4), [policy_name] NVARCHAR(1024), [pass] INT, [value] NVARCHAR(128))
 
 	--2. Surface Area Reduction 
 	INSERT INTO @results
