@@ -85,9 +85,9 @@ BEGIN
 		,[H].[run_status]
 		,[H].[run_duration_sec]
 	FROM [JobHistory] [H]
-		CROSS APPLY [system].[udf_get_instance_guid]() [I]
-		CROSS APPLY [system].[udf_get_clean_string]([H].[error_message]) [E]
-		CROSS APPLY [system].[udf_get_datetimeoffset]([H].[run_datetime]) [D1]
+		CROSS APPLY [system].[get_instance_guid]() [I]
+		CROSS APPLY [system].[get_clean_string]([H].[error_message]) [E]
+		CROSS APPLY [system].[get_datetimeoffset]([H].[run_datetime]) [D1]
 	WHERE [H].[run_datetime] BETWEEN @start_datetime AND @end_datetime
 	ORDER BY [H].[run_datetime];
 

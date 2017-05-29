@@ -101,9 +101,9 @@ BEGIN
 		,[O].[is_password_protected]
 		,[C].[column_value] AS [backup_frequency_hour]
 	FROM @output [O]
-		CROSS APPLY [system].[udf_get_instance_guid]() [I]
-		CROSS APPLY [system].[udf_get_datetimeoffset]([O].[backup_start_date]) [D1]
-		CROSS APPLY [system].[udf_get_datetimeoffset]([O].[backup_finish_date]) [D2]
+		CROSS APPLY [system].[get_instance_guid]() [I]
+		CROSS APPLY [system].[get_datetimeoffset]([O].[backup_start_date]) [D1]
+		CROSS APPLY [system].[get_datetimeoffset]([O].[backup_finish_date]) [D2]
 	WHERE [backup_start_date] BETWEEN @start_datetime AND @end_datetime
 	ORDER BY [backup_start_date], [backup_finish_date];
 

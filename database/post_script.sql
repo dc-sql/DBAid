@@ -15,6 +15,13 @@ Post-Deployment Script Template
                SELECT * FROM [$(TableName)]					
 --------------------------------------------------------------------------------------
 */
+USE [master]
+GO
+
+DECLARE @cmd VARCHAR(180);
+SET @cmd = 'ALTER LOGIN [_dbaid_sa] WITH PASSWORD=N''' + CAST(NEWID() AS CHAR(38)) + '''';
+EXEC(@cmd);
+GO
 
 USE [$(DatabaseName)];
 GO
@@ -23,7 +30,7 @@ GO
 MERGE INTO [setting].[tbl_parameter_default] AS [Target] 
 USING (SELECT N'INSTANCE_GUID', NEWID()
 	UNION SELECT N'SANITIZE_DATASET',1
-	UNION SELECT N'PUBLIC_ENCRYPTION_KEY',N'$(PublicKey)'
+	UNION SELECT N'PUBLIC_ENCRYPTION_KEY',NULL
 	UNION SELECT N'CAPACITY_CACHE_RETENTION_MONTH',3
 ) AS [Source] ([key],[value])  
 ON [Target].[key] = [Source].[key] 
@@ -74,6 +81,6 @@ EXEC [checkmk].[usp_inventory];
 GO
 
 /* set database to _dbaid_sa owner */
-EXEC [$(DatabaseName)].dbo.sp_changedbowner @loginame = N'$(DatabaseName)_sa'
+EXEC [$(DatabaseName)].[dbo].[sp_changedbowner] @loginame = N'_dbaid_sa'
 GO
 

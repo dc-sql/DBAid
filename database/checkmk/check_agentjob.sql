@@ -33,14 +33,14 @@ BEGIN
 	WHERE [enabled] = 1
 
 	SELECT @runtimejob=COUNT(*)
-	FROM [checkmk].[tbl_config_agentjob]
-	WHERE [is_check_runtime_enabled] = 1
+	FROM [checkmk].[configuration_agentjob]
+	WHERE [runtime_check_enabled] = 1
 
 	SELECT @statusjob=COUNT(*)
-	FROM [checkmk].[tbl_config_agentjob]
-	WHERE [is_check_status_enabled] = 1
+	FROM [checkmk].[configuration_agentjob]
+	WHERE [outcome_check_enabled] = 1
 
-	IF NOT ((SELECT LOWER(CAST(SERVERPROPERTY('Edition') AS NVARCHAR(128)))) LIKE '%express%')
+	IF NOT ((SELECT LOWER(CAST(SERVERPROPERTY('Edition') AS VARCHAR(128)))) LIKE '%express%')
 		INSERT INTO @xpresults
 			EXECUTE [master].[dbo].[xp_sqlagent_enum_jobs] 1, '$(DatabaseName)_sa', NULL;
 
@@ -81,11 +81,11 @@ BEGIN
 		FROM [job_data] [J]
 			LEFT JOIN @xpresults [X]
 				ON [J].[job_id] = [X].[job_id]
-			INNER JOIN [checkmk].[tbl_config_agentjob] [C]
-				ON [J].[name] = [C].[job_name]
+			INNER JOIN [checkmk].[configuration_agentjob] [CA]
+				ON [J].[name] = [CA].[job_name]
 		WHERE [J].[row] = 1
 			AND ([J].[run_status] = 0 OR [X].[running] = 1)
-			AND ([C].[is_check_status_enabled] = 1 OR [C].[is_check_runtime_enabled] = 1);
+			AND ([CA].[outcome_check_enabled] = 1 OR [CA].[runtime_check_enabled] = 1);
 
 	IF (SELECT COUNT(*) FROM @check_output) < 1
 		INSERT INTO @check_output 

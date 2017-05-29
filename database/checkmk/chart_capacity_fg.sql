@@ -35,7 +35,7 @@ BEGIN
 		EXEC(N'EXEC xp_fixeddrives');
 
 	INSERT INTO @file_info
-		EXEC [system].[usp_execute_foreach_db] 'USE [?]; 
+		EXEC [system].[execute_foreach_db] 'USE [?]; 
 			SELECT DB_ID() AS [database_id]
 				,ISNULL([FG].[data_space_id],0)
 				,[FG].[name]
@@ -175,9 +175,9 @@ BEGIN
 			,CASE WHEN [F].[filegroup_is_readonly] = 1 OR [DB].[is_read_only] = 1 THEN SUM([F].[size_reserved_mb])
 				ELSE (SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb]))
 				END AS [max]
-		FROM [pnp4nagios].[tbl_pnp_capacity_fg_config] [C]
+		FROM [checkmk].[configuration_database] [CD]
 			INNER JOIN [sys].[databases] [DB]
-				ON [C].[db_name] = [DB].[name]
+				ON [CD].[name] = [DB].[name]
 			INNER JOIN @file_info [F]
 				ON [C].[database_id] = [F].[database_id]
 			CROSS APPLY (SELECT SUM([A].[fg_size_available_mb]) AS [fg_size_available_mb]

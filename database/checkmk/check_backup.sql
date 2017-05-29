@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [checkmk].[usp_check_backup]
+CREATE PROCEDURE [checkmk].[check_backup]
 WITH ENCRYPTION, EXECUTE AS 'dbo'
 AS
 BEGIN
@@ -15,7 +15,7 @@ BEGIN
 	DECLARE @last_backup TABLE ([db_name] SYSNAME, [full_backup_date] DATETIME, [diff_backup_date] DATETIME, [tran_backup_date] DATETIME);
 	DECLARE @check_output TABLE ([message] NVARCHAR(4000), [state] NVARCHAR(8));
 
-	SELECT @major_version = [major] FROM [system].[udf_get_product_version]();
+	SELECT @major_version = [major] FROM [system].[get_product_version]();
 
 	IF @major_version >= 11
 	BEGIN
@@ -65,8 +65,8 @@ BEGIN
 
 	IF (SELECT COUNT(*) FROM @check_output WHERE [state] != 'OK') = 0
 	BEGIN
-		SELECT @backup_enabled = COUNT(*) FROM [checkmk].[configuration_database] WHERE [check_backup_enabled] = 1;
-		SELECT @backup_disabled = COUNT(*) FROM [checkmk].[configuration_database] WHERE [check_backup_enabled] = 0;
+		SELECT @backup_enabled = COUNT(*) FROM [checkmk].[configuration_database] WHERE [backup_check_enabled] = 1;
+		SELECT @backup_disabled = COUNT(*) FROM [checkmk].[configuration_database] WHERE [backup_check_enabled] = 0;
 
 		INSERT INTO @check_output VALUES('Monitoring databases for backup(s)'
 			+ '; enabled=' + CAST(@backup_enabled AS VARCHAR(8)) 

@@ -95,5 +95,5 @@ BEGIN
 		,N'TraceFlags' AS [property]
 		,STUFF((SELECT N', ' + CAST([flag] AS NCHAR(4)) AS [text()] FROM @flags WHERE [global] = 1 AND [enabled] = 1 FOR XML PATH('')), 1, 2, '') AS [value]
 	UNION ALL 
-	SELECT [class_object], [property], CAST([value] AS NVARCHAR(128)) FROM [dbo].[service]
+	SELECT [class], [property], CAST([value] AS NVARCHAR(128)) FROM [configg].[service_properties];
 END

@@ -9,6 +9,6 @@ RETURNS TABLE
 WITH ENCRYPTION
 RETURN(
 	SELECT TOP(1) [value] AS [instance_guid]
-	FROM [system].[tbl_parameter_default] 
+	FROM [system].[configuration] 
 	WHERE [key] = N'INSTANCE_GUID' COLLATE Latin1_General_CI_AS
 )

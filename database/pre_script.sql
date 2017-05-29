@@ -41,14 +41,8 @@ BEGIN
 END
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.server_principals WHERE LOWER([type]) IN ('u','s') AND LOWER(name) = LOWER('$(DatabaseName)_sa')) 
-BEGIN
-	DECLARE @cmd VARCHAR(180);
-	SET @cmd = 'CREATE LOGIN [$(DatabaseName)_sa] WITH PASSWORD=N''' + CAST(NEWID() AS CHAR(38)) + ''', DEFAULT_DATABASE=[master], CHECK_EXPIRATION=OFF, CHECK_POLICY=ON;';
-	EXEC(@cmd);
-	EXEC sp_addsrvrolemember @loginame = N'$(DatabaseName)_sa', @rolename = N'sysadmin';
-	ALTER LOGIN [$(DatabaseName)_sa] DISABLE;
-END
+IF EXISTS (SELECT * FROM sys.server_principals WHERE LOWER([type]) IN ('u','s') AND LOWER(name) = LOWER('_dbaid_sa')) 
+	DROP LOGIN [_dbaid_sa];
 GO
 
 USE [$(DatabaseName)]

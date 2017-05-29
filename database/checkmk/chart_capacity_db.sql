@@ -18,7 +18,7 @@ BEGIN
 		[size_reserved_mb] NUMERIC(20,2));
 
 	INSERT INTO @file_info
-	EXEC [system].[usp_execute_foreach_db] 'USE [?];
+	EXEC [system].[execute_foreach_db] 'USE [?];
 		SELECT DB_ID() AS [database_id]
 			,[F].[file_id]
 			,CASE WHEN [F].[type_desc] = N''LOG'' THEN ''log'' ELSE ''data'' END AS [data_type]

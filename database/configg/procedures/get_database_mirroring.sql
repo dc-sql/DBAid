@@ -10,7 +10,7 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+	EXECUTE AS LOGIN = '_dbaid_sa';
 
 	SELECT DB_NAME([mirroring].[database_id]) AS [database_name]
 		,[mirroring].[mirroring_role_desc] 

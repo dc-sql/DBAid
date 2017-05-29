@@ -1,14 +1,14 @@
 ﻿CREATE FUNCTION [system].[get_instance_tag]()
 RETURNS @returntable TABLE
 (
-	[instance_tag] NVARCHAR(256)
+	[instance_tag] VARCHAR(256)
 )
 WITH ENCRYPTION
 BEGIN
-	DECLARE @domain NVARCHAR(128);
+	DECLARE @domain VARCHAR(128);
 
-	SELECT TOP(1) @domain = CAST([value] AS NVARCHAR(128)) 
-	FROM [wmiload].[tbl_wmi_object] 
+	SELECT TOP(1) @domain = CAST([value] AS VARCHAR(128)) 
+	FROM [configg].[service_properties]
 	WHERE [property] = N'Domain';
 
 	IF (@domain IS NULL)

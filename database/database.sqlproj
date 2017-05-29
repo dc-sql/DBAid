@@ -100,6 +100,8 @@
     <Folder Include="system\security" />
     <Folder Include="audit\procedures" />
     <Folder Include="audit\tables" />
+    <Folder Include="configg\tables" />
+    <Folder Include="configg\procedures" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="system\methods\execute_foreach_db.sql">
@@ -116,7 +118,6 @@
     <Build Include="collector\get_errorlog_history.sql" />
     <Build Include="collector\get_agentjob_history.sql" />
     <Build Include="collector\last_execution.sql" />
-    <Build Include="configg\get_instance_agentjobs.sql" />
     <Build Include="checkmk\inventory_procedure.sql">
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>
@@ -129,7 +130,7 @@
     <Build Include="checkmk\inventory_agentjob.sql" />
     <Build Include="checkmk\check_agentjob.sql" />
     <Build Include="checkmk\check_backup.sql" />
-    <Build Include="checkmk\check_checkdb.sql" />
+    <Build Include="checkmk\check_integrity.sql" />
     <Build Include="checkmk\check_database.sql" />
     <Build Include="checkmk\check_logshipping.sql" />
     <Build Include="checkmk\check_mirroring.sql" />
@@ -143,6 +144,24 @@
     <Build Include="audit\procedures\get_cis_benchmark.sql" />
     <Build Include="audit\procedures\get_database_last_access.sql" />
     <Build Include="audit\tables\database_last_access.sql" />
+    <Build Include="configg\procedures\get_database_files.sql" />
+    <Build Include="configg\procedures\get_database_logshipping_primary.sql" />
+    <Build Include="configg\procedures\get_database_logshipping_secondary.sql" />
+    <Build Include="configg\procedures\get_database_mirroring.sql" />
+    <Build Include="configg\procedures\get_instance_agentjobs.sql" />
+    <Build Include="configg\procedures\get_instance_alwayson_groups.sql" />
+    <Build Include="configg\procedures\get_instance_databasemail_profiles.sql" />
+    <Build Include="configg\procedures\get_instance_databases.sql" />
+    <Build Include="configg\procedures\get_instance_maintenance_plans.sql" />
+    <Build Include="configg\procedures\get_instance_replication_publishers.sql" />
+    <Build Include="configg\procedures\get_instance_replication_subscribers.sql" />
+    <Build Include="configg\procedures\get_instance_resource_governors.sql" />
+    <Build Include="configg\procedures\get_instance_security_principals.sql" />
+    <Build Include="configg\procedures\get_instance_server_objects.sql" />
+    <Build Include="configg\procedures\get_instance_service_configurations.sql" />
+    <Build Include="configg\procedures\get_instance_sysconfigurations.sql" />
+    <Build Include="configg\tables\service_properties.sql" />
+    <Build Include="system\security\_dbaid_sa.sql" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -160,23 +179,6 @@
       <DatabaseVariableLiteralValue>msdb</DatabaseVariableLiteralValue>
       <Private>False</Private>
     </ArtifactReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Build Include="configg\get_instance_alwayson_groups.sql" />
-    <Build Include="configg\get_instance_databases.sql" />
-    <Build Include="configg\get_database_files.sql" />
-    <Build Include="configg\get_instance_databasemail_profiles.sql" />
-    <Build Include="configg\get_instance_sysconfigurations.sql" />
-    <Build Include="configg\get_database_logshipping_primary.sql" />
-    <Build Include="configg\get_database_logshipping_secondary.sql" />
-    <Build Include="configg\get_instance_maintenance_plans.sql" />
-    <Build Include="configg\get_database_mirroring.sql" />
-    <Build Include="configg\get_instance_replication_publishers.sql" />
-    <Build Include="configg\get_instance_replication_subscribers.sql" />
-    <Build Include="configg\get_instance_resource_governors.sql" />
-    <Build Include="configg\get_instance_security_principals.sql" />
-    <Build Include="configg\get_instance_server_objects.sql" />
-    <Build Include="configg\get_instance_service_configurations.sql" />
   </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>

@@ -84,7 +84,7 @@ BEGIN
 			,CASE WHEN [B].[message] LIKE N'%found % errors and repaired % errors%'
 					OR [B].[message] LIKE N'SQL Server has encountered%' 
 					OR [B].[message] LIKE N'Error:%Severity:%State:%(Params:%)%'
-					THEN N'SQL Server'
+				THEN N'SQL Server'
 				ELSE [A].[source] END AS [source]
             ,CASE WHEN [B].[message] LIKE N'%found % errors and repaired % errors%'
 					THEN N'ERROR:DBCC'
@@ -99,21 +99,19 @@ BEGIN
 				ON [A].[id]+1 = [B].[id]
 		WHERE [A].[message] LIKE N'Error:%Severity:%State:%'
 			AND [A].[message] NOT LIKE N'Error:%Severity:%State:%(Params:%)%'
-			OR ([B].[message] LIKE N'%found % errors and repaired % errors%'
-				AND [B].[message] NOT LIKE N'%found 0 errors and repaired 0 errors%')
+			OR ([B].[message] LIKE N'%found % errors and repaired % errors%' AND [B].[message] NOT LIKE N'%found 0 errors and repaired 0 errors%')
 			OR [B].[message] LIKE N'SQL Server has encountered%'
 			OR [B].[message] LIKE N'Error:%Severity:%State:%(Params:%)%'
         ORDER BY [A].[id] ASC;
 
-	
 	SELECT [I].[instance_guid]
 		,[D1].[datetimeoffset] AS [log_date]
 		,[E].[source]
 		,[E].[message_header]
 		,[E].[message]
 	FROM #__SeverityError [E]
-		CROSS APPLY [system].[udf_get_instance_guid]() [I]
-		CROSS APPLY [system].[udf_get_datetimeoffset]([E].[log_date]) [D1]
+		CROSS APPLY [system].[get_instance_guid]() [I]
+		CROSS APPLY [system].[get_datetimeoffset]([E].[log_date]) [D1]
 	ORDER BY [E].[id] ASC;
 
 	IF (@update_execution_timestamp = 1)
