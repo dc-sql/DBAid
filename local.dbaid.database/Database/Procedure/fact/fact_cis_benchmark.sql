@@ -85,6 +85,38 @@ BEGIN
 							[dpr].[name] = ''guest'' 
 							AND [dpe].[permission_name] = ''CONNECT''';
 
+	--get contained database access
+	IF OBJECT_ID('tempdb..#__contained_auth') IS NOT NULL
+		DROP TABLE #__contained_auth;		
+	CREATE TABLE #__contained_auth ([name] NVARCHAR(128) NULL)
+
+	IF OBJECT_ID('tempdb..#__contained') IS NOT NULL
+	DROP TABLE #__contained;		
+	CREATE TABLE #__contained ([pass] INT NULL, [value] INT NULL)
+
+	IF @Version >= 11
+	BEGIN
+		EXEC foreachdb N'USE [?]; 
+						INSERT INTO #__contained_auth 
+						SELECT 
+							[name]
+						FROM [sys].[database_principals]
+						WHERE 
+							[name] NOT IN (''dbo'',''Information_Schema'',''sys'',''guest'')
+							AND [type] IN (''U'',''S'',''G'')
+							AND [authentication_type] = 2';
+
+		SET @SQLString =  N'INSERT INTO #__contained 
+							SELECT
+							CASE 
+								WHEN EXISTS (SELECT 1 FROM [sys].[databases] WHERE [containment] <> 0 and [is_auto_close_on] = 1) THEN 0 
+								ELSE 1 
+							END AS [pass], 
+							(SELECT COUNT([is_auto_close_on]) FROM [sys].[databases] WHERE [containment] <> 0 and [is_auto_close_on] = 1) AS [value]'
+
+		EXECUTE sp_executesql @SQLString
+	END
+
 	--get errorlog count
 	DECLARE @NumErrorLogs INT
 	    EXEC [master].[dbo].[xp_instance_regread] N'HKEY_LOCAL_MACHINE', N'Software\Microsoft\MSSQLServer\MSSQLServer', N'NumErrorLogs', @NumErrorLogs OUTPUT
@@ -123,7 +155,7 @@ BEGIN
 						AND db_id() > 4;'
 						
 	--setup result table
-	DECLARE @results AS TABLE([cis_id] NVARCHAR(4), [policy_name] NVARCHAR(1024), [pass] INT, [value] NVARCHAR(10))
+	DECLARE @results AS TABLE([cis_id] NVARCHAR(4), [policy_name] NVARCHAR(1024), [pass] INT, [value] NVARCHAR(128))
 
 	--2. Surface Area Reduction 
 	INSERT INTO @results
@@ -156,7 +188,9 @@ BEGIN
 	SELECT '2.14','2.14 Rename the sa Login Account (Scored)' AS [Policy Name], CASE WHEN [name] = 'sa' THEN 0 ELSE 1 END AS [score], [name] AS [value] FROM [master].[sys].[server_principals] WHERE [sid] = 0x01
 	INSERT INTO @results
 	SELECT '2.15','2.15 Set the xp_cmdshell Server Configuration Option to 0 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 0 ELSE 1 END AS [pass], CAST([value_in_use] AS NVARCHAR(10)) AS [value] FROM [info].[instance] WHERE [name] = 'xp_cmdshell'
-
+	INSERT INTO @results
+	SELECT '2.16','2.16 Ensure ''AUTO_CLOSE OFF'' is set on contained databases (Scored)' AS [Policy Name], [pass], [value] FROM #__contained;
+	
 	--3. Authentication and Authorization
 	INSERT INTO @results
 	SELECT '3.1','3.1 Set The Server Authentication Property To Windows Authentication mode (Scored)' AS [Policy Name], CASE WHEN [value] = 0 THEN 0 ELSE 1 END AS [score], CAST([value] AS NVARCHAR(10)) AS [value] FROM [info].[service] WHERE [property] = 'IsIntegratedSecurityOnly'
@@ -164,6 +198,8 @@ BEGIN
 	SELECT '3.2','3.2 Revoke CONNECT permissions on the guest user within all SQL Server databases excluding the master, msdb and tempdb (Scored)' AS [Policy Name], CASE WHEN COUNT([id]) != 0 THEN 0 ELSE 1 END AS [score], CAST(COUNT([id]) AS NVARCHAR(10)) AS [value] FROM #__guest WHERE [id] NOT IN (DB_ID('master'),DB_ID('msdb'),DB_ID('tempdb')) 
 	INSERT INTO @results
 	SELECT '3.3','3.3 Drop Orphaned Users From SQL Server Databases (Scored)' AS [Policy Name], CASE WHEN COUNT([DbName]) != 0 THEN 0 ELSE 1 END AS [score], CAST(COUNT([DbName]) AS NVARCHAR(10)) AS [value] FROM #__orphan 
+	INSERT INTO @results
+	SELECT '3.4','3.4 Do not use SQL Authentication in contained databases (Scored)' AS [Policy Name], CASE WHEN COUNT([name]) != 0 THEN 0 ELSE 1 END AS [score], CAST(COUNT([name]) AS NVARCHAR(10)) AS [value] FROM #__contained_auth
 
 	--4. Password Policies
 	INSERT INTO @results

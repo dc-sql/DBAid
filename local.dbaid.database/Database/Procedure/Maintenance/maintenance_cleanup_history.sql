@@ -14,6 +14,7 @@ WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;
+	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
 
 	DECLARE @olderthan_date DATETIME, @return_code INT, @error_count INT;
 	SET @error_count = 0;
@@ -43,6 +44,8 @@ BEGIN
 
 	DELETE FROM [dbo].[CommandLog] WHERE [StartTime] < DATEADD(DAY, @cmdlog_olderthan_day, GETDATE());
 	IF (@@ERROR <> 0) BEGIN SET @error_count = @error_count + 1; PRINT '[CommandLog] - failed to purge data.'; END
+
+	REVERT;
 
 	IF (@error_count <> 0) RETURN 1;
 	ELSE RETURN 0;
