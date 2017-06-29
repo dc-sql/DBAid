@@ -153,7 +153,26 @@ BEGIN
 						FROM sys.symmetric_keys
 						WHERE algorithm_desc NOT IN (''AES_128'',''AES_192'',''AES_256'')
 						AND db_id() > 4;'
-						
+	
+	--get server login audit
+	IF OBJECT_ID('tempdb..#__server_audit') IS NOT NULL
+		DROP TABLE #__server_audit;
+	CREATE TABLE #__server_audit ([count] INT);
+		 
+	SET @Version = CAST(LEFT(CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max)),CHARINDEX('.',CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max))) - 1) + '.' + REPLACE(RIGHT(CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max)), LEN(CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max))) - CHARINDEX('.',CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max)))),'.','') AS numeric(18,10))
+	IF @Version >= 10
+	BEGIN
+		SET @SQLString =  N'INSERT INTO #__server_audit
+							SELECT TOP 1 COUNT(*)
+							FROM [sys].[server_audit_specification_details] AS [SAD]
+							INNER JOIN [sys].[server_audit_specifications] AS [SA] ON [SAD].[server_specification_id] = [SA].[server_specification_id] 
+							INNER JOIN [sys].[server_audits] AS [S] ON [SA].[audit_guid] = [S].[audit_guid] 
+							WHERE [SAD].[audit_action_id] IN (''CNAU'', ''LGFL'', ''LGSD'')
+							AND [SA].[is_state_enabled] = 1 AND [S].[is_state_enabled] = 1
+							GROUP BY [S].[name]'
+		EXECUTE sp_executesql @SQLString
+	END
+					
 	--setup result table
 	DECLARE @results AS TABLE([cis_id] NVARCHAR(4), [policy_name] NVARCHAR(1024), [pass] INT, [value] NVARCHAR(128))
 
@@ -245,8 +264,7 @@ BEGIN
 	INSERT INTO @results
 	SELECT '5.3', '5.3 Set Login Auditing to failed logins (Not Scored)' AS [Policy Name], CASE [value] WHEN 'failure' THEN 1 ELSE 0 END AS [pass], [value] FROM @loginfo_cmd_list
 	INSERT INTO @results
-	SELECT '5.4', '5.4 Use SQL Server Audit to capture both failed and successful logins (Not Scored)' AS [Policy Name], 0 AS [pass], '0' AS [value]
-
+	SELECT '5.4', '5.4 Use SQL Server Audit to capture both failed and successful logins (Not Scored)' AS [Policy Name], CASE WHEN (SELECT COUNT(*) FROM #__server_audit) > 0 THEN 1 ELSE 0 END AS [score], ISNULL((SELECT CAST([count] AS NVARCHAR(1)) FROM #__server_audit),'0') AS [value]
 	--6. Application Development
 	INSERT INTO @results
 	SELECT '6.2', '6.2 Set the CLR Assembly Permission Set to SAFE_ACCESS for All CLR Assemblies (Scored)' AS [Policy Name], CASE [count] WHEN 0 THEN 1 ELSE 0 END AS [pass], CAST([count] AS NVARCHAR(10)) AS [value] FROM #__clr_assembly
@@ -257,9 +275,9 @@ BEGIN
 	INSERT INTO @results
 	SELECT '7.2', '7.2 Ensure asymmetric key size is greater than or equal to 2048 in nonsystem databases (Scored)' AS [Policy Name], CASE WHEN EXISTS (SELECT 1 FROM #__asymmetric) THEN 0 ELSE 1 END AS [score], (SELECT CAST(COUNT([db_id]) AS NVARCHAR(10)) FROM #__asymmetric) AS [value]
 
-	--8. Appendix: Additional Considerations - WIP
-	INSERT INTO @results
-	SELECT '8.1', '8.1 SQL Server Browser Service Disabled (Not Scored)' AS [Policy Name], 0 AS [pass], '0' AS [value]
+	--8. Appendix: Additional Considerations
+    INSERT INTO @results
+	SELECT '8.1', '8.1 SQL Server Browser Service Disabled (Not Scored)' AS [Policy Name], CASE [value] WHEN '4' THEN 1 ELSE 0 END AS [score], CAST([value] AS NVARCHAR(1)) AS [value] FROM [dbo].[service] WHERE [hierarchy] LIKE '%SQLBrowser' AND [property] = 'StartMode'
 	
 	--results
 	DECLARE @audit_total INT
