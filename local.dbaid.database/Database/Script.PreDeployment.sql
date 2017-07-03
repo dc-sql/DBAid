@@ -54,7 +54,7 @@ DECLARE @cmd NVARCHAR(180);
 IF NOT EXISTS (SELECT * FROM sys.server_principals WHERE LOWER([type]) IN ('u','s') AND LOWER(name) = LOWER('$(DatabaseName)_sa')) 
 BEGIN
 	SET @password = CAST(NEWID() AS NVARCHAR(128));
-	SET @cmd = 'CREATE LOGIN [$(DatabaseName)_sa] WITH PASSWORD=N''' + @password + ''', DEFAULT_DATABASE=[master], CHECK_EXPIRATION=OFF, CHECK_POLICY=ON;';
+	SET @cmd = 'CREATE LOGIN [$(DatabaseName)_sa] WITH PASSWORD=N''' + @password + ''', DEFAULT_DATABASE=[master], CHECK_EXPIRATION=ON, CHECK_POLICY=ON;';
 
 	EXEC(@cmd);
 END
