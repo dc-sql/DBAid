@@ -3,7 +3,6 @@ using System.Configuration;
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
-using dbaid.common;
 
 namespace local.dbaid.checkmk
 {

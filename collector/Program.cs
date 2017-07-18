@@ -3,21 +3,17 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
-using System.Net;
-using System.Security;
 using System.Text;
 using System.IO;
-using dbaid.common;
 using System.Net.NetworkInformation;
 
-
-namespace local.dbaid.collector
+namespace collector
 {
     class Program
     {
-        private const string mssqlKeySelect = "SELECT [value] FROM [dbo].[static_parameters] WHERE UPPER([name]) = N'PUBLIC_ENCRYPTION_KEY'";
-        private const string mssqlAppSelect = "SELECT [value] FROM [dbo].[static_parameters] WHERE UPPER([name]) = N'PROGRAM_NAME'";
-        private const string mssqlInstanceTagProc = "[dbo].[instance_tag]";
+        private const string mssqlPublicKeySelect = "SELECT [value] FROM [dbo].[static_parameters] WHERE UPPER([name]) = N'PUBLIC_ENCRYPTION_KEY'";
+        private const string mssqlProgramNameSelect = "SELECT [value] FROM [dbo].[static_parameters] WHERE UPPER([name]) = N'PROGRAM_NAME'";
+        private const string mssqlInstanceTagSelect = "SELECT [instance_tag] FROM [system].[get_instance_tag]";
         private const string mssqlControlProc = "[control].[log]";
         private const string encryptedExt = ".encrypted";
         private const string processedDir = "processed";
@@ -27,28 +23,12 @@ namespace local.dbaid.collector
 
         static void Main(string[] args)
         {
-            Log.licenseHeader();
-
-            if (Array.IndexOf(args, "?") >= 0 || String.IsNullOrEmpty(csb.ConnectionString))
-            {
-                Log.licenseHeader();
-                return;
-            }
-
-            Arguments flag = new Arguments(args);
-
-            string server = flag.ContainsFlag("-server") ? flag.GetValue("-server") : String.Empty;
-            string database = flag.ContainsFlag("-db") ? flag.GetValue("-db") : "_dbaid";
-
-            int errorCount = 0;
-            int warningCount = 0;
-
+            string connectionString = args[0];
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
             string logFile = Path.Combine(baseDirectory, logID + DateTime.Now.ToString("yyyyMMdd") + logExt);
-            string workingDirectory = String.Empty;
-            string processDirectory = String.Empty;
+            string outputDirectory = Path.Combine(baseDirectory,"");
             bool logVerbose = true;
-            byte fileRententionDays = 7;
+            byte fileRententionDays = 4;
             
             string emailSmtp = String.Empty;
             string[] emailTo = { String.Empty };

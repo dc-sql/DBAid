@@ -180,6 +180,9 @@
       <Private>False</Private>
     </ArtifactReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="database.publish.xml" />
+  </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>
     </PostBuildEvent>
