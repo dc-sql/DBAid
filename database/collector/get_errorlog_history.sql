@@ -6,9 +6,9 @@ Version 3, 29 June 2007
 
 CREATE PROCEDURE [collector].[get_errorlog_history]
 (
-	@start_datetime DATETIME2 = NULL,
-	@end_datetime DATETIME2 = NULL,
-	@sanitize BIT = 0,
+	@start_datetime DATETIME = NULL,
+	@end_datetime DATETIME = NULL,
+	@sanitize BIT = 1,
 	@update_execution_timestamp BIT = 0
 )
 WITH ENCRYPTION
@@ -41,7 +41,7 @@ BEGIN
 									,[message] NVARCHAR(MAX));
 
 	IF (@start_datetime IS NULL)
-		SELECT @start_datetime=ISNULL([last_execution], DATEADD(DAY,-1,SYSDATETIME())) 
+		SELECT @start_datetime=ISNULL([last_execution], DATEADD(DAY,-1,GETDATE())) 
 		FROM [collector].[last_execution] 
 		WHERE [object_name] = OBJECT_NAME(@@PROCID);
 
@@ -52,7 +52,7 @@ BEGIN
 	FROM @enumerrorlogs;
 
 	IF (@end_datetime IS NULL)
-		SET @end_datetime = SYSDATETIME();
+		SET @end_datetime = GETDATE();
 
 	SET @mindate = GETDATE()
 	SET @loop = 0;

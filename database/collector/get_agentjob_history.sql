@@ -6,9 +6,9 @@ Version 3, 29 June 2007
 
 CREATE PROCEDURE [collector].[get_agentjob_history]
 (
-	@start_datetime DATETIME2 = NULL,
-	@end_datetime DATETIME2 = NULL,
-	@sanitize BIT = 0,
+	@start_datetime DATETIME = NULL,
+	@end_datetime DATETIME = NULL,
+	@sanitize BIT = 1,
 	@update_execution_timestamp BIT = 0
 )
 WITH ENCRYPTION
@@ -40,11 +40,11 @@ BEGIN
 		FROM [collector].[last_execution] WHERE [object_name] = OBJECT_NAME(@@PROCID);
 	END
 
+	IF (@end_datetime IS NULL)
+		SET @end_datetime = GETDATE();
+
 	INSERT INTO @jobhistory 
 		EXEC [msdb].[dbo].[sp_help_jobhistory] @mode=N'FULL'
-
-	IF (@end_datetime IS NULL)
-		SET @end_datetime = SYSDATETIME();
 
 	;WITH JobHistory
 	AS

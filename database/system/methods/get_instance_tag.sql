@@ -18,7 +18,7 @@ BEGIN
 			,@value=@domain OUTPUT;
 
 	INSERT @returntable
-		SELECT QUOTENAME(REPLACE(@@SERVERNAME, '\', '@')) + N'_' + REPLACE(@domain, '.', '_') AS [instance_tag]
+		SELECT REPLACE(@@SERVERNAME, '\', '@') + N'_' + REPLACE(@domain, '.', '_') AS [instance_tag]
 
 	RETURN
 END

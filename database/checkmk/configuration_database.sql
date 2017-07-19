@@ -1,6 +1,6 @@
 ﻿CREATE TABLE [checkmk].[configuration_database]
 (
-	[name] SYSNAME NOT NULL,
+	[name] SYSNAME NOT NULL PRIMARY KEY,
 
 	[database_check_alert] VARCHAR(10) NOT NULL DEFAULT 'CRITICAL',
 	[database_check_enabled] BIT NOT NULL DEFAULT 1,

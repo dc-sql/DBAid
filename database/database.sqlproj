@@ -158,6 +158,7 @@
     <Build Include="configg\procedures\get_instance_service_configurations.sql" />
     <Build Include="configg\procedures\get_instance_sysconfigurations.sql" />
     <Build Include="configg\tables\service_properties.sql" />
+    <Build Include="system\methods\get_procedure_list.sql" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
