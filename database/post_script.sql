@@ -15,15 +15,6 @@ Post-Deployment Script Template
                SELECT * FROM [$(TableName)]					
 --------------------------------------------------------------------------------------
 */
-USE [master]
-GO
-DECLARE @cmd VARCHAR(180);
-SET @cmd = 'ALTER LOGIN [_dbaid_sa] WITH PASSWORD=N''' + CAST(NEWID() AS CHAR(38)) + '''';
-EXEC(@cmd);
-ALTER LOGIN [_dbaid_sa] DISABLE;
-EXEC sp_addsrvrolemember '_dbaid_sa', 'sysadmin';
-GO
-
 USE [$(DatabaseName)];
 GO
 

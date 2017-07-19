@@ -31,7 +31,7 @@ END
 
 IF @bpt = 0
 BEGIN
-	EXEC sp_configure 'blocked process threshold', 60;
+	EXEC sp_configure 'blocked process threshold', 20;
 END
 
 IF @sao = 0

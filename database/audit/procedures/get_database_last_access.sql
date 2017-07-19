@@ -2,11 +2,12 @@
 WITH ENCRYPTION
 AS
 BEGIN
+	SET NOCOUNT ON;
+
 	DECLARE @objects TABLE ([db_id] INT, [object_id] INT, [object_name] VARCHAR(128));
-	DECLARE @last_access TABLE ([db_name] [nvarchar](128) NOT NULL
-								,[db_last_access] [datetime] NULL
-								,[last_server_restart] [datetime] NOT NULL
-								,[last_audit_datetime] [datetime] NOT NULL);
+	DECLARE @last_access TABLE ([name] [nvarchar](128) NOT NULL
+								,[last_access] [datetime] NULL
+								,[last_server_restart] [datetime] NOT NULL);
 
 	INSERT INTO @objects
 		EXEC [system].[execute_foreach_db] N'SELECT DB_ID(''?'') AS [db_id], [object_id], [name] FROM [?].sys.objects WHERE [is_ms_shipped] = 0 AND [type] = ''U'';';
@@ -15,7 +16,6 @@ BEGIN
 		SELECT [db_name]
 			,MAX(CASE WHEN [db_last_access] = '19000101' THEN NULL ELSE [db_last_access] END) AS [db_last_access]
 			,[last_server_restart]
-			,GETDATE() AS [last_audit_datetime]
 		FROM
 		(SELECT [D].[name] AS [db_name],
 			ISNULL([X].[last_user_seek],'19000101') AS [last_user_seek],
@@ -47,22 +47,22 @@ BEGIN
 
 	MERGE [audit].[database_last_access] AS [target]
 	USING (
-	SELECT [db_name]
-		,[db_last_access]
+	SELECT [name]
+		,[last_access]
 		,[last_server_restart]
-		,[last_audit_datetime]
 	FROM @last_access
 	) AS [source]
-	ON ([target].[db_name] = [source].[db_name]) 
+	ON ([target].[name] = [source].[name]) 
 	WHEN MATCHED THEN
-		UPDATE SET [target].[db_last_access] = ISNULL([source].[db_last_access], [target].[db_last_access])
+		UPDATE SET [target].[last_access] = ISNULL([source].[last_access], [target].[last_access])
 			,[target].[last_server_restart] = [source].[last_server_restart]
-			,[target].[last_audit_datetime] = [source].[last_audit_datetime]
+			,[target].[last_audit_datetime] = GETDATE()
 	WHEN NOT MATCHED BY TARGET THEN 
-		INSERT VALUES ([source].[db_name]
-			,ISNULL([source].[db_last_access], [source].[last_server_restart])
+		INSERT VALUES ([source].[name]
+			,ISNULL([source].[last_access], [source].[last_server_restart])
 			,[source].[last_server_restart]
-			,[source].[last_audit_datetime])
+			,GETDATE()
+			,GETDATE())
 	WHEN NOT MATCHED BY SOURCE AND DATEDIFF(DAY, [target].[last_audit_datetime], GETDATE()) > 7 THEN
 	DELETE;
 END
