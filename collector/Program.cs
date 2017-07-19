@@ -8,8 +8,7 @@ namespace collector
 {
     class Program
     {
-        private const string selectInstanceTag = "SELECT [instance_tag] FROM [system].[get_instance_tag]()";
-        private const string selectProcedureList = "SELECT [procedure] FROM [dbo].[get_procedure_list](N'collector')";
+        private const string selectProcedureList = "SELECT [procedure] FROM [dbo].[get_procedure_list](N'collector', NULL)";
 
         static void Help()
         {
@@ -68,54 +67,54 @@ namespace collector
 
             using (var con = new SqlConnection(csb.ConnectionString))
             {
-                con.Open();
+                string instanceTag = String.Empty;
+                DataRowCollection procedures = null; 
 
                 if (log == "verbose")
                 {
                     Console.WriteLine("{0} - Initializing Collector", runtime.ToShortTimeString());
                 }
 
-                var cmd = new SqlCommand();
-                string instanceTag = String.Empty;
-                List<string> procedures = new List<string>();
-                SqlDataReader row = null;
-                cmd.Connection = con;
-                cmd.CommandType = CommandType.Text;
+                con.Open();
 
-                cmd.CommandText = selectInstanceTag;
-                row = cmd.ExecuteReader();
-                row.Read();
-                instanceTag = row[0].ToString();
-                row.Close();
-
-                cmd.CommandText = selectProcedureList;
-                row = cmd.ExecuteReader();
-
-                while (row.Read())
+                using (var cmd = new SqlCommand("[system].[get_instance_tag]", con))
                 {
-                    procedures.Add(row[0].ToString());
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    SqlDataReader row = cmd.ExecuteReader();
+
+                    row.Read();
+                    instanceTag = row[0].ToString();
+                    row.Close();
                 }
 
-                row.Close();
-
-                cmd.Parameters.Add(new SqlParameter("@update_execution_timestamp", true));
-
-                if (sanitize == "false")
-                    cmd.Parameters.Add(new SqlParameter("@sanitize", false));
-
-                foreach (string proc in procedures)  // execute procedures and write contents out to file.
+                using (var cmd = new SqlCommand("[system].[get_procedure_list]", con))
                 {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add(new SqlParameter("@schema", "collector"));
+
+                    DataTable dt = new DataTable();
+                    dt.Load(cmd.ExecuteReader());
+                    procedures = dt.Rows;
+                }
+
+                foreach (DataRow row in procedures)  // execute procedures and write contents out to file.
+                {
+                    string proc = row[0].ToString();
                     string procTag = proc.Replace("[", "").Replace("]", "").Replace(".", "_");
                     string file = instanceTag + "_" + procTag + "_" + runtime.ToString("yyyyMMddHHmm") + ".xml";
                     string filepath = Path.Combine(output, file);
 
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.CommandText = proc;
+                    using (var cmd = new SqlCommand(proc, con))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@update_execution_timestamp", true));
+                        if (sanitize == "false") { cmd.Parameters.Add(new SqlParameter("@sanitize", false)); }
 
-                    DataTable dt = new DataTable();
-                    dt.TableName = procTag;
-                    dt.Load(cmd.ExecuteReader());
-                    dt.WriteXml(filepath, XmlWriteMode.WriteSchema);
+                        DataTable dt = new DataTable();
+                        dt.TableName = procTag;
+                        dt.Load(cmd.ExecuteReader());
+                        dt.WriteXml(filepath, XmlWriteMode.WriteSchema);
+                    }
 
                     if (log == "verbose")
                     {
@@ -124,11 +123,11 @@ namespace collector
                 }
 
                 con.Close();
+            }
 
-                if (log == "verbose")
-                {
-                    Console.WriteLine("{0} - Completed Collection on [{1}]", runtime.ToShortTimeString(), csb.DataSource);
-                }
+            if (log == "verbose")
+            {
+                Console.WriteLine("{0} - Completed Collection on [{1}]", runtime.ToShortTimeString(), csb.DataSource);
             }
 #if DEBUG 
             Console.ReadKey();

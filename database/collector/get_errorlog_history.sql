@@ -93,10 +93,13 @@ BEGIN
 				WHEN [B].[message] LIKE N'Error:%Severity:%State:%(Params:%)%'
 					THEN SUBSTRING([B].[message], 0, CHARINDEX(N'.', [B].[message])+1)
 				ELSE [A].[message] END AS [message_header]
-			,[B].[message] AS [message]
+			,CASE WHEN @sanitize = 0 THEN [B].[message] ELSE [M].[text] END AS [message]
 		FROM ErrorSet [A]
 			INNER JOIN ErrorSet [B]
 				ON [A].[id]+1 = [B].[id]
+			INNER JOIN [master].[sys].[messages] [M]
+				ON [M].[language_id] = CAST(SERVERPROPERTY('LCID') AS INT)
+					AND CAST(SUBSTRING([A].[message],8,CHARINDEX(',',[A].[message])-8) AS INT) = [M].[message_id]
 		WHERE [A].[message] LIKE N'Error:%Severity:%State:%'
 			AND [A].[message] NOT LIKE N'Error:%Severity:%State:%(Params:%)%'
 			OR ([B].[message] LIKE N'%found % errors and repaired % errors%' AND [B].[message] NOT LIKE N'%found 0 errors and repaired 0 errors%')

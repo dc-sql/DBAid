@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [checkmk].[usp_check_logshipping]
+CREATE PROCEDURE [checkmk].[check_logshipping]
 WITH ENCRYPTION
 AS
 BEGIN

@@ -52,14 +52,9 @@ BEGIN
 		SELECT [H].[job_name]
 			,[H].[step_id]
 			,[H].[step_name]
-			,CASE 
-				WHEN @sanitize=0 THEN 
-					CASE 
-						WHEN [H].[run_status]=0 THEN [H].[message] 
-						ELSE NULL
-					END
-				ELSE ISNULL([M].[text],'SANITIZE_DATASET is enabled. Please investigate on the SQL Instance.') 
-			END AS [error_message]
+			,CASE WHEN @sanitize = 0 
+				THEN CASE WHEN [H].[run_status] = 0 THEN [H].[message] ELSE NULL END
+				ELSE [M].[text]	END AS [error_message]
 			,CASE [H].[run_status] 
 				WHEN 0 THEN 'Failed'
 				WHEN 1 THEN 'Succeeded'

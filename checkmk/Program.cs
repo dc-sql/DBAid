@@ -8,15 +8,13 @@ namespace local.dbaid.checkmk
 {
     class Program
     {
-        private const string mssqlControlCheck = "[control].[check]";
-        private const string mssqlControlChart = "[control].[chart]";
-        private const string mssqlEditionCheck = "SELECT * FROM [dbo].[cleanstring](@@VERSION)";
+        private const string selectInventoryProcedureList = "SELECT [procedure] FROM [dbo].[get_procedure_list](N'checkmk',N'inventory%')";
+        private const string selectCheckProcedureList = "SELECT [procedure] FROM [dbo].[get_procedure_list](N'checkmk',N'check%')";
+        private const string selectChartProcedureList = "SELECT [procedure] FROM [dbo].[get_procedure_list](N'checkmk',N'chart%')";
+        private const string selectVersion = "SELECT * FROM [dbo].[cleanstring](@@VERSION)";
 
         static int Main(string[] args)
         {
-            string isCheck = ConfigurationManager.AppSettings["is_check_enabled"];
-            string isChart = ConfigurationManager.AppSettings["is_chart_enabled"];
-
             ConnectionStringSettingsCollection settings = ConfigurationManager.ConnectionStrings;
 
             foreach (ConnectionStringSettings connStr in settings)

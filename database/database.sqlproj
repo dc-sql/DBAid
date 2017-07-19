@@ -103,17 +103,10 @@
     <Folder Include="audit\tables" />
     <Folder Include="configg\tables" />
     <Folder Include="configg\procedures" />
+    <Folder Include="system\methods\function" />
+    <Folder Include="system\methods\procedure" />
   </ItemGroup>
   <ItemGroup>
-    <Build Include="system\methods\execute_foreach_db.sql">
-      <QuotedIdentifier>ProjectDefault</QuotedIdentifier>
-    </Build>
-    <Build Include="system\methods\delete_system_history.sql" />
-    <Build Include="system\methods\get_clean_string.sql" />
-    <Build Include="system\methods\get_datetimeoffset.sql" />
-    <Build Include="system\methods\get_instance_guid.sql" />
-    <Build Include="system\methods\get_instance_tag.sql" />
-    <Build Include="system\methods\get_product_version.sql" />
     <Build Include="system\configuration.sql" />
     <Build Include="collector\get_backup_history.sql" />
     <Build Include="collector\get_errorlog_history.sql" />
@@ -136,7 +129,6 @@
     <Build Include="checkmk\chart_capacity_db.sql" />
     <Build Include="checkmk\configuration_perfmon.sql" />
     <Build Include="checkmk\chart_perfmon.sql" />
-    <Build Include="system\methods\get_split_string.sql" />
     <Build Include="system\security\schemas.sql" />
     <Build Include="audit\procedures\get_cis_benchmark.sql" />
     <Build Include="audit\procedures\get_database_last_access.sql" />
@@ -158,7 +150,17 @@
     <Build Include="configg\procedures\get_instance_service_configurations.sql" />
     <Build Include="configg\procedures\get_instance_sysconfigurations.sql" />
     <Build Include="configg\tables\service_properties.sql" />
-    <Build Include="system\methods\get_procedure_list.sql" />
+    <Build Include="system\methods\procedure\delete_system_history.sql" />
+    <Build Include="system\methods\procedure\execute_foreach_db.sql">
+      <QuotedIdentifier>ProjectDefault</QuotedIdentifier>
+    </Build>
+    <Build Include="system\methods\function\get_clean_string.sql" />
+    <Build Include="system\methods\function\get_datetimeoffset.sql" />
+    <Build Include="system\methods\function\get_instance_guid.sql" />
+    <Build Include="system\methods\function\get_product_version.sql" />
+    <Build Include="system\methods\function\get_split_string.sql" />
+    <Build Include="system\methods\procedure\get_procedure_list.sql" />
+    <Build Include="system\methods\procedure\get_instance_tag.sql" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
