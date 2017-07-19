@@ -20,24 +20,22 @@ BEGIN
 								,[subscriber_db] NVARCHAR(128)
 								,[publication] NVARCHAR(128));
 
-	INSERT INTO @db_subscription EXEC [system].[execute_foreach_db] N'SELECT ''?'' FROM [?].[INFORMATION_SCHEMA].[TABLES] [T] INNER JOIN [sys].[databases] [D] ON ''?'' = [D].[name] WHERE [TABLE_NAME]=''MSreplication_subscriptions'' AND [D].[is_distributor]=0';
-
-	EXECUTE AS LOGIN = '_dbaid_sa';
+	INSERT INTO @db_subscription 
+		EXEC [system].[execute_foreach_db] N'SELECT ''?'' FROM [?].[INFORMATION_SCHEMA].[TABLES] [T] INNER JOIN [sys].[databases] [D] ON ''?'' = [D].[name] WHERE [TABLE_NAME]=''MSreplication_subscriptions'' AND [D].[is_distributor]=0';
 
 	WHILE (SELECT COUNT([db_name]) FROM @db_subscription) > 0
 	BEGIN
 		SET @db_name=(SELECT TOP(1) [db_name] FROM @db_subscription);
 
-		SET @sql_cmd=N'SELECT [publisher], [publisher_db], ''' + @db_name + ''' AS [subscriber_db], [publication] FROM [' + @db_name + '].[dbo].[MSreplication_subscriptions]';
+		SET @sql_cmd=N'SELECT [publisher], [publisher_db], ''' 
+			+ @db_name 
+			+ ''' AS [subscriber_db], [publication] FROM [' + @db_name + '].[dbo].[MSreplication_subscriptions]';
 		
 		INSERT INTO @subscription
 			EXEC sp_executesql @stmt = @sql_cmd;
 
 		DELETE FROM @db_subscription WHERE [db_name] = @db_name;
 	END
-
-	REVERT;
-	REVERT;
 
 	SELECT * FROM @subscription;
 END

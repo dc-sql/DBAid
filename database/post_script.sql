@@ -17,18 +17,19 @@ Post-Deployment Script Template
 */
 USE [master]
 GO
-
 DECLARE @cmd VARCHAR(180);
 SET @cmd = 'ALTER LOGIN [_dbaid_sa] WITH PASSWORD=N''' + CAST(NEWID() AS CHAR(38)) + '''';
 EXEC(@cmd);
+ALTER LOGIN [_dbaid_sa] DISABLE;
+EXEC sp_addsrvrolemember '_dbaid_sa', 'sysadmin';
 GO
 
 USE [$(DatabaseName)];
 GO
 
 /* Insert static variables */
-MERGE INTO [setting].[tbl_parameter_default] AS [Target] 
-USING (SELECT N'INSTANCE_GUID', NEWID()
+MERGE INTO [system].[configuration] AS [Target] 
+USING (SELECT N'INSTANCE_GUID', CAST(NEWID() AS SQL_VARIANT)
 	UNION SELECT N'SANITIZE_DATASET',1
 	UNION SELECT N'PUBLIC_ENCRYPTION_KEY',NULL
 	UNION SELECT N'CAPACITY_CACHE_RETENTION_MONTH',3
@@ -40,7 +41,7 @@ WHEN NOT MATCHED BY TARGET THEN
 GO
 
 /* General perf counters */
-MERGE INTO [checkmk].[tbl_pnp_config_perfmon] AS [Target] 
+MERGE INTO [checkmk].[configuration_perfmon] AS [Target] 
 USING (VALUES(N'%:Broker Activation', N'Tasks Running', N'_Total')
 	,(N'%:Broker Activation',N'Tasks Started/sec',N'_Total')
 	,(N'%:Broker Statistics',N'Activation Errors Total',NULL)
@@ -76,11 +77,9 @@ WHEN NOT MATCHED BY TARGET THEN
 			[Source].[instance_name]);
 GO
 
-/* execute dbaid inventory */
-EXEC [checkmk].[usp_inventory];
+/* execute inventory */
+EXEC [checkmk].[inventory_database];
 GO
-
-/* set database to _dbaid_sa owner */
-EXEC [$(DatabaseName)].[dbo].[sp_changedbowner] @loginame = N'_dbaid_sa'
+EXEC [checkmk].[inventory_agentjob];
 GO
 

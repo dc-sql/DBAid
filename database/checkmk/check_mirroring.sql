@@ -10,7 +10,6 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-	DECLARE @check_config TABLE([config_name] NVARCHAR(128), [ci_name] NVARCHAR(128), [check_value] SQL_VARIANT, [check_change_alert] VARCHAR(10));
 	DECLARE @check_output TABLE([message] NVARCHAR(4000),[state] NVARCHAR(8));
 
 	INSERT INTO @check_output
@@ -24,7 +23,7 @@ BEGIN
 		INNER JOIN [master].[sys].[database_mirroring] [M]
 			ON [D].[database_id] = [M].[database_id]
 		INNER JOIN [checkmk].[configuration_database] [C]
-			ON [D].[database_id] = [C].[database_id]
+			ON [D].[name] = [C].[name]
 	WHERE [C].[mirroring_check_enabled] = 1
 		AND [M].[mirroring_guid] IS NOT NULL;
 

@@ -41,31 +41,6 @@ BEGIN
 END
 GO
 
-IF EXISTS (SELECT * FROM sys.server_principals WHERE LOWER([type]) IN ('u','s') AND LOWER(name) = LOWER('_dbaid_sa'))
-BEGIN
-	DECLARE @sql VARCHAR(500);
-
-	DECLARE revoke_curse CURSOR FAST_FORWARD FOR
-		SELECT 'REVOKE IMPERSONATE ON LOGIN::[_dbaid_sa] TO ' + QUOTENAME(SUSER_NAME(grantee_principal_id))
-		FROM sys.server_permissions
-		WHERE [type] = 'IM'	AND SUSER_NAME(grantor_principal_id) = '_dbaid_sa';
-
-	OPEN revoke_curse ;
-    FETCH NEXT FROM revoke_curse INTO @sql;
-
-	WHILE @@FETCH_STATUS = 0
-    BEGIN  
-		EXEC(@sql);
-		FETCH NEXT FROM revoke_curse INTO @sql;
-	END
-
-	CLOSE revoke_curse;
-    DEALLOCATE revoke_curse;
-
-	DROP LOGIN [_dbaid_sa];
-END
-GO
-
 USE [$(DatabaseName)]
 GO
 

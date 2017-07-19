@@ -85,6 +85,7 @@
     <WarningLevel>4</WarningLevel>
     <FileAlignment>8192</FileAlignment>
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
+    <SqlTargetName>mssql-dbaid-database-deployment</SqlTargetName>
   </PropertyGroup>
   <!-- VS10 without SP1 will not have VisualStudioVersion set, so do that here -->
   <PropertyGroup />
@@ -118,12 +119,8 @@
     <Build Include="collector\get_errorlog_history.sql" />
     <Build Include="collector\get_agentjob_history.sql" />
     <Build Include="collector\last_execution.sql" />
-    <Build Include="checkmk\inventory_procedure.sql">
-      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
-    </Build>
     <PostDeploy Include="post_script.sql" />
     <PreDeploy Include="pre_script.sql" />
-    <Build Include="checkmk\configuration_procedure.sql" />
     <Build Include="checkmk\inventory_database.sql" />
     <Build Include="checkmk\configuration_database.sql" />
     <Build Include="checkmk\configuration_agentjob.sql" />
@@ -161,7 +158,8 @@
     <Build Include="configg\procedures\get_instance_service_configurations.sql" />
     <Build Include="configg\procedures\get_instance_sysconfigurations.sql" />
     <Build Include="configg\tables\service_properties.sql" />
-    <Build Include="system\security\_dbaid_sa.sql" />
+    <Build Include="system\security\users.sql" />
+    <Build Include="system\security\logins.sql" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />

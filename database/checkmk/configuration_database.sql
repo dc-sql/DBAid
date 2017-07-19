@@ -1,6 +1,5 @@
 ﻿CREATE TABLE [checkmk].[configuration_database]
 (
-	[database_id] INT NOT NULL PRIMARY KEY,
 	[name] SYSNAME NOT NULL,
 
 	[database_check_alert] VARCHAR(10) NOT NULL DEFAULT 'CRITICAL',
@@ -9,8 +8,8 @@
 	[backup_check_alert] VARCHAR(10) NOT NULL DEFAULT 'CRITICAL',
 	[backup_check_enabled] BIT NOT NULL DEFAULT 1,
 	[backup_check_full_hour] INT NOT NULL DEFAULT 30,
-	[backup_check_diff_hour] INT NOT NULL DEFAULT 30,
-	[backup_check_tran_hour] INT NOT NULL DEFAULT 1,
+	[backup_check_diff_hour] INT NULL DEFAULT NULL,
+	[backup_check_tran_hour] INT NULL DEFAULT 1,
 	
 	[integrity_check_alert] VARCHAR(10) NOT NULL DEFAULT 'WARNING',
 	[integrity_check_hour] INT NOT NULL DEFAULT 170, 

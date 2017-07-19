@@ -16,11 +16,11 @@ BEGIN
 	INSERT INTO @check_output
 		SELECT QUOTENAME([D].[name]) COLLATE Database_Default 
 			+ '=' + UPPER([D].[state_desc]) COLLATE Database_Default AS [message]
-			,CASE WHEN [D].[state] NOT IN (0,1,2) THEN [CD].[database_check_alert] ELSE 'OK' END AS [state]
+			,CASE WHEN [D].[state] NOT IN (0,1,2) THEN [C].[database_check_alert] ELSE 'OK' END AS [state]
 		FROM [sys].[databases] [D]
-			INNER JOIN [checkmk].[configuration_database] [CD] 
-				ON [D].[database_id] = [CD].[database_id]
-		WHERE [CD].[database_check_enabled] = 1
+			INNER JOIN [checkmk].[configuration_database] [C] 
+				ON [D].[name] = [C].[name]
+		WHERE [C].[database_check_enabled] = 1
 		ORDER BY [D].[name];
 
 	IF (SELECT COUNT(*) FROM @check_output WHERE [state] != 'OK') = 0

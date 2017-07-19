@@ -6,17 +6,10 @@ BEGIN
 
 	/* Inventory check_job */
 	MERGE INTO [checkmk].[configuration_agentjob] AS [Target]
-	USING(SELECT [J].[job_id]
-			,[J].[name]
-		FROM [msdb].[dbo].[sysjobs] [J]) AS [Source]
+	USING(SELECT [J].[name] FROM [msdb].[dbo].[sysjobs] [J]) AS [Source]
 	ON [Target].[name] = [Source].[name]
-	WHEN MATCHED THEN
-		UPDATE SET [Target].[job_id] = [Source].[job_id]
 	WHEN NOT MATCHED BY TARGET THEN
-		INSERT ([job_id],
-				[name])
-		VALUES ([Source].[job_id],
-				[Source].[name])
+		INSERT ([name])	VALUES ([Source].[name])
 	WHEN NOT MATCHED BY SOURCE THEN
 		DELETE;
 END

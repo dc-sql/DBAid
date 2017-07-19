@@ -5,7 +5,7 @@ Version 3, 29 June 2007
 */
 
 CREATE PROCEDURE [audit].[get_cis_benchmark]
-WITH ENCRYPTION, EXECUTE AS 'dbo'
+WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;

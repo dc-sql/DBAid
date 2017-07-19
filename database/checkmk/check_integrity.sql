@@ -5,7 +5,7 @@ Version 3, 29 June 2007
 */
 
 CREATE PROCEDURE [checkmk].[check_integrity]
-WITH ENCRYPTION, EXECUTE AS 'dbo'
+WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;

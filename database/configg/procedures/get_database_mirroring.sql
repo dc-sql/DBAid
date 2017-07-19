@@ -10,8 +10,6 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-	EXECUTE AS LOGIN = '_dbaid_sa';
-
 	SELECT DB_NAME([mirroring].[database_id]) AS [database_name]
 		,[mirroring].[mirroring_role_desc] 
 		,[mirroring].[mirroring_safety_level_desc]
@@ -20,7 +18,4 @@ BEGIN
 		,[mirroring].[mirroring_witness_name]
 	FROM [master].[sys].[database_mirroring] [mirroring] 
 	WHERE [mirroring].[mirroring_guid] IS NOT NULL;
-
-	REVERT;
-	REVERT;
 END

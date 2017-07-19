@@ -38,7 +38,7 @@ BEGIN
 
 	SELECT @statusjob=COUNT(*)
 	FROM [checkmk].[configuration_agentjob]
-	WHERE [outcome_check_enabled] = 1
+	WHERE [state_check_enabled] = 1
 
 	IF NOT ((SELECT LOWER(CAST(SERVERPROPERTY('Edition') AS VARCHAR(128)))) LIKE '%express%')
 		INSERT INTO @xpresults
@@ -49,7 +49,7 @@ BEGIN
 	(
 		SELECT ROW_NUMBER() OVER (PARTITION BY [J].[name] ORDER BY [T].[run_datetime] DESC) AS [row]
 			,[J].[job_id]
-			,[J].[name] AS [job_name]
+			,[J].[name]
 			,CASE [H].[run_status]
 					WHEN 0 THEN 'FAIL'
 					WHEN 1 THEN 'SUCCESS'
@@ -71,25 +71,25 @@ BEGIN
 				+ [J].[run_status]
 				+ ';runtime_min='
 				+ CASE [X].[running] 
-					WHEN 1 THEN CAST(DATEDIFF(MINUTE,[T].[last_exec_date],GETDATE()) AS VARCHAR(10))
-					ELSE (run_duration/100.00%100) END 
-				+ ';max_runtime_minutes=' 
-				+ [C].[max_runtime_minutes] AS [message]
-			,CASE WHEN [J].[run_status] = 0 THEN [C].[check_status_state] 
-				WHEN [X].[running] = 1 AND CAST(DATEDIFF(MINUTE,[T].[last_exec_date],GETDATE()) AS VARCHAR(10)) > [C].[max_runtime_minutes] THEN [C].[check_runtime_state] 
+					WHEN 1 THEN CAST(DATEDIFF(MINUTE,[X].[last_run_date],GETDATE()) AS VARCHAR(10))
+					ELSE ([J].[run_duration]/100.00%100) END 
+				+ ';runtime_check_min=' 
+				+ [C].[runtime_check_min] AS [message]
+			,CASE WHEN [J].[run_status] = 0 THEN [C].[state_check_alert] 
+				WHEN [X].[running] = 1 AND CAST(DATEDIFF(MINUTE,[X].[last_run_date],GETDATE()) AS VARCHAR(10)) > [C].[runtime_check_min] THEN [C].[runtime_check_alert] 
 				ELSE 'OK' END AS [state]
 		FROM [job_data] [J]
+			INNER JOIN [checkmk].[configuration_agentjob] [C]
+				ON [J].[name] = [C].[name]
 			LEFT JOIN @xpresults [X]
 				ON [J].[job_id] = [X].[job_id]
-			INNER JOIN [checkmk].[configuration_agentjob] [CA]
-				ON [J].[name] = [CA].[job_name]
 		WHERE [J].[row] = 1
 			AND ([J].[run_status] = 0 OR [X].[running] = 1)
-			AND ([CA].[outcome_check_enabled] = 1 OR [CA].[runtime_check_enabled] = 1);
+			AND ([C].[state_check_enabled] = 1 OR [C].[runtime_check_enabled] = 1);
 
 	IF (SELECT COUNT(*) FROM @check_output) < 1
 		INSERT INTO @check_output 
-		VALUES(CAST(@countjob AS VARCHAR(10)) + ' agent job(s); ' 
+		VALUES(CAST(@countjob AS VARCHAR(10)) + ' agent job(s) enabled; ' 
 			+ CAST(@statusjob AS VARCHAR(10)) + 'monitoring status; ' 
 			+ CAST(@runtimejob AS VARCHAR(10)) + 'monitoring runtime' ,N'NA');
 

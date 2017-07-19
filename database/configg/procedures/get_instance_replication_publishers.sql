@@ -53,8 +53,6 @@ BEGIN
 
 	INSERT INTO @db_publication EXEC [system].[execute_foreach_db]  N'SELECT ''?'' FROM [?].[INFORMATION_SCHEMA].[TABLES] [T] INNER JOIN [sys].[databases] [D] ON ''?'' = [D].[name] WHERE [TABLE_NAME]=''syspublications''  AND [D].[is_distributor]=0';
 
-	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
-
 	WHILE (SELECT COUNT([db_name]) FROM @db_publication) > 0
 	BEGIN
 		SET @db_name=(SELECT TOP(1) [db_name] FROM @db_publication);
@@ -147,9 +145,6 @@ BEGIN
 
 		DELETE FROM @db_publication WHERE [db_name] = @db_name;
 	END
-
-	REVERT;
-	REVERT;
 
 	SELECT * FROM @publications;
 END
