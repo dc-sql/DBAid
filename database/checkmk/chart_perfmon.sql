@@ -28,7 +28,7 @@ BEGIN
 
 	INSERT INTO @sample1
 		SELECT ROW_NUMBER() OVER (ORDER BY [S].[object_name],[S].[cntr_type],[S].[counter_name],[S].[instance_name]) AS [rownum]
-			,RTRIM(STUFF([S].[object_name], 1, 10, ''))
+			,RTRIM([S].[object_name])
 			,RTRIM([S].[counter_name])
 			,RTRIM([S].[instance_name])
 			,[S].[cntr_value]
@@ -36,10 +36,10 @@ BEGIN
 			,[T].[ms_ticks]
 		FROM [sys].[dm_os_performance_counters] [S]
 			INNER JOIN [checkmk].[configuration_perfmon] [C]
-				ON [S].[object_name] LIKE [C].[object_name] COLLATE Latin1_General_CI_AS
-				AND ([S].[counter_name] LIKE [C].[counter_name] COLLATE Latin1_General_CI_AS 
+				ON RTRIM([S].[object_name]) LIKE [C].[object_name] COLLATE Latin1_General_CI_AS
+				AND (RTRIM([S].[counter_name]) LIKE [C].[counter_name] COLLATE Latin1_General_CI_AS 
 					OR ISNULL([C].[counter_name],'') = '')
-				AND ([S].[instance_name] LIKE [C].[instance_name] COLLATE Latin1_General_CI_AS 
+				AND (RTRIM([S].[instance_name]) LIKE [C].[instance_name] COLLATE Latin1_General_CI_AS 
 					OR ISNULL([C].[instance_name],'') = '')
 			CROSS APPLY (SELECT [ms_ticks] FROM [sys].[dm_os_sys_info]) [T](ms_ticks)
 
@@ -47,7 +47,7 @@ BEGIN
 
 	INSERT INTO @sample2
 		SELECT ROW_NUMBER() OVER (ORDER BY [S].[object_name],[S].[cntr_type],[S].[counter_name],[S].[instance_name]) AS [rownum]
-			,RTRIM(STUFF([S].[object_name], 1, 10, ''))
+			,RTRIM([S].[object_name])
 			,RTRIM([S].[counter_name])
 			,RTRIM([S].[instance_name])
 			,[S].[cntr_value]
@@ -55,10 +55,10 @@ BEGIN
 			,[T].[ms_ticks]
 		FROM [sys].[dm_os_performance_counters] [S]
 			INNER JOIN [checkmk].[configuration_perfmon] [C]
-				ON [S].[object_name] LIKE [C].[object_name] COLLATE Latin1_General_CI_AS
-				AND ([S].[counter_name] LIKE [C].[counter_name] COLLATE Latin1_General_CI_AS 
+				ON RTRIM([S].[object_name]) LIKE [C].[object_name] COLLATE Latin1_General_CI_AS
+				AND (RTRIM([S].[counter_name]) LIKE [C].[counter_name] COLLATE Latin1_General_CI_AS 
 					OR ISNULL([C].[counter_name],'') = '')
-				AND ([S].[instance_name] LIKE [C].[instance_name] COLLATE Latin1_General_CI_AS 
+				AND (RTRIM([S].[instance_name]) LIKE [C].[instance_name] COLLATE Latin1_General_CI_AS 
 					OR ISNULL([C].[instance_name],'') = '')
 			CROSS APPLY (SELECT [ms_ticks] FROM [sys].[dm_os_sys_info]) [T]([ms_ticks]);
 
@@ -106,7 +106,7 @@ BEGIN
 								WHEN [S1].[cntr_type] = 65792 AND RTRIM([S1].[counter_name]) = N'Usage' THEN N'c'
 								WHEN [S1].[counter_name] LIKE N'%(ms)%' OR [S1].[instance_name] LIKE N'%(ms)%' THEN N'ms'
 								WHEN [S1].[counter_name] LIKE N'%(KB)%' OR [S1].[instance_name] LIKE N'%(KB)%' THEN N'KB'
-								WHEN [S1].[counter_name] LIKE N'%Byte%' AND [S1].[counter_name] NOT LIKE N'%/sec%' THEN N'B'
+								WHEN [S1].[counter_name] LIKE N'%Bytes%' OR [S1].[instance_name] LIKE N'%Bytes%' THEN N'B'
 								ELSE NULL END) [U](uom)
 	WHERE [S1].[cntr_type] IN (537003264,1073874176,272696576,65792)
 	ORDER BY [S1].[object_name]

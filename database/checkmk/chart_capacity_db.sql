@@ -41,9 +41,9 @@ BEGIN
 		,[P1].[rows_size_used_mb] + [P1].[log_size_used_mb] AS [used]
 		,[P2].[rows_size_reserved_mb] + [P2].[log_size_reserved_mb] AS [reserved]
 		,NULL AS [max]
-		,NULL AS [used_warning]
-		,NULL AS [used_critical]
-		,'MB' AS [unit]
+		,NULL AS [used_warn]
+		,NULL AS [used_crit]
+		,'MB' AS [uom]
 	FROM
 	(SELECT [database_id],
 		[P].[log] AS [log_size_used_mb], 
