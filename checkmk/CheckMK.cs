@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Text;
 
@@ -24,7 +23,7 @@ namespace local.dbaid.checkmk
 
                     rowCount++;
 
-                    message.AppendFormat("{0} - {1};\\n ", col2.ToUpper(), col1);
+                    message.AppendFormat("{0} - {1};\\n ", col2, col1);
 
                     // Get and set status code.
                     switch (col2.ToUpper())

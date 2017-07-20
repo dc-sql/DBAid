@@ -124,7 +124,7 @@
     <Build Include="checkmk\check_database.sql" />
     <Build Include="checkmk\check_logshipping.sql" />
     <Build Include="checkmk\check_mirroring.sql" />
-    <Build Include="checkmk\check_alwayson.sql" />
+    <None Include="checkmk\check_alwayson.sql" />
     <Build Include="checkmk\chart_capacity_fg.sql" />
     <Build Include="checkmk\chart_capacity_db.sql" />
     <Build Include="checkmk\configuration_perfmon.sql" />
@@ -161,6 +161,7 @@
     <Build Include="system\methods\function\get_split_string.sql" />
     <Build Include="system\methods\procedure\get_procedure_list.sql" />
     <Build Include="system\methods\procedure\get_instance_tag.sql" />
+    <Build Include="checkmk\check_instance.sql" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />

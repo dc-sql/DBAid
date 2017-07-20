@@ -16,5 +16,7 @@ BEGIN
 			,@value_name='Domain'
 			,@value=@domain OUTPUT;
 
-	SELECT REPLACE(@@SERVERNAME, '\', '@') + N'_' + REPLACE(@domain, '.', '_') AS [instance_tag];
+	SELECT CAST(SERVERPROPERTY('MachineName') AS VARCHAR(128)) + '_' 
+		+  @@SERVICENAME + '_' 
+		+ REPLACE(@domain, '.', '_') AS [instance_tag];
 END

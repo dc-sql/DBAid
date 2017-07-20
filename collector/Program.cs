@@ -8,8 +8,6 @@ namespace collector
 {
     class Program
     {
-        private const string selectProcedureList = "SELECT [procedure] FROM [dbo].[get_procedure_list](N'collector', NULL)";
-
         static void Help()
         {
             Console.WriteLine("-server localhost\\inst (Mandatory)");
@@ -97,10 +95,10 @@ namespace collector
                     procedures = dt.Rows;
                 }
 
-                foreach (DataRow row in procedures)  // execute procedures and write contents out to file.
+                foreach (DataRow dr in procedures)  // execute procedures and write contents out to file.
                 {
-                    string proc = row[0].ToString();
-                    string procTag = proc.Replace("[", "").Replace("]", "").Replace(".", "_");
+                    string proc = dr[0].ToString();
+                    string procTag = proc.ToString().Substring(proc.LastIndexOf('_') + 1).Replace("]", "");
                     string file = instanceTag + "_" + procTag + "_" + runtime.ToString("yyyyMMddHHmm") + ".xml";
                     string filepath = Path.Combine(output, file);
 

@@ -10,13 +10,13 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-	DECLARE @check_output TABLE([message] NVARCHAR(4000),[state] NVARCHAR(8));
+	DECLARE @check_output TABLE([state] VARCHAR(8), [message] VARCHAR(4000));
 	DECLARE @onlinecount INT, @restorecount INT, @recovercount INT;
 
 	INSERT INTO @check_output
-		SELECT QUOTENAME([D].[name]) COLLATE Database_Default 
+		SELECT CASE WHEN [D].[state] NOT IN (0,1,2) THEN [C].[database_check_alert] ELSE 'OK' END AS [state]
+			,QUOTENAME([D].[name]) COLLATE Database_Default 
 			+ '=' + UPPER([D].[state_desc]) COLLATE Database_Default AS [message]
-			,CASE WHEN [D].[state] NOT IN (0,1,2) THEN [C].[database_check_alert] ELSE 'OK' END AS [state]
 		FROM [sys].[databases] [D]
 			INNER JOIN [checkmk].[configuration_database] [C] 
 				ON [D].[name] = [C].[name]
@@ -30,10 +30,10 @@ BEGIN
 		SELECT @recovercount = COUNT([state]) FROM sys.databases WHERE [state] = 2;
 
 		INSERT INTO @check_output 
-		VALUES(CAST(@onlinecount AS NVARCHAR(10)) + ' online; ' 
+		VALUES('NA', CAST(@onlinecount AS NVARCHAR(10)) + ' online; ' 
 			+ CAST(@restorecount AS NVARCHAR(10)) + ' restoring; ' 
-			+ CAST(@recovercount AS NVARCHAR(10)) + ' recovering','NA');
+			+ CAST(@recovercount AS NVARCHAR(10)) + ' recovering');
 	END
 
-	SELECT [message], [state] FROM @check_output WHERE [state] != 'OK';
+	SELECT [state], [message] FROM @check_output WHERE [state] != 'OK';
 END

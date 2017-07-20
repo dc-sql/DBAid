@@ -1,85 +1,157 @@
 ﻿using System;
 using System.Configuration;
-using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
 using System.Text;
 
 namespace local.dbaid.checkmk
 {
     class Program
     {
-        private const string selectInventoryProcedureList = "SELECT [procedure] FROM [dbo].[get_procedure_list](N'checkmk',N'inventory%')";
-        private const string selectCheckProcedureList = "SELECT [procedure] FROM [dbo].[get_procedure_list](N'checkmk',N'check%')";
-        private const string selectChartProcedureList = "SELECT [procedure] FROM [dbo].[get_procedure_list](N'checkmk',N'chart%')";
-        private const string selectVersion = "SELECT * FROM [dbo].[cleanstring](@@VERSION)";
-
-        static int Main(string[] args)
+        static void Main(string[] args)
         {
             ConnectionStringSettingsCollection settings = ConfigurationManager.ConnectionStrings;
 
-            foreach (ConnectionStringSettings connStr in settings)
+            foreach (ConnectionStringSettings css in settings)
             {
-                string cs = connStr.ConnectionString;
-                string instance = connStr.Name;
+                SqlConnectionStringBuilder csb = new SqlConnectionStringBuilder(css.ConnectionString);
+                csb.Encrypt = true;
+                csb.TrustServerCertificate = true;
 
-                DataSet cds = new DataSet(); //Command dataset
-                DataSet rds = new DataSet(); //Result dataset
-                
-                try
+                if (String.IsNullOrEmpty(csb.InitialCatalog))
+                    csb.InitialCatalog = "_dbaid";
+                if (String.IsNullOrEmpty(csb.UserID) || String.IsNullOrEmpty(csb.Password))
+                    csb.IntegratedSecurity = true;
+                else csb.IntegratedSecurity = false;
+
+                using (var con = new SqlConnection(csb.ConnectionString))
                 {
-                    // output service version
-                    string version = Query.Select(cs, "SELECT * FROM [dbo].[cleanstring](@@VERSION)").Rows[0][0].ToString();
-                    Console.WriteLine("0 {0}_{1} - {2}", "mssql", instance, version);
+                    string instanceTag = String.Empty;
 
-                    if (isCheck == "1")
+                    con.Open();
+
+                    using (var cmd = new SqlCommand("[system].[get_instance_tag]", con))
                     {
-                        // get list of executable check commands
-                        cds.Tables.Add(Query.Execute(cs, mssqlControlCheck));
-                        cds.Tables[mssqlControlCheck].PrimaryKey = new DataColumn[] { cds.Tables[mssqlControlCheck].Columns[0] };
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        SqlDataReader row = cmd.ExecuteReader();
+
+                        row.Read();
+                        instanceTag = row[0].ToString();
+                        row.Close();
                     }
 
-                    if (isChart == "1")
+                    using (var cmd = new SqlCommand("[system].[get_procedure_list]", con))
                     {
-                        // get list of executable chart commands
-                        cds.Tables.Add(Query.Execute(cs, mssqlControlChart));
-                        cds.Tables[mssqlControlChart].PrimaryKey = new DataColumn[] { cds.Tables[mssqlControlChart].Columns[0] };
-                    }
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@schema", "checkmk"));
+                        cmd.Parameters.Add(new SqlParameter("@filter", "inventory%"));
 
-                    // execute each procedures that are returned by the control commands
-                    foreach (DataTable dt in cds.Tables)
-                    {
+                        DataTable dt = new DataTable();
+                        dt.Load(cmd.ExecuteReader());
+
                         foreach (DataRow dr in dt.Rows)
                         {
-                            rds.Tables.Add(Query.Execute(cs, dr[0].ToString()));
+                            string proc = dr[0].ToString();
+
+                            using (var inventory = new SqlCommand(proc, con))
+                            {
+                                inventory.CommandType = CommandType.StoredProcedure;
+                                inventory.ExecuteNonQuery();
+                            }
                         }
                     }
 
-                    // Console out the results for Check_MK
-                    foreach (DataTable dt in rds.Tables)
+                    using (var cmd = new SqlCommand("[system].[get_procedure_list]", con))
                     {
-                        // if data table contains data from a check procedure, then format in check format.
-                        if (cds.Tables[mssqlControlCheck].Rows.Contains(dt.TableName))
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@schema", "checkmk"));
+                        cmd.Parameters.Add(new SqlParameter("@filter", "check%"));
+
+                        DataTable dt = new DataTable();
+                        dt.Load(cmd.ExecuteReader());
+
+                        foreach (DataRow dr in dt.Rows)
                         {
-                            Console.WriteLine(CheckMK.FormatCheck(dt, instance));
-                        }
-                        // else if data table contains data from a chart procedure, then format in chart format.
-                        else if (cds.Tables[mssqlControlChart].Rows.Contains(dt.TableName))
-                        {
-                            Console.WriteLine(CheckMK.FormatChart(dt, instance));
+                            string proc = dr[0].ToString();
+                            string procTag = proc.ToString().Substring(proc.LastIndexOf('_')+1).Replace("]","");
+
+                            using (var check = new SqlCommand(proc, con))
+                            {
+                                check.CommandType = CommandType.StoredProcedure;
+
+                                DataTable results = new DataTable();
+                                results.Load(check.ExecuteReader());
+
+                                StringBuilder message = new StringBuilder();
+                                int code = 0; 
+
+                                foreach (DataRow row in results.Rows)
+                                {
+                                    message.AppendFormat("{0} - {1};\\n ", row[0].ToString(), row[1].ToString());
+
+                                    if (statusCode(row[0].ToString()) > code)
+                                    {
+                                        code = statusCode(row[0].ToString());
+                                    }
+                                }
+
+                                Console.WriteLine("{0} mssql_{1}_{2} count={3} {4}", code, instanceTag, procTag, results.Rows.Count, message);
+                            }
                         }
                     }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("2 {0}_{1} - {2}", "mssql", connStr.Name.ToUpper(), e.Message);
 
-                    return 2;
+                    using (var cmd = new SqlCommand("[system].[get_procedure_list]", con))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@schema", "checkmk"));
+                        cmd.Parameters.Add(new SqlParameter("@filter", "chart%"));
+
+                        DataTable dt = new DataTable();
+                        dt.Load(cmd.ExecuteReader());
+
+                        foreach (DataRow dr in dt.Rows)
+                        {
+                            string proc = dr[0].ToString();
+                            string procTag = proc.ToString().Substring(proc.LastIndexOf('_') + 1).Replace("]", "");
+
+                            using (var chart = new SqlCommand(proc, con))
+                            {
+                                chart.CommandType = CommandType.StoredProcedure;
+
+                                DataTable results = new DataTable();
+                                results.Load(chart.ExecuteReader());
+
+                                foreach (DataRow row in results.Rows)
+                                {
+                                    Console.WriteLine("Do Something");
+                                }
+                            }
+                        }
+                    }
+
+                    con.Close();
                 }
             }
+#if DEBUG
+            Console.ReadKey();
+#endif
+        }
 
-            //Console.ReadKey();
-
-            return 1;
+        static int statusCode(string status)
+        {
+            switch (status.ToUpper())
+            {
+                case "NA":
+                    return 0;
+                case "OK":
+                    return 0;
+                case "WARNING":
+                    return 1;
+                case "CRITICAL":
+                    return 2;
+                default:
+                    return 3;
+            }
         }
     }
 }
