@@ -98,7 +98,7 @@ namespace collector
                 foreach (DataRow dr in procedures)  // execute procedures and write contents out to file.
                 {
                     string proc = dr[0].ToString();
-                    string procTag = proc.ToString().Substring(proc.LastIndexOf('_') + 1).Replace("]", "");
+                    string procTag = proc.ToString().Substring(proc.IndexOf('_') + 1).Replace("]", "");
                     string file = instanceTag + "_" + procTag + "_" + runtime.ToString("yyyyMMddHHmm") + ".xml";
                     string filepath = Path.Combine(output, file);
 

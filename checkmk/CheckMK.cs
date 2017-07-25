@@ -79,11 +79,9 @@ namespace local.dbaid.checkmk
                 foreach (DataRow dr in dt.Rows)
                 {
                     decimal val = dr.IsNull(0) ? -1 : (decimal)dr[0];
-
-                    bool warnExist = dr.IsNull(1) ? false : true;
+                    bool isWarn = dr.IsNull(1) ? false : true;
                     decimal warn = dr.IsNull(1) ? 0 : (decimal)dr[1];
-
-                    bool critExist = dr.IsNull(2) ? false : true;
+                    bool isCrit = dr.IsNull(2) ? false : true;
                     decimal crit = dr.IsNull(2) ? 0 : (decimal)dr[2];
 
                     string pnp = dr.IsNull(3) ? String.Empty : dr[3].ToString();

@@ -167,10 +167,10 @@ BEGIN
 			,SUM([F].[size_used_mb]) AS [used]
 			,CASE WHEN [F].[filegroup_is_readonly] = 1 OR [DB].[is_read_only] = 1 OR [DB].[state] != 0 THEN NULL 
 				ELSE (SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb]))-((SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb])) * (CAST([C].[capacity_check_warning_free] AS NUMERIC(5,2))/100.00))
-				END AS [used_warn]
+				END AS [warning]
 			,CASE WHEN [F].[filegroup_is_readonly] = 1 OR [DB].[is_read_only] = 1 OR [DB].[state] != 0 THEN NULL 
 				ELSE (SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb]))-((SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb])) * (CAST([C].[capacity_check_critical_free] AS NUMERIC(5,2))/100.00))
-				END AS [used_crit]
+				END AS [critical]
 			,SUM([F].[size_reserved_mb]) AS [reserved]
 			,CASE WHEN [F].[filegroup_is_readonly] = 1 OR [DB].[is_read_only] = 1 THEN SUM([F].[size_reserved_mb])
 				ELSE (SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb]))
@@ -203,12 +203,12 @@ BEGIN
 			,[C].[capacity_check_critical_free]
 			,[C].[capacity_check_warning_free]
 	)
-	SELECT [database_name] + N'_' + [data_space] AS [data_space]
+	SELECT [database_name] + N'_' + [data_space] AS [name]
 		,[used]
 		,[reserved]
 		,[max]
-		,[used_warn]
-		,[used_crit]
+		,[warning]
+		,[critical]
 		,'MB' AS [uom]
 	FROM Dataset
 	ORDER BY [database_name], [data_space];

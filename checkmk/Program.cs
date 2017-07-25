@@ -30,13 +30,13 @@ namespace local.dbaid.checkmk
 
                     con.Open();
 
-                    using (var cmd = new SqlCommand("[system].[get_instance_tag]", con))
+                    using (var cmd = new SqlCommand("SELECT @@SERVICENAME", con))
                     {
-                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.CommandType = CommandType.Text;
                         SqlDataReader row = cmd.ExecuteReader();
 
                         row.Read();
-                        instanceTag = row[0].ToString();
+                        instanceTag = row[0].ToString().ToLower();
                         row.Close();
                     }
 
@@ -73,7 +73,7 @@ namespace local.dbaid.checkmk
                         foreach (DataRow dr in dt.Rows)
                         {
                             string proc = dr[0].ToString();
-                            string procTag = proc.ToString().Substring(proc.LastIndexOf('_')+1).Replace("]","");
+                            string procTag = proc.ToString().Substring(proc.IndexOf('_') + 1).Replace("]", "");
 
                             using (var check = new SqlCommand(proc, con))
                             {
@@ -104,7 +104,7 @@ namespace local.dbaid.checkmk
                     {
                         cmd.CommandType = CommandType.StoredProcedure;
                         cmd.Parameters.Add(new SqlParameter("@schema", "checkmk"));
-                        cmd.Parameters.Add(new SqlParameter("@filter", "chart%"));
+                        cmd.Parameters.Add(new SqlParameter("@filter", "chart_capacity%"));
 
                         DataTable dt = new DataTable();
                         dt.Load(cmd.ExecuteReader());
@@ -112,7 +112,82 @@ namespace local.dbaid.checkmk
                         foreach (DataRow dr in dt.Rows)
                         {
                             string proc = dr[0].ToString();
-                            string procTag = proc.ToString().Substring(proc.LastIndexOf('_') + 1).Replace("]", "");
+                            string procTag = proc.ToString().Substring(proc.IndexOf('_') + 1).Replace("]", "");
+
+                            using (var chart = new SqlCommand(proc, con))
+                            {
+                                chart.CommandType = CommandType.StoredProcedure;
+
+                                DataTable results = new DataTable();
+                                results.Load(chart.ExecuteReader());
+
+                                foreach (DataRow row in results.Rows)
+                                {
+                                    string name = String.Empty;
+                                    decimal used = -1;
+                                    decimal reserved = -1;
+                                    decimal max = -1;
+                                    decimal warning = -1;
+                                    decimal critical = -1;
+
+                                    if (results.Columns.Contains("name"))
+                                        if (!row.IsNull("name"))
+                                            name = (string)row["name"];
+
+                                    if (results.Columns.Contains("used"))
+                                        if (!row.IsNull("used"))
+                                            used = (decimal)row["used"];
+
+                                    if (results.Columns.Contains("reserved"))
+                                        if (!row.IsNull("reserved"))
+                                            reserved = (decimal)row["reserved"];
+
+                                    if (results.Columns.Contains("max"))
+                                        if (!row.IsNull("max"))
+                                            max = (decimal)row["max"];
+
+                                    if (results.Columns.Contains("warning"))
+                                        if (!row.IsNull("warning"))
+                                            warning = (decimal)row["warning"];
+
+                                    if (results.Columns.Contains("critical"))
+                                        if (!row.IsNull("critical"))
+                                            critical = (decimal)row["critical"];
+
+                                    if (used >= critical && critical != -1)
+                                    {
+                                        Console.WriteLine("{0} mssql_{1}_{2} {3} CRITICAL; ", statusCode("CRITICAL"), instanceTag, procTag, name);
+                                    }
+                                    else if (used >= warning && warning != -1)
+                                    {
+                                        Console.WriteLine("{0} mssql_{1}_{2} {3} WARNING; ", statusCode("WARNING"), instanceTag, procTag, name);
+                                    }
+                                    else if ((used < warning && warning != -1) && (used < critical && critical != -1))
+                                    {
+                                        Console.WriteLine("{0} mssql_{1}_{2} {3} OK; ", statusCode("OK"), instanceTag, procTag, name);
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("{0} mssql_{1}_{2} {3} NA; ", statusCode("NA"), instanceTag, procTag, name);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    using (var cmd = new SqlCommand("[system].[get_procedure_list]", con))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@schema", "checkmk"));
+                        cmd.Parameters.Add(new SqlParameter("@filter", "chart_perfmon%"));
+
+                        DataTable dt = new DataTable();
+                        dt.Load(cmd.ExecuteReader());
+
+                        foreach (DataRow dr in dt.Rows)
+                        {
+                            string proc = dr[0].ToString();
+                            string procTag = proc.ToString().Substring(proc.IndexOf('_') + 1).Replace("]", "");
 
                             using (var chart = new SqlCommand(proc, con))
                             {
@@ -149,6 +224,8 @@ namespace local.dbaid.checkmk
                     return 1;
                 case "CRITICAL":
                     return 2;
+                case "UNKNOWN":
+                    return 3;
                 default:
                     return 3;
             }
