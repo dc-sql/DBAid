@@ -13,19 +13,19 @@ namespace local.dbaid.asbuilt
     class Markdown
     {
 
-        public static String getMarkdown(string connectionString, string query)
+        public static String getMarkdown(string connectionString, string query, int timeOut)
         {
             StringBuilder md = new StringBuilder();
 
-            foreach (DataRow dr in Query.Execute(connectionString, query).Rows)
+            foreach (DataRow dr in Query.Execute(connectionString, query, timeOut).Rows)
             {
                 md.Append("- [" + dr[0].ToString()+"](#" +dr[0].ToString().Replace("].[","").Replace("[","").Replace("]","")+")" + Environment.NewLine);
             }
 
-            foreach (DataRow dr in Query.Execute(connectionString, query).Rows)
+            foreach (DataRow dr in Query.Execute(connectionString, query, timeOut).Rows)
             {
                 md.Append(Environment.NewLine + "## " + dr[0].ToString() + Environment.NewLine);
-                md.Append(formatMarkdown(Query.Execute(connectionString, dr[0].ToString())));
+                md.Append(formatMarkdown(Query.Execute(connectionString, dr[0].ToString(), timeOut)));
             }
 
             return md.ToString();
