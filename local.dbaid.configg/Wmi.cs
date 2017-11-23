@@ -90,7 +90,7 @@ namespace local.dbaid.asbuilt
 
                     if (testSqlWmiClass(host, ns, "SELECT * FROM SqlService"))
                     {
-                        using (ManagementObjectSearcher SqlService = new ManagementObjectSearcher(root, "SELECT DisplayName,BinaryPath,Description,HostName,ServiceName,StartMode,StartName FROM SqlService WHERE DisplayName LIKE '%(" + instance + ")'"))
+                        using (ManagementObjectSearcher SqlService = new ManagementObjectSearcher(root, "SELECT DisplayName,BinaryPath,Description,HostName,ServiceName,StartMode,StartName FROM SqlService WHERE DisplayName LIKE '%(" + instance + ")' OR ServiceName = 'SQLBrowser'"))
                         {
                             foreach (ManagementObject obj in SqlService.Get())
                             {
