@@ -209,7 +209,9 @@ BEGIN
 	SELECT '2.15','2.15 Set the xp_cmdshell Server Configuration Option to 0 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 0 ELSE 1 END AS [pass], CAST([value_in_use] AS NVARCHAR(10)) AS [value] FROM [info].[instance] WHERE [name] = 'xp_cmdshell'
 	INSERT INTO @results
 	SELECT '2.16','2.16 Ensure ''AUTO_CLOSE OFF'' is set on contained databases (Scored)' AS [Policy Name], [pass], [value] FROM #__contained;
-	
+	INSERT INTO @results
+	SELECT '2.17','2.17 Ensure no login exists with the name ''sa'' (Scored)' AS [Policy Name], CASE WHEN EXISTS(SELECT [name] FROM [master].[sys].[server_principals] WHERE [name] = 'sa') THEN 0 ELSE 1 END AS [score], CASE WHEN EXISTS(SELECT [name] FROM [master].[sys].[server_principals] WHERE [name] = 'sa') THEN 'sa' ELSE 0 END AS [value]
+
 	--3. Authentication and Authorization
 	INSERT INTO @results
 	SELECT '3.1','3.1 Set The Server Authentication Property To Windows Authentication mode (Scored)' AS [Policy Name], CASE WHEN [value] = 0 THEN 0 ELSE 1 END AS [score], CAST([value] AS NVARCHAR(10)) AS [value] FROM [info].[service] WHERE [property] = 'IsIntegratedSecurityOnly'
@@ -219,6 +221,66 @@ BEGIN
 	SELECT '3.3','3.3 Drop Orphaned Users From SQL Server Databases (Scored)' AS [Policy Name], CASE WHEN COUNT([DbName]) != 0 THEN 0 ELSE 1 END AS [score], CAST(COUNT([DbName]) AS NVARCHAR(10)) AS [value] FROM #__orphan 
 	INSERT INTO @results
 	SELECT '3.4','3.4 Do not use SQL Authentication in contained databases (Scored)' AS [Policy Name], CASE WHEN COUNT([name]) != 0 THEN 0 ELSE 1 END AS [score], CAST(COUNT([name]) AS NVARCHAR(10)) AS [value] FROM #__contained_auth
+		INSERT INTO @results
+	SELECT '3.5','3.5 Ensure the SQL Server''s MSSQL Service Account is Not an Administrator (Scored)' AS [Policy Name], 
+		CASE WHEN EXISTS(
+		SELECT [value]
+		FROM [dbo].[service]
+		WHERE 
+			[hierarchy] LIKE '%SQLService/MSSQL$%' OR [hierarchy] LIKE '%SQLService/MSSQLSERVER%'
+			AND [property] = 'StartName'
+			AND [value] IN (
+				SELECT SUBSTRING(CAST([value] AS NVARCHAR(4000)),CHARINDEX('"',CAST([value] AS NVARCHAR(4000)))+1, CHARINDEX('"',CAST([value] AS NVARCHAR(4000)),CHARINDEX('"',CAST([value] AS NVARCHAR(4000)))+1) - CHARINDEX('"',CAST([value] AS NVARCHAR(4000)))-1) 
+				+'\'+
+				SUBSTRING([property],CHARINDEX('"',[property])+1, CHARINDEX('"',[property],CHARINDEX('"',[property])+1) - CHARINDEX('"',[property])-1)
+				FROM [dbo].[service]
+				WHERE [hierarchy] LIKE '%Win32_GroupUser/Local_Admins%')
+		) THEN 0 ELSE 1 END AS [score], CAST([value] AS NVARCHAR(4000))
+	FROM [dbo].[service]
+	WHERE 
+		[hierarchy] LIKE '%SQLService/MSSQL$%' OR [hierarchy] LIKE '%SQLService/MSSQLSERVER%'
+		AND [property] = 'StartName' 
+
+	INSERT INTO @results
+	SELECT '3.6','3.6 Ensure the SQL Server''s SQLAgent Service Account is Not an Administrator (Scored)' AS [Policy Name], 
+		CASE WHEN EXISTS(
+		SELECT [value]
+		FROM [dbo].[service]
+		WHERE 
+			[hierarchy] LIKE '%SQLService/SQLAgent%' OR [hierarchy] LIKE '%SQLService/SQLSERVERAGENT%'
+			AND [property] = 'StartName'
+			AND [value] IN (
+				SELECT SUBSTRING(CAST([value] AS NVARCHAR(4000)),CHARINDEX('"',CAST([value] AS NVARCHAR(4000)))+1, CHARINDEX('"',CAST([value] AS NVARCHAR(4000)),CHARINDEX('"',CAST([value] AS NVARCHAR(4000)))+1) - CHARINDEX('"',CAST([value] AS NVARCHAR(4000)))-1) 
+				+'\'+
+				SUBSTRING([property],CHARINDEX('"',[property])+1, CHARINDEX('"',[property],CHARINDEX('"',[property])+1) - CHARINDEX('"',[property])-1)
+				FROM [dbo].[service]
+				WHERE [hierarchy] LIKE '%Win32_GroupUser/Local_Admins%')
+		) THEN 0 ELSE 1 END AS [score], CAST([value] AS NVARCHAR(4000))
+	FROM [dbo].[service]
+	WHERE 
+		[hierarchy] LIKE '%SQLService/SQLAgent%' OR [hierarchy] LIKE '%SQLService/SQLSERVERAGENT%'
+		AND [property] = 'StartName' 
+
+	INSERT INTO @results
+	SELECT '3.7','3.7 Ensure the SQL Server''s Full-Text Service Account is Not an Administrator (Scored)' AS [Policy Name], 
+		CASE WHEN EXISTS(
+		SELECT [value]
+		FROM [dbo].[service]
+		WHERE 
+			[hierarchy] LIKE '%SQLService/MSSQLFDLauncher%' 
+			AND [property] = 'StartName'
+			AND [value] IN (
+				SELECT SUBSTRING(CAST([value] AS NVARCHAR(4000)),CHARINDEX('"',CAST([value] AS NVARCHAR(4000)))+1, CHARINDEX('"',CAST([value] AS NVARCHAR(4000)),CHARINDEX('"',CAST([value] AS NVARCHAR(4000)))+1) - CHARINDEX('"',CAST([value] AS NVARCHAR(4000)))-1) 
+				+'\'+
+				SUBSTRING([property],CHARINDEX('"',[property])+1, CHARINDEX('"',[property],CHARINDEX('"',[property])+1) - CHARINDEX('"',[property])-1)
+				FROM [dbo].[service]
+				WHERE [hierarchy] LIKE '%Win32_GroupUser/Local_Admins%')
+		) THEN 0 ELSE 1 END AS [score], CAST([value] AS NVARCHAR(4000))
+	FROM [dbo].[service]
+	WHERE 
+		[hierarchy] LIKE '%SQLService/MSSQLFDLauncher%' 
+		AND [property] = 'StartName' 
+
 
 	--4. Password Policies
 	INSERT INTO @results
@@ -264,7 +326,7 @@ BEGIN
 	INSERT INTO @results
 	SELECT '5.3', '5.3 Set Login Auditing to failed logins (Not Scored)' AS [Policy Name], CASE [value] WHEN 'failure' THEN 1 ELSE 0 END AS [pass], [value] FROM @loginfo_cmd_list
 	INSERT INTO @results
-	SELECT '5.4', '5.4 Use SQL Server Audit to capture both failed and successful logins (Not Scored)' AS [Policy Name], CASE WHEN (SELECT COUNT(*) FROM #__server_audit) > 0 THEN 1 ELSE 0 END AS [score], ISNULL((SELECT CAST([count] AS NVARCHAR(1)) FROM #__server_audit),'0') AS [value]
+	SELECT '5.4', '5.4 Use SQL Server Audit to capture both failed and successful logins (Scored)' AS [Policy Name], CASE WHEN (SELECT COUNT(*) FROM #__server_audit) > 0 THEN 1 ELSE 0 END AS [score], ISNULL((SELECT CAST([count] AS NVARCHAR(1)) FROM #__server_audit),'0') AS [value]
 	--6. Application Development
 	INSERT INTO @results
 	SELECT '6.2', '6.2 Set the CLR Assembly Permission Set to SAFE_ACCESS for All CLR Assemblies (Scored)' AS [Policy Name], CASE [count] WHEN 0 THEN 1 ELSE 0 END AS [pass], CAST([count] AS NVARCHAR(10)) AS [value] FROM #__clr_assembly
