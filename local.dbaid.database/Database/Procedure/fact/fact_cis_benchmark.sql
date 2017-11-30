@@ -281,6 +281,22 @@ BEGIN
 		[hierarchy] LIKE '%SQLService/MSSQLFDLauncher%' 
 		AND [property] = 'StartName' 
 
+	INSERT INTO @results
+	SELECT '3.8','3.8 Ensure only the default permissions specified by Microsoft are granted to the public server role (Scored)' AS [Policy Name], 
+		CASE WHEN COUNT(*) != 0 THEN 0 ELSE 1 END AS [score], CAST(COUNT(*) AS NVARCHAR(10)) AS [value] 
+	FROM [master].[sys].[server_permissions]
+		WHERE (grantee_principal_id = SUSER_SID(N'public') and state_desc LIKE
+		'GRANT%')
+		AND NOT (state_desc = 'GRANT' and [permission_name] = 'VIEW ANY DATABASE'
+		and class_desc = 'SERVER')
+		AND NOT (state_desc = 'GRANT' and [permission_name] = 'CONNECT' and
+		class_desc = 'ENDPOINT' and major_id = 2)
+		AND NOT (state_desc = 'GRANT' and [permission_name] = 'CONNECT' and
+		class_desc = 'ENDPOINT' and major_id = 3)
+		AND NOT (state_desc = 'GRANT' and [permission_name] = 'CONNECT' and
+		class_desc = 'ENDPOINT' and major_id = 4)
+		AND NOT (state_desc = 'GRANT' and [permission_name] = 'CONNECT' and
+	class_desc = 'ENDPOINT' and major_id = 5);
 
 	--4. Password Policies
 	INSERT INTO @results
