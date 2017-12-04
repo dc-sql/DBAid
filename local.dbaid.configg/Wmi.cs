@@ -378,6 +378,29 @@ namespace local.dbaid.asbuilt
                 Console.WriteLine(ex.Message + " - " + ex.StackTrace);
             }
 
+            try
+            {
+                string user_query = string.Format("select PartComponent from win32_groupuser where GroupComponent=\"Win32_Group.Domain='{0}',Name='administrators'\"", host);
+                using (ManagementObjectSearcher Win32UserGroup = new ManagementObjectSearcher(root, user_query))
+                {
+                    foreach (ManagementObject obj in Win32UserGroup.Get())
+                    {
+                        foreach (PropertyData prop in obj.Properties)
+                        {
+                            if (prop.Value != null)
+                            {
+                                string[] local_admins = prop.Value.ToString().Split(',');
+                                PropertyValueCollection.Add(new PropertyValue(host + "/" + obj.ClassPath.ClassName.ToString() + "/Local_Admins", local_admins[1].ToString(), local_admins[0].ToString()));
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message + " - " + ex.StackTrace);
+            }
+
             return PropertyValueCollection;
         }
 
