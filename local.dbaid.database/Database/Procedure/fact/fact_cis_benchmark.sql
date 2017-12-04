@@ -328,10 +328,30 @@ BEGIN
 				WHERE pr.[type_desc] = 'WINDOWS_GROUP'
 			AND pr.[name] like CAST(SERVERPROPERTY('MachineName') AS nvarchar) + '%') AS [value]
 
+	INSERT INTO @results
+	SELECT '3.11','3.11 Ensure the public role in the msdb database is not granted access to SQL Agent proxies (Scored)' AS [Policy Name],
+	CASE WHEN EXISTS(SELECT [sp].[name] AS proxyname
+				FROM [msdb].[dbo].[sysproxylogin] [spl]
+				INNER JOIN [msdb].[sys].[database_principals] [dp]
+				ON [dp].[sid] = [spl].[sid]
+				INNER JOIN [msdb].[dbo].[sysproxies] sp
+				ON [sp].[proxy_id] = [spl].[proxy_id]
+				WHERE [principal_id] = USER_ID('public'))
+	THEN 0 ELSE 1 END AS [score],
+	(SELECT CAST(COUNT(*) AS NVARCHAR(10))
+				FROM [msdb].[dbo].[sysproxylogin] [spl]
+				INNER JOIN [msdb].[sys].[database_principals] [dp]
+				ON [dp].[sid] = [spl].[sid]
+				INNER JOIN [msdb].[dbo].[sysproxies] sp
+				ON [sp].[proxy_id] = [spl].[proxy_id]
+				WHERE [principal_id] = USER_ID('public')) AS [value]
 
 	--4. Password Policies
 	INSERT INTO @results
-	SELECT '4.1','4.1 Set the MUST_CHANGE Option to ON for All SQL Authenticated Logins (Not Scored)' AS [Policy Name], CASE WHEN EXISTS (SELECT 1 FROM [master].[sys].[sql_logins] WHERE [is_policy_checked] != 1 OR [is_expiration_checked] != 1) THEN 0 ELSE 1 END AS [score], (SELECT CAST(COUNT([sid]) AS NVARCHAR(10)) FROM [master].[sys].[sql_logins] WHERE [is_policy_checked] != 1 OR [is_expiration_checked] != 1) AS [value]
+	SELECT '4.1','4.1 Set the MUST_CHANGE Option to ON for All SQL Authenticated Logins (Not Scored)' AS [Policy Name], CASE WHEN EXISTS (SELECT 1 FROM [master].[sys].[sql_logins] WHERE ([is_policy_checked] != 1 OR [is_expiration_checked] != 1) AND [name] NOT IN ('##MS_PolicyTsqlExecutionLogin##','##MS_PolicyEventProcessingLogin##')) 
+	THEN 0 ELSE 1 END AS [score], 
+	(SELECT CAST(COUNT([sid]) AS NVARCHAR(10)) FROM [master].[sys].[sql_logins] WHERE ([is_policy_checked] != 1 OR [is_expiration_checked] != 1) AND [name] NOT IN ('##MS_PolicyTsqlExecutionLogin##','##MS_PolicyEventProcessingLogin##')) AS [value]
+
 	INSERT INTO @results
 	SELECT '4.2','4.2 Set the CHECK_EXPIRATION Option to ON for All SQL Authenticated Logins Within the Sysadmin Role (Scored)' AS [Policy Name], 
 	CASE WHEN EXISTS (
