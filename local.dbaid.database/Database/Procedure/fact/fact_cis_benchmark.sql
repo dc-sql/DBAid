@@ -298,6 +298,37 @@ BEGIN
 		AND NOT (state_desc = 'GRANT' and [permission_name] = 'CONNECT' and
 	class_desc = 'ENDPOINT' and major_id = 5);
 
+	INSERT INTO @results
+	SELECT '3.9','3.9 Ensure Windows BUILTIN groups are not SQL Logins (Scored)' AS [Policy Name], 
+	CASE WHEN EXISTS(SELECT pr.[name], pe.[permission_name], pe.[state_desc]
+				FROM sys.server_principals pr
+				JOIN sys.server_permissions pe
+				ON pr.principal_id = pe.grantee_principal_id
+				WHERE pr.name like 'BUILTIN%')
+	THEN 0 ELSE 1 END AS [score],
+	(SELECT CAST(COUNT(*) AS NVARCHAR(10))
+	FROM sys.server_principals pr
+	JOIN sys.server_permissions pe
+	ON pr.principal_id = pe.grantee_principal_id
+	WHERE pr.name like 'BUILTIN%') AS [value]
+
+	INSERT INTO @results
+	SELECT '3.10','3.10 Ensure Windows local groups are not SQL Logins (Scored)' AS [Policy Name], 
+	CASE WHEN EXISTS(SELECT pr.[name] AS LocalGroupName, pe.[permission_name], pe.[state_desc]
+				FROM sys.server_principals pr
+				JOIN sys.server_permissions pe
+				ON pr.[principal_id] = pe.[grantee_principal_id]
+				WHERE pr.[type_desc] = 'WINDOWS_GROUP'
+				AND pr.[name] like CAST(SERVERPROPERTY('MachineName') AS nvarchar) + '%')
+	THEN 0 ELSE 1 END AS [score],
+	(SELECT CAST(COUNT(*) AS NVARCHAR(10))
+				FROM sys.server_principals pr
+				JOIN sys.server_permissions pe
+				ON pr.[principal_id] = pe.[grantee_principal_id]
+				WHERE pr.[type_desc] = 'WINDOWS_GROUP'
+			AND pr.[name] like CAST(SERVERPROPERTY('MachineName') AS nvarchar) + '%') AS [value]
+
+
 	--4. Password Policies
 	INSERT INTO @results
 	SELECT '4.1','4.1 Set the MUST_CHANGE Option to ON for All SQL Authenticated Logins (Not Scored)' AS [Policy Name], CASE WHEN EXISTS (SELECT 1 FROM [master].[sys].[sql_logins] WHERE [is_policy_checked] != 1 OR [is_expiration_checked] != 1) THEN 0 ELSE 1 END AS [score], (SELECT CAST(COUNT([sid]) AS NVARCHAR(10)) FROM [master].[sys].[sql_logins] WHERE [is_policy_checked] != 1 OR [is_expiration_checked] != 1) AS [value]
