@@ -66,7 +66,6 @@ BEGIN
 					EXEC sp_change_users_login @Action=''Report''
 					UPDATE #__orphan SET [DbName] = N''?'' WHERE [DbName] IS NULL;';
 
-
 	--get guests with connect permissions
 	IF OBJECT_ID('tempdb..#__guest') IS NOT NULL
 		DROP TABLE #__guest;		
