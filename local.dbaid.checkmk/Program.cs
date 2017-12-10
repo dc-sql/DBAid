@@ -191,6 +191,8 @@ namespace local.dbaid.checkmk
 #if (DEBUG)
             Console.ReadKey();
 #endif
+            //Added improves performance, no requirement to maintain pools once application exits, GC overhead 1-2 seconds
+            System.Data.SqlClient.SqlConnection.ClearAllPools();
             return 1;
         }
     }
