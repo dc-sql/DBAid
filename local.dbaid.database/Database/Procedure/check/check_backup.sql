@@ -18,7 +18,6 @@ SET NOCOUNT ON;
 
 	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
 
-
 	IF SERVERPROPERTY('IsHadrEnabled') = 1
 	BEGIN
 		EXEC [dbo].[sp_executesql] @stmt = N'
