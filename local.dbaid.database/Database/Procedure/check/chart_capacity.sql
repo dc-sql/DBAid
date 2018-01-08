@@ -211,7 +211,7 @@ BEGIN
 			,MAX([S].[fg_size_available_mb]) AS [fg_size_available_mb]
 		FROM [dbo].[config_database] [C]
 			INNER JOIN [sys].[databases] [DB]
-				ON [C].[database_id] = [DB].[database_id]
+				ON [C].[database_id] = [DB].[database_id] AND [C].[is_enabled] = 1
 			INNER JOIN @file_info [F]
 				ON [C].[database_id] = [F].[database_id]
 			CROSS APPLY (SELECT SUM([A].[fg_size_available_mb]) AS [fg_size_available_mb]
@@ -246,8 +246,8 @@ BEGIN
 	)
 	SELECT	
 		CAST([used] AS NUMERIC(20,2)) AS [val]
-		,CAST([warning] AS NUMERIC(20,2)) AS [warn]
-		,CAST([critical] AS NUMERIC(20,2)) AS [crit]
+		,CASE WHEN CAST([warning] AS NUMERIC(20,2)) < 1 THEN NULL ELSE CAST([warning] AS NUMERIC(20,2)) END AS [warn]
+		,CASE WHEN CAST([critical] AS NUMERIC(20,2)) < 1 THEN NULL ELSE CAST([critical] AS NUMERIC(20,2)) END AS [crit]
 		,N''''
 		+ REPLACE([db_name],N' ',N'_')
 		+ N'_'
