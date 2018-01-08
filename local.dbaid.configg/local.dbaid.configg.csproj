@@ -95,6 +95,7 @@
     <Compile Include="Wmi.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="App.config" />
     <None Include="FodyWeavers.xml" />
     <Content Include="md.ico" />
   </ItemGroup>
