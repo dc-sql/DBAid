@@ -50,7 +50,8 @@ namespace local.dbaid.collector
             string processDirectory = String.Empty;
             bool logVerbose = true;
             byte fileRententionDays = 7;
-            
+
+            bool emailEnable = true;
             string emailSmtp = String.Empty;
             string[] emailTo = { String.Empty };
             string emailFrom = String.Empty;
@@ -80,6 +81,7 @@ namespace local.dbaid.collector
                 logVerbose = bool.Parse(ConfigurationManager.AppSettings["logVerbose"]);
                 fileRententionDays = byte.Parse(ConfigurationManager.AppSettings["ProcessedFileRetentionDays"]);
 
+                emailEnable = bool.Parse(ConfigurationManager.AppSettings["emailEnable"]);
                 emailSmtp = ConfigurationManager.AppSettings["EmailSmtp"];
                 emailTo = ConfigurationManager.AppSettings["EmailTo"].Split(';');
                 emailFrom = ConfigurationManager.AppSettings["EmailFrom"];
@@ -107,8 +109,10 @@ namespace local.dbaid.collector
             {
                 Log.message(LogEntryType.ERROR, "DBAidCollector", ex.Message + (logVerbose ? " - " + ex.StackTrace : ""), logFile);
                 errorCount++;
-
-                Smtp.send(emailSmtp, emailFrom, emailTo, Environment.MachineName, "Failed to initialise DBAid collector", null, emailAttachmentByteLimit, emailAttachmentCountLimit, emailEnableSsl, emailIgnoreSslError, emailAnonymous);
+                if (emailEnable)
+                {
+                    Smtp.send(emailSmtp, emailFrom, emailTo, Environment.MachineName, "Failed to initialise DBAid collector", null, emailAttachmentByteLimit, emailAttachmentCountLimit, emailEnableSsl, emailIgnoreSslError, emailAnonymous);
+                }
                 Console.Write("Settings in App.Config may be incorrect and/or missing, or permissions to write log file is missing.");
                 return;
             }
@@ -225,14 +229,17 @@ namespace local.dbaid.collector
                         + warningCount.ToString()
                         + " warning(s) \n";
 
-                    Smtp.send(emailSmtp, emailFrom, emailTo, emailSubject, body, attachments.ToArray(), emailAttachmentByteLimit, emailAttachmentCountLimit, emailEnableSsl, emailIgnoreSslError, emailAnonymous);
-
-                    foreach (string file in attachments)
+                    if (emailEnable)
                     {
-                        FileIo.move(file, Path.Combine(processDirectory, Path.GetFileName(file) + processedExt));
-                    }
+                        Smtp.send(emailSmtp, emailFrom, emailTo, emailSubject, body, attachments.ToArray(), emailAttachmentByteLimit, emailAttachmentCountLimit, emailEnableSsl, emailIgnoreSslError, emailAnonymous);
 
-                    Log.message(LogEntryType.INFO, "DBAidCollector", "Email Sent to \"" + string.Join("; ", emailTo) + "\"", logFile);
+                        foreach (string file in attachments)
+                        {
+                            FileIo.move(file, Path.Combine(processDirectory, Path.GetFileName(file) + processedExt));
+                        }
+
+                        Log.message(LogEntryType.INFO, "DBAidCollector", "Email Sent to \"" + string.Join("; ", emailTo) + "\"", logFile);
+                    }
                 }
                 catch (Exception ex)
                 {
