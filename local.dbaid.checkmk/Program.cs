@@ -26,11 +26,12 @@ namespace local.dbaid.checkmk
             int defaultCmdTimout = int.Parse(ConfigurationManager.AppSettings["default_cmd_timeout_sec"]);
 
             //To get the location the assembly normally resides on disk or the install directory
-            string path = System.Reflection.Assembly.GetExecutingAssembly().CodeBase;
+            string path = AppDomain.CurrentDomain.BaseDirectory;
             //once you have the path you get the directory with:
-            var directory =Path.GetDirectoryName(path);
-
-            string spoolpath = "C:\\Program Files (x86)\\check_mk\\spool\\"; //default path for checkmk fix to find path
+            DirectoryInfo directory = Directory.GetParent(Path.GetDirectoryName(path));
+            //DirectoryInfo parentDir = Directory.GetParent(directory);
+            string spoolpath = directory.ToString()+"\\spool\\";
+            //string spoolpath = checkmkpath.ToString(); //default path for checkmk fix to find path
 
             ConnectionStringSettingsCollection settings = ConfigurationManager.ConnectionStrings;
 
@@ -107,13 +108,13 @@ namespace local.dbaid.checkmk
                                                 // if data table contains data from a check procedure, then format in check format.
                                                 if (cds.Tables[mssqlControlCheck].Rows.Contains(dtc.TableName))
                                                 {
-                                                    Byte[] info = new UTF8Encoding(true).GetBytes("<<<local>>>" + Environment.NewLine + CheckMK.FormatCheck(dtc, instance));
+                                                    Byte[] info = new UTF8Encoding(true).GetBytes(CheckMK.FormatCheck(dtc, instance) + Environment.NewLine);
                                                     fs.Write(info, 0, info.Length);
                                                 }
                                                 // else if data table contains data from a chart procedure, then format in chart format.
                                                 else if (cds.Tables[mssqlControlChart].Rows.Contains(dtc.TableName))
                                                 {
-                                                    Byte[] info = new UTF8Encoding(true).GetBytes("<<<local>>>"+ Environment.NewLine + CheckMK.FormatChart(dtc, instance));
+                                                    Byte[] info = new UTF8Encoding(true).GetBytes(CheckMK.FormatChart(dtc, instance) + Environment.NewLine);
                                                     fs.Write(info, 0, info.Length);
                                                 }                                      
                                             }
@@ -190,6 +191,8 @@ namespace local.dbaid.checkmk
 #if (DEBUG)
             Console.ReadKey();
 #endif
+            //Added improves performance, no requirement to maintain pools once application exits, GC overhead 1-2 seconds
+            System.Data.SqlClient.SqlConnection.ClearAllPools();
             return 1;
         }
     }

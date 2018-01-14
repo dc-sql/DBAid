@@ -15,17 +15,11 @@ SET NOCOUNT ON;
 
 	DECLARE @to_backup INT;
 	DECLARE @not_backup INT;
-	DECLARE @version NUMERIC(18,10) 
 
 	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
 
-	SET @version = CAST(LEFT(CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max)),CHARINDEX('.',CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max))) - 1) + '.' + REPLACE(RIGHT(CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max)), LEN(CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max))) - CHARINDEX('.',CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max)))),'.','') AS numeric(18,10))
-
-	IF @version >= 11 AND SERVERPROPERTY('IsHadrEnabled') IS NOT NULL
+	IF SERVERPROPERTY('IsHadrEnabled') = 1
 	BEGIN
-
-
-
 		EXEC [dbo].[sp_executesql] @stmt = N'
 		DECLARE @check TABLE([message] NVARCHAR(4000)
 					,[state] NVARCHAR(8));
@@ -33,11 +27,31 @@ SET NOCOUNT ON;
 		DECLARE @to_backup INT;
 		DECLARE @not_backup INT;
 
+		
+		DECLARE @ag_table AS TABLE([name] SYSNAME, 
+							[database_id] INT, 
+							[automated_backup_preference] TINYINT,
+							[role] TINYINT );
+
+		INSERT into @ag_table
+		SELECT [AG].[name], 
+				[DS].[database_id], 
+				[AG].[automated_backup_preference],
+				[RS].[role] 
+		FROM [master].[sys].[dm_hadr_availability_replica_states] [RS]
+			INNER JOIN [master].[sys].[dm_hadr_database_replica_states] [DS]
+				ON [RS].[group_id] = [DS].[group_id]
+				AND [RS].[is_local] = 1  
+				AND [DS].[is_local] = 1
+			INNER JOIN [master].[sys].[availability_groups] [AG]
+				ON [AG].[group_id] = [RS].[group_id]
+
+
 		SELECT @to_backup=COUNT(*) FROM [dbo].[config_database] [D]
 		LEFT JOIN (SELECT [AG].[name], 
 						[DS].[database_id], 
 						[AG].[automated_backup_preference],
-						[RS].[Role] FROM  [master].[sys].[dm_hadr_availability_replica_states] [RS]
+						[RS].[role] FROM  [master].[sys].[dm_hadr_availability_replica_states] [RS]
 						INNER JOIN [master].[sys].[dm_hadr_database_replica_states] [DS]
 							ON [RS].[group_id] = [DS].[group_id]
 								AND [RS].[is_local] = 1  AND [DS].[is_local] = 1
@@ -46,10 +60,11 @@ SET NOCOUNT ON;
 								ON [table].[database_id] = [D].[database_id]
 		WHERE [backup_frequency_hours] > 0 
 			AND LOWER([db_name]) NOT IN (N''tempdb'')
+			AND [is_enabled] = 1
 			AND ISNULL([table].[automated_backup_preference],0) = 0
-			AND ISNULL([table].[Role],1) = 1
+			AND ISNULL([table].[role],1) = 1
 
-		SELECT @not_backup=COUNT(*) - @to_backup FROM [dbo].[config_database] [D] WHERE LOWER([db_name]) NOT IN (N''tempdb'')	
+		SELECT @not_backup=COUNT(*) - @to_backup FROM [dbo].[config_database] [D] WHERE LOWER([db_name]) NOT IN (N''tempdb'') OR [is_enabled] = 0	
 
 		;WITH Backups
 		AS
@@ -80,38 +95,29 @@ SET NOCOUNT ON;
 		FROM Backups [B]
 			INNER JOIN [dbo].[config_database] [D]
 				ON [B].[database_id] = [D].[database_id]
-			LEFT JOIN (SELECT [AG].[name], 
-						[DS].[database_id], 
-						[AG].[automated_backup_preference],
-						[RS].[Role] FROM  [master].[sys].[dm_hadr_availability_replica_states] [RS]
-						INNER JOIN [master].[sys].[dm_hadr_database_replica_states] [DS]
-							ON [RS].[group_id] = [DS].[group_id]
-								AND [RS].[is_local] = 1  AND [DS].[is_local] = 1
-						INNER JOIN [master].[sys].[availability_groups] [AG]
-							ON [AG].[group_id] = [RS].[group_id]) AS [table] 
-								ON [table].[database_id] = [D].[database_id] 
+			LEFT JOIN @ag_table AS [AGT]
+				ON [AGT].[database_id] = [D].[database_id] 
 			CROSS APPLY (SELECT CASE WHEN ([B].[backup_finish_date] IS NULL OR DATEDIFF(HOUR, [B].[backup_finish_date], GETDATE()) > ([D].[backup_frequency_hours])) THEN [D].[backup_state_alert] ELSE N''OK'' END AS [state]) [S]
 		WHERE [B].[row] = 1
 			AND [D].[backup_frequency_hours] > 0
 			AND DATEDIFF(HOUR, [B].[create_date], GETDATE()) > [D].[backup_frequency_hours]
 			AND LOWER([D].[db_name]) NOT IN (N''tempdb'')
-			AND ISNULL([table].[automated_backup_preference],0) = 0
-			AND ISNULL([table].[Role],1) = 1
+			AND ISNULL([AGT].[automated_backup_preference],0) = 0
+			AND ISNULL([AGT].[role],1) = 1
 			AND [S].[state] NOT IN (N''OK'')
+			AND [D].[is_enabled] = 1
 		ORDER BY [D].[db_name]
-		
+
 		IF (SELECT COUNT(*) FROM @check) < 1
 		INSERT INTO @check VALUES(CAST(@to_backup AS NVARCHAR(10)) + N'' database(s) monitored, '' + CAST(@not_backup AS NVARCHAR(10)) + N'' database(s) opted-out'', N''NA'');
 
 		SELECT [message], [state] 
 		FROM @check;'
-
-
 	END
 	ELSE
 	BEGIN
-		SELECT @to_backup=COUNT(*) FROM [dbo].[config_database] WHERE [backup_frequency_hours] > 0 AND LOWER([db_name]) NOT IN (N'tempdb')
-		SELECT @not_backup=COUNT(*) FROM [dbo].[config_database] WHERE [backup_frequency_hours] = 0 AND LOWER([db_name]) NOT IN (N'tempdb')
+		SELECT @to_backup=COUNT(*) FROM [dbo].[config_database] WHERE [backup_frequency_hours] > 0 AND LOWER([db_name]) NOT IN (N'tempdb') AND [is_enabled] = 1
+		SELECT @not_backup=COUNT(*) FROM [dbo].[config_database] WHERE [backup_frequency_hours] = 0 AND LOWER([db_name]) NOT IN (N'tempdb') OR [is_enabled] = 0
 
 		;WITH Backups
 		AS
@@ -148,15 +154,15 @@ SET NOCOUNT ON;
 			AND DATEDIFF(HOUR, [B].[create_date], GETDATE()) > [D].[backup_frequency_hours]
 			AND LOWER([D].[db_name]) NOT IN (N'tempdb')
 			AND [S].[state] NOT IN (N'OK')
+			AND [D].[is_enabled] = 1
 		ORDER BY [D].[db_name]
-	
+
 		IF (SELECT COUNT(*) FROM @check) < 1
 			INSERT INTO @check VALUES(CAST(@to_backup AS NVARCHAR(10)) + N' database(s) monitored, ' + CAST(@not_backup AS NVARCHAR(10)) + N' database(s) opted-out', N'NA');
 
-		SELECT [message], [state] 
+		SELECT [message],[state] 
 		FROM @check;
 	END
 
-	REVERT;
 	REVERT;
 END

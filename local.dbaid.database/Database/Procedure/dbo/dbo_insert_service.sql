@@ -18,6 +18,9 @@ BEGIN
 	DECLARE @date DATETIME;
 	SET @date = GETDATE();
 
+	--added to always get the latest data for localadmins as they can be added and removed - fudge with timer
+	DELETE FROM [dbo].[service] WHERE [hierarchy] LIKE '%Win32_GroupUser/Local_Admins%' AND [lastseen] < DATEADD(MINUTE, -1, GETDATE());
+
 	IF EXISTS (SELECT 1 FROM [dbo].[service] WHERE [hierarchy] = @hierarchy AND [property] = @property)
 	BEGIN
 		UPDATE [dbo].[service] SET [value] = @value, [lastseen] = @date WHERE [hierarchy] = @hierarchy AND [property] = @property;

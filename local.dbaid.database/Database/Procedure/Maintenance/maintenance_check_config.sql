@@ -33,7 +33,7 @@ BEGIN
 		FROM sys.databases [D]
 			LEFT JOIN sys.database_mirroring [M]
 				ON [D].[database_id] = [M].[database_id]
-		WHERE [D].[database_id] NOT IN (SELECT [database_id] FROM [dbo].[config_database]);
+		WHERE [D].[database_id] NOT IN (SELECT [database_id] FROM [dbo].[config_database]) AND [D].[source_database_id] IS NULL;
 
 
 

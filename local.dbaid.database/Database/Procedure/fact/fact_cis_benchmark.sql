@@ -66,7 +66,6 @@ BEGIN
 					EXEC sp_change_users_login @Action=''Report''
 					UPDATE #__orphan SET [DbName] = N''?'' WHERE [DbName] IS NULL;';
 
-
 	--get guests with connect permissions
 	IF OBJECT_ID('tempdb..#__guest') IS NOT NULL
 		DROP TABLE #__guest;		
@@ -172,7 +171,29 @@ BEGIN
 							GROUP BY [S].[name]'
 		EXECUTE sp_executesql @SQLString
 	END
-					
+	
+	--get admin group members
+	DECLARE @admin_accounts AS TABLE 
+	([hierarchy] NVARCHAR(260),
+	[value] NVARCHAR(260) NULL)
+
+	INSERT INTO @admin_accounts 
+	SELECT [hierarchy],CAST([value] AS NVARCHAR(260))
+	FROM [dbo].[service]
+	WHERE 
+	 [property] = 'StartName'
+		AND [value] IN (
+			SELECT SUBSTRING(CAST([value] AS NVARCHAR(4000)),CHARINDEX('"',CAST([value] AS NVARCHAR(4000)))+1, CHARINDEX('"',CAST([value] AS NVARCHAR(4000)),CHARINDEX('"',CAST([value] AS NVARCHAR(4000)))+1) - CHARINDEX('"',CAST([value] AS NVARCHAR(4000)))-1) 
+			+'\'+
+			SUBSTRING([property],CHARINDEX('"',[property])+1, CHARINDEX('"',[property],CHARINDEX('"',[property])+1) - CHARINDEX('"',[property])-1)
+			FROM [dbo].[service]
+			WHERE [hierarchy] LIKE '%Win32_GroupUser/Local_Admins%')
+				AND ([hierarchy] LIKE '%SQLService/MSSQL$%' 
+				OR [hierarchy] LIKE '%SQLService/MSSQLSERVER%' 
+				OR [hierarchy] LIKE '%SQLService/SQLAgent%' 
+				OR [hierarchy] LIKE '%SQLService/SQLSERVERAGENT%'
+				OR [hierarchy] LIKE '%SQLService/MSSQLFDLauncher%')
+
 	--setup result table
 	DECLARE @results AS TABLE([cis_id] NVARCHAR(4), [policy_name] NVARCHAR(1024), [pass] INT, [value] NVARCHAR(128))
 
@@ -210,7 +231,7 @@ BEGIN
 	INSERT INTO @results
 	SELECT '2.16','2.16 Ensure ''AUTO_CLOSE OFF'' is set on contained databases (Scored)' AS [Policy Name], [pass], [value] FROM #__contained;
 	INSERT INTO @results
-	SELECT '2.17','2.17 Ensure no login exists with the name ''sa'' (Scored)' AS [Policy Name], CASE WHEN EXISTS(SELECT [name] FROM [master].[sys].[server_principals] WHERE [name] = 'sa') THEN 0 ELSE 1 END AS [score], CASE WHEN EXISTS(SELECT [name] FROM [master].[sys].[server_principals] WHERE [name] = 'sa') THEN 'sa' ELSE 0 END AS [value]
+	SELECT '2.17','2.17 Ensure no login exists with the name ''sa'' (Scored)' AS [Policy Name], CASE WHEN EXISTS(SELECT [name] FROM [master].[sys].[server_principals] WHERE [name] = 'sa') THEN 0 ELSE 1 END AS [score], CASE WHEN EXISTS(SELECT [name] FROM [master].[sys].[server_principals] WHERE [name] = 'sa') THEN CAST('sa' AS NVARCHAR(128)) ELSE '0' END AS [value]
 
 	--3. Authentication and Authorization
 	INSERT INTO @results
@@ -221,65 +242,61 @@ BEGIN
 	SELECT '3.3','3.3 Drop Orphaned Users From SQL Server Databases (Scored)' AS [Policy Name], CASE WHEN COUNT([DbName]) != 0 THEN 0 ELSE 1 END AS [score], CAST(COUNT([DbName]) AS NVARCHAR(10)) AS [value] FROM #__orphan 
 	INSERT INTO @results
 	SELECT '3.4','3.4 Do not use SQL Authentication in contained databases (Scored)' AS [Policy Name], CASE WHEN COUNT([name]) != 0 THEN 0 ELSE 1 END AS [score], CAST(COUNT([name]) AS NVARCHAR(10)) AS [value] FROM #__contained_auth
+
+	IF EXISTS (SELECT [value] FROM @admin_accounts WHERE [hierarchy] LIKE '%SQLService/MSSQL$%' OR [hierarchy] LIKE '%SQLService/MSSQLSERVER%')
+	BEGIN
 		INSERT INTO @results
-	SELECT '3.5','3.5 Ensure the SQL Server''s MSSQL Service Account is Not an Administrator (Scored)' AS [Policy Name], 
-		CASE WHEN EXISTS(
-		SELECT [value]
-		FROM [dbo].[service]
+	    SELECT '3.5','3.5 Ensure the SQL Server''s MSSQL Service Account is Not an Administrator (Scored)' AS [Policy Name],
+			0 AS [score],
+			[value]
+		FROM @admin_accounts
 		WHERE 
-			[hierarchy] LIKE '%SQLService/MSSQL$%' OR [hierarchy] LIKE '%SQLService/MSSQLSERVER%'
-			AND [property] = 'StartName'
-			AND [value] IN (
-				SELECT SUBSTRING(CAST([value] AS NVARCHAR(4000)),CHARINDEX('"',CAST([value] AS NVARCHAR(4000)))+1, CHARINDEX('"',CAST([value] AS NVARCHAR(4000)),CHARINDEX('"',CAST([value] AS NVARCHAR(4000)))+1) - CHARINDEX('"',CAST([value] AS NVARCHAR(4000)))-1) 
-				+'\'+
-				SUBSTRING([property],CHARINDEX('"',[property])+1, CHARINDEX('"',[property],CHARINDEX('"',[property])+1) - CHARINDEX('"',[property])-1)
-				FROM [dbo].[service]
-				WHERE [hierarchy] LIKE '%Win32_GroupUser/Local_Admins%')
-		) THEN 0 ELSE 1 END AS [score], CAST([value] AS NVARCHAR(4000))
-	FROM [dbo].[service]
-	WHERE 
-		[hierarchy] LIKE '%SQLService/MSSQL$%' OR [hierarchy] LIKE '%SQLService/MSSQLSERVER%'
-		AND [property] = 'StartName' 
+		  [hierarchy] LIKE '%SQLService/MSSQL$%' OR [hierarchy] LIKE '%SQLService/MSSQLSERVER%'
+	END
+	ELSE
+	BEGIN
+		INSERT INTO @results
+		SELECT '3.5','3.5 Ensure the SQL Server''s MSSQL Service Account is Not an Administrator (Scored)' AS [Policy Name],
+			1 AS [score],
+			'0'
+	END 
 
-	INSERT INTO @results
-	SELECT '3.6','3.6 Ensure the SQL Server''s SQLAgent Service Account is Not an Administrator (Scored)' AS [Policy Name], 
-		CASE WHEN EXISTS(
-		SELECT [value]
-		FROM [dbo].[service]
+	IF EXISTS (SELECT [value] FROM @admin_accounts WHERE [hierarchy] LIKE '%SQLService/SQLAgent%' OR [hierarchy] LIKE '%SQLService/SQLSERVERAGENT%')
+	BEGIN
+		INSERT INTO @results
+	    SELECT '3.6','3.6 Ensure the SQL Server''s SQLAgent Service Account is Not an Administrator (Scored)' AS [Policy Name],
+			0 AS [score],
+			[value]
+		FROM @admin_accounts
 		WHERE 
-			[hierarchy] LIKE '%SQLService/SQLAgent%' OR [hierarchy] LIKE '%SQLService/SQLSERVERAGENT%'
-			AND [property] = 'StartName'
-			AND [value] IN (
-				SELECT SUBSTRING(CAST([value] AS NVARCHAR(4000)),CHARINDEX('"',CAST([value] AS NVARCHAR(4000)))+1, CHARINDEX('"',CAST([value] AS NVARCHAR(4000)),CHARINDEX('"',CAST([value] AS NVARCHAR(4000)))+1) - CHARINDEX('"',CAST([value] AS NVARCHAR(4000)))-1) 
-				+'\'+
-				SUBSTRING([property],CHARINDEX('"',[property])+1, CHARINDEX('"',[property],CHARINDEX('"',[property])+1) - CHARINDEX('"',[property])-1)
-				FROM [dbo].[service]
-				WHERE [hierarchy] LIKE '%Win32_GroupUser/Local_Admins%')
-		) THEN 0 ELSE 1 END AS [score], CAST([value] AS NVARCHAR(4000))
-	FROM [dbo].[service]
-	WHERE 
-		[hierarchy] LIKE '%SQLService/SQLAgent%' OR [hierarchy] LIKE '%SQLService/SQLSERVERAGENT%'
-		AND [property] = 'StartName' 
+		  [hierarchy] LIKE '%SQLService/SQLAgent%' OR [hierarchy] LIKE '%SQLService/SQLSERVERAGENT%'
+	END
+	ELSE
+	BEGIN
+		INSERT INTO @results
+		SELECT '3.6','3.6 Ensure the SQL Server''s SQLAgent Service Account is Not an Administrator (Scored)' AS [Policy Name],
+			1 AS [score],
+			'0'
+	END 
 
-	INSERT INTO @results
-	SELECT '3.7','3.7 Ensure the SQL Server''s Full-Text Service Account is Not an Administrator (Scored)' AS [Policy Name], 
-		CASE WHEN EXISTS(
-		SELECT [value]
-		FROM [dbo].[service]
+	IF EXISTS (SELECT [value] FROM @admin_accounts WHERE [hierarchy] LIKE '%SQLService/MSSQLFDLauncher%')
+	BEGIN
+		INSERT INTO @results
+	    SELECT '3.7','3.7 Ensure the SQL Server''s Full-Text Service Account is Not an Administrator (Scored)' AS [Policy Name],
+			0 AS [score],
+			[value]
+		FROM @admin_accounts
 		WHERE 
-			[hierarchy] LIKE '%SQLService/MSSQLFDLauncher%' 
-			AND [property] = 'StartName'
-			AND [value] IN (
-				SELECT SUBSTRING(CAST([value] AS NVARCHAR(4000)),CHARINDEX('"',CAST([value] AS NVARCHAR(4000)))+1, CHARINDEX('"',CAST([value] AS NVARCHAR(4000)),CHARINDEX('"',CAST([value] AS NVARCHAR(4000)))+1) - CHARINDEX('"',CAST([value] AS NVARCHAR(4000)))-1) 
-				+'\'+
-				SUBSTRING([property],CHARINDEX('"',[property])+1, CHARINDEX('"',[property],CHARINDEX('"',[property])+1) - CHARINDEX('"',[property])-1)
-				FROM [dbo].[service]
-				WHERE [hierarchy] LIKE '%Win32_GroupUser/Local_Admins%')
-		) THEN 0 ELSE 1 END AS [score], CAST([value] AS NVARCHAR(4000))
-	FROM [dbo].[service]
-	WHERE 
-		[hierarchy] LIKE '%SQLService/MSSQLFDLauncher%' 
-		AND [property] = 'StartName' 
+		  [hierarchy] LIKE '%SQLService/MSSQLFDLauncher%'
+	END
+	ELSE
+	BEGIN
+		INSERT INTO @results
+		SELECT '3.7','3.7 Ensure the SQL Server''s Full-Text Service Account is Not an Administrator (Scored)' AS [Policy Name],
+			1 AS [score],
+			'0'
+	END
+
 
 	INSERT INTO @results
 	SELECT '3.8','3.8 Ensure only the default permissions specified by Microsoft are granted to the public server role (Scored)' AS [Policy Name], 
