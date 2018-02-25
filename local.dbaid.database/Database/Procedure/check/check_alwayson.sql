@@ -13,7 +13,7 @@ BEGIN
 	DECLARE @check TABLE([message] NVARCHAR(4000)
 						,[state] NVARCHAR(8));
 
-	IF SERVERPROPERTY('IsHadrEnabled') IS NOT NULL
+	IF SERVERPROPERTY('IsHadrEnabled') = 1
 	BEGIN
 
 		EXECUTE AS LOGIN = N'$(DatabaseName)_sa';

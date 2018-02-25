@@ -420,7 +420,7 @@ BEGIN
 
 	SET @jobId = NULL;
 
-	--upgrade code, remove job from older version, uses different paramters
+	--upgrade code, remove job from older version, uses different parameters
 	IF ((SELECT TOP (1) CAST(SUBSTRING([version], 0, CHARINDEX('.', [version], 0)) AS INT) FROM [_dbaid].[dbo].[version] ORDER BY [installdate] DESC) <= 4)
 	BEGIN
 		   EXEC msdb.dbo.sp_delete_job @job_name=N'$(DatabaseName)_maintenance_history', @delete_unused_schedule=1
@@ -615,7 +615,7 @@ BEGIN
 
 			SET @out = @JobTokenLogDir + N'\$(DatabaseName)_integrity_check_user_' + @JobTokenDateTime + N'.log';
 
-			EXEC msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Execute CheckBD', 
+			EXEC msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Execute CheckDB', 
 					@step_id=1, @cmdexec_success_code=0, @on_success_action=1, @on_fail_action=2, @subsystem=N'CmdExec', 
 					@command=@cmd, 
 					@output_file_name=@out,

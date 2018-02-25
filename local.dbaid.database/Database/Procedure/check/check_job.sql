@@ -61,7 +61,7 @@ BEGIN
 		INSERT INTO @check 
 		VALUES(CAST(@countjobenabled AS NVARCHAR(10)) 
 			+ N' job(s) monitored; ' 
-			+ CAST(@countjobenabled AS NVARCHAR(10))
+			+ CAST(@countjobdisabled AS NVARCHAR(10))
 			+ ' job(s) not monitored; '
 			,N'NA');
 

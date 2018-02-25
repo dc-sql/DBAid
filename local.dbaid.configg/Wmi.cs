@@ -90,7 +90,7 @@ namespace local.dbaid.asbuilt
 
                     if (testSqlWmiClass(host, ns, "SELECT * FROM SqlService"))
                     {
-                        using (ManagementObjectSearcher SqlService = new ManagementObjectSearcher(root, "SELECT DisplayName,BinaryPath,Description,HostName,ServiceName,StartMode,StartName FROM SqlService WHERE DisplayName LIKE '%(" + instance + ")'"))
+                        using (ManagementObjectSearcher SqlService = new ManagementObjectSearcher(root, "SELECT DisplayName,BinaryPath,Description,HostName,ServiceName,StartMode,StartName FROM SqlService WHERE DisplayName LIKE '%(" + instance + ")' OR ServiceName = 'SQLBrowser'"))
                         {
                             foreach (ManagementObject obj in SqlService.Get())
                             {
@@ -368,6 +368,29 @@ namespace local.dbaid.asbuilt
                                         PropertyValueCollection.Add(new PropertyValue(path, prop.Name.ToString(), prop.Value.ToString()));
                                     }
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message + " - " + ex.StackTrace);
+            }
+
+            try
+            {
+                string user_query = string.Format("select PartComponent from win32_groupuser where GroupComponent=\"Win32_Group.Domain='{0}',Name='administrators'\"", host);
+                using (ManagementObjectSearcher Win32UserGroup = new ManagementObjectSearcher(root, user_query))
+                {
+                    foreach (ManagementObject obj in Win32UserGroup.Get())
+                    {
+                        foreach (PropertyData prop in obj.Properties)
+                        {
+                            if (prop.Value != null)
+                            {
+                                string[] local_admins = prop.Value.ToString().Split(',');
+                                PropertyValueCollection.Add(new PropertyValue(host + "/" + obj.ClassPath.ClassName.ToString() + "/Local_Admins", local_admins[1].ToString(), local_admins[0].ToString()));
                             }
                         }
                     }

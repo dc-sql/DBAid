@@ -16,8 +16,8 @@ BEGIN
 	DECLARE @dbcheckdb INT;
 	DECLARE @dbnotcheckdb INT;
 
-	SELECT @dbcheckdb=COUNT(*) FROM [dbo].[config_database] WHERE [checkdb_frequency_hours] > 0 AND [is_enabled] = 1
-	SELECT @dbnotcheckdb=COUNT(*) FROM [dbo].[config_database] WHERE [checkdb_frequency_hours] = 0 OR [is_enabled] = 0
+	SELECT @dbcheckdb=COUNT(*) FROM [dbo].[config_database] WHERE [checkdb_frequency_hours] > 0 AND LOWER([db_name]) NOT IN (N'tempdb') AND [is_enabled] = 1
+	SELECT @dbnotcheckdb=COUNT(*) FROM [dbo].[config_database] WHERE [checkdb_frequency_hours] = 0 AND LOWER([db_name]) NOT IN (N'tempdb') OR [is_enabled] = 0
 	
 	IF OBJECT_ID('tempdb..#dbccinfo') IS NOT NULL 
 	DROP TABLE #dbccinfo;
@@ -84,6 +84,5 @@ BEGIN
 		SELECT [message], [state] 
 		FROM @check
 
-		REVERT;
 		REVERT;
 	END

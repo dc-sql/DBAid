@@ -66,7 +66,6 @@ BEGIN
 					EXEC sp_change_users_login @Action=''Report''
 					UPDATE #__orphan SET [DbName] = N''?'' WHERE [DbName] IS NULL;';
 
-
 	--get guests with connect permissions
 	IF OBJECT_ID('tempdb..#__guest') IS NOT NULL
 		DROP TABLE #__guest;		
@@ -153,7 +152,48 @@ BEGIN
 						FROM sys.symmetric_keys
 						WHERE algorithm_desc NOT IN (''AES_128'',''AES_192'',''AES_256'')
 						AND db_id() > 4;'
-						
+	
+	--get server login audit
+	IF OBJECT_ID('tempdb..#__server_audit') IS NOT NULL
+		DROP TABLE #__server_audit;
+	CREATE TABLE #__server_audit ([count] INT);
+		 
+	SET @Version = CAST(LEFT(CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max)),CHARINDEX('.',CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max))) - 1) + '.' + REPLACE(RIGHT(CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max)), LEN(CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max))) - CHARINDEX('.',CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max)))),'.','') AS numeric(18,10))
+	IF @Version >= 10
+	BEGIN
+		SET @SQLString =  N'INSERT INTO #__server_audit
+							SELECT TOP 1 COUNT(*)
+							FROM [sys].[server_audit_specification_details] AS [SAD]
+							INNER JOIN [sys].[server_audit_specifications] AS [SA] ON [SAD].[server_specification_id] = [SA].[server_specification_id] 
+							INNER JOIN [sys].[server_audits] AS [S] ON [SA].[audit_guid] = [S].[audit_guid] 
+							WHERE [SAD].[audit_action_id] IN (''CNAU'', ''LGFL'', ''LGSD'')
+							AND [SA].[is_state_enabled] = 1 AND [S].[is_state_enabled] = 1
+							GROUP BY [S].[name]'
+		EXECUTE sp_executesql @SQLString
+	END
+	
+	--get admin group members
+	DECLARE @admin_accounts AS TABLE 
+	([hierarchy] NVARCHAR(260),
+	[value] NVARCHAR(260) NULL)
+
+	INSERT INTO @admin_accounts 
+	SELECT [hierarchy],CAST([value] AS NVARCHAR(260))
+	FROM [dbo].[service]
+	WHERE 
+	 [property] = 'StartName'
+		AND [value] IN (
+			SELECT SUBSTRING(CAST([value] AS NVARCHAR(4000)),CHARINDEX('"',CAST([value] AS NVARCHAR(4000)))+1, CHARINDEX('"',CAST([value] AS NVARCHAR(4000)),CHARINDEX('"',CAST([value] AS NVARCHAR(4000)))+1) - CHARINDEX('"',CAST([value] AS NVARCHAR(4000)))-1) 
+			+'\'+
+			SUBSTRING([property],CHARINDEX('"',[property])+1, CHARINDEX('"',[property],CHARINDEX('"',[property])+1) - CHARINDEX('"',[property])-1)
+			FROM [dbo].[service]
+			WHERE [hierarchy] LIKE '%Win32_GroupUser/Local_Admins%')
+				AND ([hierarchy] LIKE '%SQLService/MSSQL$%' 
+				OR [hierarchy] LIKE '%SQLService/MSSQLSERVER%' 
+				OR [hierarchy] LIKE '%SQLService/SQLAgent%' 
+				OR [hierarchy] LIKE '%SQLService/SQLSERVERAGENT%'
+				OR [hierarchy] LIKE '%SQLService/MSSQLFDLauncher%')
+
 	--setup result table
 	DECLARE @results AS TABLE([cis_id] NVARCHAR(4), [policy_name] NVARCHAR(1024), [pass] INT, [value] NVARCHAR(128))
 
@@ -190,7 +230,9 @@ BEGIN
 	SELECT '2.15','2.15 Set the xp_cmdshell Server Configuration Option to 0 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 0 ELSE 1 END AS [pass], CAST([value_in_use] AS NVARCHAR(10)) AS [value] FROM [info].[instance] WHERE [name] = 'xp_cmdshell'
 	INSERT INTO @results
 	SELECT '2.16','2.16 Ensure ''AUTO_CLOSE OFF'' is set on contained databases (Scored)' AS [Policy Name], [pass], [value] FROM #__contained;
-	
+	INSERT INTO @results
+	SELECT '2.17','2.17 Ensure no login exists with the name ''sa'' (Scored)' AS [Policy Name], CASE WHEN EXISTS(SELECT [name] FROM [master].[sys].[server_principals] WHERE [name] = 'sa') THEN 0 ELSE 1 END AS [score], CASE WHEN EXISTS(SELECT [name] FROM [master].[sys].[server_principals] WHERE [name] = 'sa') THEN CAST('sa' AS NVARCHAR(128)) ELSE '0' END AS [value]
+
 	--3. Authentication and Authorization
 	INSERT INTO @results
 	SELECT '3.1','3.1 Set The Server Authentication Property To Windows Authentication mode (Scored)' AS [Policy Name], CASE WHEN [value] = 0 THEN 0 ELSE 1 END AS [score], CAST([value] AS NVARCHAR(10)) AS [value] FROM [info].[service] WHERE [property] = 'IsIntegratedSecurityOnly'
@@ -201,9 +243,132 @@ BEGIN
 	INSERT INTO @results
 	SELECT '3.4','3.4 Do not use SQL Authentication in contained databases (Scored)' AS [Policy Name], CASE WHEN COUNT([name]) != 0 THEN 0 ELSE 1 END AS [score], CAST(COUNT([name]) AS NVARCHAR(10)) AS [value] FROM #__contained_auth
 
+	IF EXISTS (SELECT [value] FROM @admin_accounts WHERE [hierarchy] LIKE '%SQLService/MSSQL$%' OR [hierarchy] LIKE '%SQLService/MSSQLSERVER%')
+	BEGIN
+		INSERT INTO @results
+	    SELECT '3.5','3.5 Ensure the SQL Server''s MSSQL Service Account is Not an Administrator (Scored)' AS [Policy Name],
+			0 AS [score],
+			[value]
+		FROM @admin_accounts
+		WHERE 
+		  [hierarchy] LIKE '%SQLService/MSSQL$%' OR [hierarchy] LIKE '%SQLService/MSSQLSERVER%'
+	END
+	ELSE
+	BEGIN
+		INSERT INTO @results
+		SELECT '3.5','3.5 Ensure the SQL Server''s MSSQL Service Account is Not an Administrator (Scored)' AS [Policy Name],
+			1 AS [score],
+			'0'
+	END 
+
+	IF EXISTS (SELECT [value] FROM @admin_accounts WHERE [hierarchy] LIKE '%SQLService/SQLAgent%' OR [hierarchy] LIKE '%SQLService/SQLSERVERAGENT%')
+	BEGIN
+		INSERT INTO @results
+	    SELECT '3.6','3.6 Ensure the SQL Server''s SQLAgent Service Account is Not an Administrator (Scored)' AS [Policy Name],
+			0 AS [score],
+			[value]
+		FROM @admin_accounts
+		WHERE 
+		  [hierarchy] LIKE '%SQLService/SQLAgent%' OR [hierarchy] LIKE '%SQLService/SQLSERVERAGENT%'
+	END
+	ELSE
+	BEGIN
+		INSERT INTO @results
+		SELECT '3.6','3.6 Ensure the SQL Server''s SQLAgent Service Account is Not an Administrator (Scored)' AS [Policy Name],
+			1 AS [score],
+			'0'
+	END 
+
+	IF EXISTS (SELECT [value] FROM @admin_accounts WHERE [hierarchy] LIKE '%SQLService/MSSQLFDLauncher%')
+	BEGIN
+		INSERT INTO @results
+	    SELECT '3.7','3.7 Ensure the SQL Server''s Full-Text Service Account is Not an Administrator (Scored)' AS [Policy Name],
+			0 AS [score],
+			[value]
+		FROM @admin_accounts
+		WHERE 
+		  [hierarchy] LIKE '%SQLService/MSSQLFDLauncher%'
+	END
+	ELSE
+	BEGIN
+		INSERT INTO @results
+		SELECT '3.7','3.7 Ensure the SQL Server''s Full-Text Service Account is Not an Administrator (Scored)' AS [Policy Name],
+			1 AS [score],
+			'0'
+	END
+
+
+	INSERT INTO @results
+	SELECT '3.8','3.8 Ensure only the default permissions specified by Microsoft are granted to the public server role (Scored)' AS [Policy Name], 
+		CASE WHEN COUNT(*) != 0 THEN 0 ELSE 1 END AS [score], CAST(COUNT(*) AS NVARCHAR(10)) AS [value] 
+	FROM [master].[sys].[server_permissions]
+		WHERE (grantee_principal_id = SUSER_SID(N'public') and state_desc LIKE
+		'GRANT%')
+		AND NOT (state_desc = 'GRANT' and [permission_name] = 'VIEW ANY DATABASE'
+		and class_desc = 'SERVER')
+		AND NOT (state_desc = 'GRANT' and [permission_name] = 'CONNECT' and
+		class_desc = 'ENDPOINT' and major_id = 2)
+		AND NOT (state_desc = 'GRANT' and [permission_name] = 'CONNECT' and
+		class_desc = 'ENDPOINT' and major_id = 3)
+		AND NOT (state_desc = 'GRANT' and [permission_name] = 'CONNECT' and
+		class_desc = 'ENDPOINT' and major_id = 4)
+		AND NOT (state_desc = 'GRANT' and [permission_name] = 'CONNECT' and
+	class_desc = 'ENDPOINT' and major_id = 5);
+
+	INSERT INTO @results
+	SELECT '3.9','3.9 Ensure Windows BUILTIN groups are not SQL Logins (Scored)' AS [Policy Name], 
+	CASE WHEN EXISTS(SELECT pr.[name], pe.[permission_name], pe.[state_desc]
+				FROM sys.server_principals pr
+				JOIN sys.server_permissions pe
+				ON pr.principal_id = pe.grantee_principal_id
+				WHERE pr.name like 'BUILTIN%')
+	THEN 0 ELSE 1 END AS [score],
+	(SELECT CAST(COUNT(*) AS NVARCHAR(10))
+	FROM sys.server_principals pr
+	JOIN sys.server_permissions pe
+	ON pr.principal_id = pe.grantee_principal_id
+	WHERE pr.name like 'BUILTIN%') AS [value]
+
+	INSERT INTO @results
+	SELECT '3.10','3.10 Ensure Windows local groups are not SQL Logins (Scored)' AS [Policy Name], 
+	CASE WHEN EXISTS(SELECT pr.[name] AS LocalGroupName, pe.[permission_name], pe.[state_desc]
+				FROM sys.server_principals pr
+				JOIN sys.server_permissions pe
+				ON pr.[principal_id] = pe.[grantee_principal_id]
+				WHERE pr.[type_desc] = 'WINDOWS_GROUP'
+				AND pr.[name] like CAST(SERVERPROPERTY('MachineName') AS nvarchar) + '%')
+	THEN 0 ELSE 1 END AS [score],
+	(SELECT CAST(COUNT(*) AS NVARCHAR(10))
+				FROM sys.server_principals pr
+				JOIN sys.server_permissions pe
+				ON pr.[principal_id] = pe.[grantee_principal_id]
+				WHERE pr.[type_desc] = 'WINDOWS_GROUP'
+			AND pr.[name] like CAST(SERVERPROPERTY('MachineName') AS nvarchar) + '%') AS [value]
+
+	INSERT INTO @results
+	SELECT '3.11','3.11 Ensure the public role in the msdb database is not granted access to SQL Agent proxies (Scored)' AS [Policy Name],
+	CASE WHEN EXISTS(SELECT [sp].[name] AS proxyname
+				FROM [msdb].[dbo].[sysproxylogin] [spl]
+				INNER JOIN [msdb].[sys].[database_principals] [dp]
+				ON [dp].[sid] = [spl].[sid]
+				INNER JOIN [msdb].[dbo].[sysproxies] sp
+				ON [sp].[proxy_id] = [spl].[proxy_id]
+				WHERE [principal_id] = USER_ID('public'))
+	THEN 0 ELSE 1 END AS [score],
+	(SELECT CAST(COUNT(*) AS NVARCHAR(10))
+				FROM [msdb].[dbo].[sysproxylogin] [spl]
+				INNER JOIN [msdb].[sys].[database_principals] [dp]
+				ON [dp].[sid] = [spl].[sid]
+				INNER JOIN [msdb].[dbo].[sysproxies] sp
+				ON [sp].[proxy_id] = [spl].[proxy_id]
+				WHERE [principal_id] = USER_ID('public')) AS [value]
+
 	--4. Password Policies
 	INSERT INTO @results
-	SELECT '4.1','4.1 Set the MUST_CHANGE Option to ON for All SQL Authenticated Logins (Not Scored)' AS [Policy Name], CASE WHEN EXISTS (SELECT 1 FROM [master].[sys].[sql_logins] WHERE [is_policy_checked] != 1 OR [is_expiration_checked] != 1) THEN 0 ELSE 1 END AS [score], (SELECT CAST(COUNT([sid]) AS NVARCHAR(10)) FROM [master].[sys].[sql_logins] WHERE [is_policy_checked] != 1 OR [is_expiration_checked] != 1) AS [value]
+	SELECT '4.1','4.1 Set the MUST_CHANGE Option to ON for All SQL Authenticated Logins (Not Scored)' AS [Policy Name], CASE WHEN EXISTS (SELECT 1 FROM [master].[sys].[sql_logins] WHERE ([is_policy_checked] != 1 OR [is_expiration_checked] != 1) AND [name] NOT IN ('##MS_PolicyTsqlExecutionLogin##','##MS_PolicyEventProcessingLogin##')) 
+	THEN 0 ELSE 1 END AS [score], 
+	(SELECT CAST(COUNT([sid]) AS NVARCHAR(10)) FROM [master].[sys].[sql_logins] WHERE ([is_policy_checked] != 1 OR [is_expiration_checked] != 1) AND [name] NOT IN ('##MS_PolicyTsqlExecutionLogin##','##MS_PolicyEventProcessingLogin##')) AS [value]
+
 	INSERT INTO @results
 	SELECT '4.2','4.2 Set the CHECK_EXPIRATION Option to ON for All SQL Authenticated Logins Within the Sysadmin Role (Scored)' AS [Policy Name], 
 	CASE WHEN EXISTS (
@@ -245,8 +410,7 @@ BEGIN
 	INSERT INTO @results
 	SELECT '5.3', '5.3 Set Login Auditing to failed logins (Not Scored)' AS [Policy Name], CASE [value] WHEN 'failure' THEN 1 ELSE 0 END AS [pass], [value] FROM @loginfo_cmd_list
 	INSERT INTO @results
-	SELECT '5.4', '5.4 Use SQL Server Audit to capture both failed and successful logins (Not Scored)' AS [Policy Name], 0 AS [pass], '0' AS [value]
-
+	SELECT '5.4', '5.4 Use SQL Server Audit to capture both failed and successful logins (Scored)' AS [Policy Name], CASE WHEN (SELECT COUNT(*) FROM #__server_audit) > 0 THEN 1 ELSE 0 END AS [score], ISNULL((SELECT CAST([count] AS NVARCHAR(1)) FROM #__server_audit),'0') AS [value]
 	--6. Application Development
 	INSERT INTO @results
 	SELECT '6.2', '6.2 Set the CLR Assembly Permission Set to SAFE_ACCESS for All CLR Assemblies (Scored)' AS [Policy Name], CASE [count] WHEN 0 THEN 1 ELSE 0 END AS [pass], CAST([count] AS NVARCHAR(10)) AS [value] FROM #__clr_assembly
@@ -257,9 +421,9 @@ BEGIN
 	INSERT INTO @results
 	SELECT '7.2', '7.2 Ensure asymmetric key size is greater than or equal to 2048 in nonsystem databases (Scored)' AS [Policy Name], CASE WHEN EXISTS (SELECT 1 FROM #__asymmetric) THEN 0 ELSE 1 END AS [score], (SELECT CAST(COUNT([db_id]) AS NVARCHAR(10)) FROM #__asymmetric) AS [value]
 
-	--8. Appendix: Additional Considerations - WIP
-	INSERT INTO @results
-	SELECT '8.1', '8.1 SQL Server Browser Service Disabled (Not Scored)' AS [Policy Name], 0 AS [pass], '0' AS [value]
+	--8. Appendix: Additional Considerations
+    INSERT INTO @results
+	SELECT '8.1', '8.1 SQL Server Browser Service Disabled (Not Scored)' AS [Policy Name], CASE [value] WHEN '4' THEN 1 ELSE 0 END AS [score], CAST([value] AS NVARCHAR(1)) AS [value] FROM [dbo].[service] WHERE [hierarchy] LIKE '%SQLBrowser' AND [property] = 'StartMode'
 	
 	--results
 	DECLARE @audit_total INT

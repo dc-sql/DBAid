@@ -49,6 +49,8 @@ namespace local.dbaid.asbuilt
             bool emailEnableSsl = flag.ContainsFlag("-emailssl") ? bool.Parse(flag.GetValue("-emailssl")) : false;
             bool emailIgnoreSslError = flag.ContainsFlag("-emailignoresslerror") ? bool.Parse(flag.GetValue("-emailignoresslerror")) : false;
             bool emailAnonymous = flag.ContainsFlag("-emailanonymous") ? bool.Parse(flag.GetValue("-emailanonymous")) : true;
+            int connectionTimeout = flag.ContainsFlag("-connectionTimeout") ? int.Parse(flag.GetValue("-connectionTimeout")) : 60;
+            int timeOut = flag.ContainsFlag("-commandTimeout") ? int.Parse(flag.GetValue("-commandTimeout")) : 30;
 
             if (String.IsNullOrEmpty(server))
             {
@@ -73,6 +75,7 @@ namespace local.dbaid.asbuilt
             csb.DataSource = server;
             csb.InitialCatalog = database;
             csb.IntegratedSecurity = true;
+            csb.ConnectTimeout = connectionTimeout;
 
             try
             {
@@ -86,7 +89,7 @@ namespace local.dbaid.asbuilt
 
             try
             {
-                csb.ApplicationName = Query.Select(csb.ConnectionString, mssqlAppSelect).Rows[0][0].ToString();
+                csb.ApplicationName = Query.Select(csb.ConnectionString, mssqlAppSelect, timeOut).Rows[0][0].ToString();
             }
             catch (ApplicationException ex)
             {
@@ -107,7 +110,7 @@ namespace local.dbaid.asbuilt
                     parameters.Add("property", prop.Property.Value);
                     parameters.Add("value", prop.Value);
 
-                    Query.Execute(csb.ConnectionString, mssqlInsertService, parameters);
+                    Query.Execute(csb.ConnectionString, mssqlInsertService, parameters, timeOut);
                 }
 
                 Log.message(LogEntryType.INFO, "DBaidAsBuilt", "Loaded WMI HostInfo.", logFile);
@@ -120,7 +123,7 @@ namespace local.dbaid.asbuilt
                     parameters.Add("property", prop.Property.Value);
                     parameters.Add("value", prop.Value);
 
-                    Query.Execute(csb.ConnectionString, mssqlInsertService, parameters);
+                    Query.Execute(csb.ConnectionString, mssqlInsertService, parameters, timeOut);
                 }
 
                 Log.message(LogEntryType.INFO, "DBaidAsBuilt", "Loaded WMI ServiceInfo.", logFile);
@@ -133,7 +136,7 @@ namespace local.dbaid.asbuilt
                     parameters.Add("property", prop.Property.Value);
                     parameters.Add("value", prop.Value);
 
-                    Query.Execute(csb.ConnectionString, mssqlInsertService, parameters);
+                    Query.Execute(csb.ConnectionString, mssqlInsertService, parameters, timeOut);
                 }
 
                 Log.message(LogEntryType.INFO, "DBaidAsBuilt", "Loaded WMI DriveInfo.", logFile);
@@ -147,7 +150,7 @@ namespace local.dbaid.asbuilt
                     {
                         outfile.Write("# As-Built Document - " + csb.DataSource + Environment.NewLine + "---" + Environment.NewLine);
                         outfile.Write("## Contents" + Environment.NewLine);
-                        outfile.Write(Markdown.getMarkdown(csb.ConnectionString, mssqlControlFact));
+                        outfile.Write(Markdown.getMarkdown(csb.ConnectionString, mssqlControlFact, timeOut));
 
                         Log.message(LogEntryType.INFO, "DBaidAsBuilt", "Generated AsBuilt for [" + csb.DataSource + "]", logFile);
                         
