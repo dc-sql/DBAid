@@ -1,6 +1,6 @@
 ##The Datacom Microsoft SQL Server monitoring and management solution.
 
-Compatible and tested with 2008 SP2+, 2008 R2, 2012, 2014, 2016
+Compatible and tested with 2008 SP2+, 2008 R2, 2012, 2014, 2016, 2017
 
  
 
