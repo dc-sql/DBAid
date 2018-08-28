@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright (C) 2015 Datacom
 GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
@@ -28,15 +28,13 @@ BEGIN
 	;WITH [jobset]
 	AS
 	(
-		SELECT ROW_NUMBER() OVER (PARTITION BY [J].[name] ORDER BY [T].[run_datetime] DESC) AS [row]
+		SELECT ROW_NUMBER() OVER (PARTITION BY [J].[name] ORDER BY [H].[run_date] DESC, [H].[run_time] DESC) AS [row]
 			,[J].[job_id]
 			,[J].[name]
 			,[H].[run_status]
-			,[T].[run_datetime]
 		FROM [msdb].[dbo].[sysjobs] [J]
 			INNER JOIN [msdb].[dbo].[sysjobhistory] [H]
 				ON [J].[job_id] = [H].[job_id]
-			CROSS APPLY (SELECT CAST(CAST([H].[run_date] AS CHAR(8)) + ' ' + STUFF(STUFF(REPLACE(STR([H].[run_time],6,0),' ','0'),3,0,':'),6,0,':') AS DATETIME)) [T]([run_datetime])
 		WHERE [J].[enabled] = 1
 			AND [H].[step_id] = 0
 	)
