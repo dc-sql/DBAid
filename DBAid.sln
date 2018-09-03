@@ -1,13 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2042
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "checkmk", "checkmk\checkmk.csproj", "{117BF6E5-916A-4060-982E-D7B0C1CDA6DD}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "collector", "collector\collector.csproj", "{A55B67DB-74C8-4DB1-AAB3-003E8B53531B}"
 EndProject
 Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "database", "database\database.sqlproj", "{30BBB9FF-8CB9-44CB-B27E-D722FA8552E4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "configg", "configg\configg.csproj", "{65C90572-6278-464C-A1E2-B4087388D85F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,8 +47,19 @@ Global
 		{30BBB9FF-8CB9-44CB-B27E-D722FA8552E4}.Release|x86.ActiveCfg = Release|x86
 		{30BBB9FF-8CB9-44CB-B27E-D722FA8552E4}.Release|x86.Build.0 = Release|x86
 		{30BBB9FF-8CB9-44CB-B27E-D722FA8552E4}.Release|x86.Deploy.0 = Release|x86
+		{65C90572-6278-464C-A1E2-B4087388D85F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65C90572-6278-464C-A1E2-B4087388D85F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65C90572-6278-464C-A1E2-B4087388D85F}.Debug|x86.ActiveCfg = Debug|x86
+		{65C90572-6278-464C-A1E2-B4087388D85F}.Debug|x86.Build.0 = Debug|x86
+		{65C90572-6278-464C-A1E2-B4087388D85F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65C90572-6278-464C-A1E2-B4087388D85F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65C90572-6278-464C-A1E2-B4087388D85F}.Release|x86.ActiveCfg = Release|x86
+		{65C90572-6278-464C-A1E2-B4087388D85F}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F92BA2CA-80F9-46C0-9C11-1CD6A35CE469}
 	EndGlobalSection
 EndGlobal

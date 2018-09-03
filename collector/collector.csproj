@@ -7,9 +7,9 @@
     <ProjectGuid>{A55B67DB-74C8-4DB1-AAB3-003E8B53531B}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>local.dbaid.collector</RootNamespace>
+    <RootNamespace>dbaid.collector</RootNamespace>
     <AssemblyName>dbaid.collector</AssemblyName>
-    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SccProjectName>SAK</SccProjectName>
     <SccLocalPath>SAK</SccLocalPath>
