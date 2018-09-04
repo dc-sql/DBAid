@@ -7,7 +7,7 @@ BEGIN
 	DECLARE @domain VARCHAR(128);
 
 	SELECT TOP(1) @domain = CAST([value] AS VARCHAR(128)) 
-	FROM [configg].[service_properties]
+	FROM [configg].[wmi_service_property]
 	WHERE [property] = N'Domain';
 
 	IF (@domain IS NULL)

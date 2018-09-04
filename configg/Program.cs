@@ -29,7 +29,7 @@ namespace Configg
             using (SqlCommand cmd = new SqlCommand())
             {
                 SqlConfig config = new SqlConfig();
-                string select = @"SELECT [value] FROM [dbo].[config_configg] WHERE [type] = 'wmiquery'";
+                string select = @"SELECT [query] FROM [configg].[wmi_query]";
                 string create = @"IF (SELECT OBJECT_ID(N'" + config.Results.TableName + "')) IS NULL "
                     + @"CREATE TABLE " + config.Results.TableName
                     + @"([class] VARCHAR(256),[property] VARCHAR(256),[value] SQL_VARIANT)";
@@ -47,7 +47,7 @@ namespace Configg
 
                     while (dr.Read())
                     {
-                        config.Load((string)dr["value"], conn.DataSource);
+                        config.Load((string)dr["query"], conn.DataSource);
                     }
 
                     dr.Close();

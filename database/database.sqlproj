@@ -149,7 +149,7 @@
     <Build Include="configg\procedures\get_instance_server_objects.sql" />
     <Build Include="configg\procedures\get_instance_service_configurations.sql" />
     <Build Include="configg\procedures\get_instance_sysconfigurations.sql" />
-    <Build Include="configg\tables\service_properties.sql" />
+    <Build Include="configg\tables\wmi_service_property.sql" />
     <Build Include="system\methods\procedure\delete_system_history.sql" />
     <Build Include="system\methods\procedure\execute_foreach_db.sql">
       <QuotedIdentifier>ProjectDefault</QuotedIdentifier>

@@ -17,7 +17,7 @@ namespace Configg
 
         private void init()
         {
-            _results.TableName = "dbo.service";
+            _results.TableName = "configg.wmi_service_property";
             _results.Columns.Add(new DataColumn("class", typeof(SqlString)));
             _results.Columns.Add(new DataColumn("property", typeof(SqlString)));
             _results.Columns.Add(new DataColumn("value", typeof(object)));

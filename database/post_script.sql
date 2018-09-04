@@ -21,7 +21,6 @@ GO
 /* Insert static variables */
 MERGE INTO [system].[configuration] AS [Target] 
 USING (SELECT N'INSTANCE_GUID', CAST(NEWID() AS SQL_VARIANT)
-	UNION SELECT N'SANITIZE_DATASET',1
 	UNION SELECT N'CAPACITY_CACHE_RETENTION_MONTH',3
 ) AS [Source] ([key],[value])  
 ON [Target].[key] = [Source].[key] 
