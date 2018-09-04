@@ -175,7 +175,7 @@ BEGIN
 			,CASE WHEN [F].[filegroup_is_readonly] = 1 OR [DB].[is_read_only] = 1 THEN SUM([F].[size_reserved_mb])
 				ELSE (SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb]))
 				END AS [max]
-		FROM [checkmk].[configuration_database] [C]
+		FROM [checkmk].[config_database] [C]
 			INNER JOIN [sys].[databases] [DB]
 				ON [C].[name] = [DB].[name]
 			INNER JOIN @file_info [F]

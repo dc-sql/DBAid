@@ -13,40 +13,46 @@ BEGIN
 	DECLARE @countjob INT, @runtimejob INT, @statusjob INT;
 	DECLARE @check_output TABLE([state] VARCHAR(8), [message] VARCHAR(4000));
 
-	DECLARE @xpresults TABLE ([job_id] UNIQUEIDENTIFIER
-							,[last_run_date] INT
-							,[last_run_time] INT
-							,[next_run_date] INT
-							,[next_run_time] INT
-							,[next_run_schedule_id] INT
-							,[requested_to_run] INT
-							,[request_source] INT
-							,[request_source_id] SYSNAME COLLATE database_default NULL
-							,[running] INT
-							,[current_step] INT
-							,[current_retry_attempt] INT
-							,[job_state] INT);
+	DECLARE @jobactivity TABLE (
+			[session_id] int NULL,
+			[job_id] uniqueidentifier NULL,
+			[job_name] sysname NULL,
+			[run_requested_date] datetime NULL,
+			[run_requested_source] sysname NULL,
+			[queued_date] datetime NULL,
+			[start_execution_date] datetime NULL,
+			[last_executed_step_id] int NULL,
+			[last_executed_step_date] datetime NULL,
+			[stop_execution_date] datetime NULL,
+			[next_scheduled_run_date] datetime NULL,
+			[job_history_id] int NULL,
+			[message] nvarchar(1024) NULL,
+			[run_status] int NULL,
+			[operator_id_emailed] int NULL,
+			[operator_id_netsent] int NULL,
+			[operator_id_paged] int NULL
+	);
 
 	SELECT @countjob=COUNT(*)
 	FROM [msdb].[dbo].[sysjobs]
 	WHERE [enabled] = 1
 
 	SELECT @runtimejob=COUNT(*)
-	FROM [checkmk].[configuration_agentjob]
+	FROM [checkmk].[config_agentjob]
 	WHERE [runtime_check_enabled] = 1
 
 	SELECT @statusjob=COUNT(*)
-	FROM [checkmk].[configuration_agentjob]
+	FROM [checkmk].[config_agentjob]
 	WHERE [state_check_enabled] = 1
 
 	IF NOT ((SELECT LOWER(CAST(SERVERPROPERTY('Edition') AS VARCHAR(128)))) LIKE '%express%')
-		INSERT INTO @xpresults
-			EXECUTE [master].[dbo].[xp_sqlagent_enum_jobs] 1, NULL, NULL;
+		INSERT INTO @jobactivity 
+			EXEC msdb.dbo.sp_help_jobactivity
 
 	;WITH [job_data]
 	AS
 	(
-		SELECT ROW_NUMBER() OVER (PARTITION BY [J].[name] ORDER BY [T].[run_datetime] DESC) AS [row]
+		SELECT ROW_NUMBER() OVER (PARTITION BY [J].[name] ORDER BY [H].[run_date] DESC, [H].[run_time] DESC) AS [row]
 			,[J].[job_id]
 			,[J].[name]
 			,CASE [H].[run_status]
@@ -55,35 +61,39 @@ BEGIN
 					WHEN 2 THEN 'RETRY'
 					WHEN 3 THEN 'CANCEL'
 					ELSE 'UNKNOWN' END AS [run_status]
-			,[T].[run_datetime]
+			,[run_datetime] = CAST(CAST([H].[run_date] AS CHAR(8)) + ' ' + STUFF(STUFF(REPLACE(STR([H].[run_time],6,0),' ','0'),3,0,':'),6,0,':') AS DATETIME)
 			,[H].[run_duration]
 		FROM [msdb].[dbo].[sysjobs] [J]
 			INNER JOIN [msdb].[dbo].[sysjobhistory] [H]
 				ON [J].[job_id] = [H].[job_id]
-			CROSS APPLY (SELECT CAST(CAST([H].[run_date] AS CHAR(8)) + ' ' + STUFF(STUFF(REPLACE(STR([H].[run_time],6,0),' ','0'),3,0,':'),6,0,':') AS DATETIME)) [T]([run_datetime])
 		WHERE [J].[enabled] = 1
 			AND [H].[step_id] = 0
 	)
 	INSERT INTO @check_output
-		SELECT CASE WHEN [J].[run_status] = 'FAIL' THEN [C].[state_check_alert] 
-				WHEN [X].[running] = 1 AND CAST(DATEDIFF(MINUTE,[X].[last_run_date],GETDATE()) AS VARCHAR(10)) > [C].[runtime_check_min] THEN [C].[runtime_check_alert] 
+		SELECT CASE 
+				WHEN [J].[run_status] = 'FAIL' 
+					THEN [C].[state_check_alert] 
+				WHEN [X].[start_execution_date] IS NOT NULL 
+					AND [X].[stop_execution_date] IS NULL 
+					AND CAST(DATEDIFF(MINUTE,[X].[start_execution_date],GETDATE()) AS VARCHAR(10)) > [C].[runtime_check_min] 
+					THEN [C].[runtime_check_alert] 
 				ELSE 'OK' END AS [state]
 			,'job=' + QUOTENAME([J].[name]) COLLATE Database_Default
 				+ ';state=' 
 				+ [J].[run_status]
 				+ ';runtime_min='
-				+ CASE [X].[running] 
-					WHEN 1 THEN CAST(DATEDIFF(MINUTE,[X].[last_run_date],GETDATE()) AS VARCHAR(10))
+				+ CASE WHEN [X].[start_execution_date] IS NOT NULL AND [X].[stop_execution_date] IS NULL
+					THEN CAST(DATEDIFF(MINUTE,[X].[start_execution_date],GETDATE()) AS VARCHAR(10))
 					ELSE CAST([J].[run_duration]/100.00%100 AS VARCHAR(10)) END 
 				+ ';runtime_check_min=' 
 				+ CAST([C].[runtime_check_min] AS VARCHAR(10)) AS [message]
 		FROM [job_data] [J]
-			INNER JOIN [checkmk].[configuration_agentjob] [C]
+			INNER JOIN [checkmk].[config_agentjob] [C]
 				ON [J].[name] = [C].[name]
-			LEFT JOIN @xpresults [X]
+			LEFT JOIN @jobactivity [X]
 				ON [J].[job_id] = [X].[job_id]
 		WHERE [J].[row] = 1
-			AND ([J].[run_status] = 'FAIL' OR [X].[running] = 1)
+			AND ([J].[run_status] = 'FAIL' OR ([X].[start_execution_date] IS NOT NULL AND [X].[stop_execution_date] IS NULL))
 			AND ([C].[state_check_enabled] = 1 OR [C].[runtime_check_enabled] = 1);
 
 	IF (SELECT COUNT(*) FROM @check_output) < 1

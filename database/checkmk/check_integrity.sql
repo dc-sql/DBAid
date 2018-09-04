@@ -37,7 +37,7 @@ BEGIN
 		FROM [sys].[databases] [DB]
 			LEFT JOIN #dbccinfo [DI]
 				ON [DB].[name] = [DI].[db_name]
-			LEFT JOIN [checkmk].[configuration_database] [CD]
+			LEFT JOIN [checkmk].[config_database] [CD]
 					ON [DB].[name] = [CD].[name] COLLATE Database_Default
 		WHERE [DI].[field] = 'dbi_dbccLastKnownGood'
 			AND [CD].[integrity_check_enabled] = 1
@@ -57,11 +57,11 @@ BEGIN
 		IF (SELECT COUNT(*) FROM @check_output WHERE [state] NOT IN ('OK')) < 1
 		BEGIN
 			SELECT @dbcheckdb=COUNT(*) 
-			FROM [checkmk].[configuration_database] 
+			FROM [checkmk].[config_database] 
 			WHERE [integrity_check_enabled] = 1;
 
 			SELECT @dbnotcheckdb=COUNT(*) 
-			FROM [checkmk].[configuration_database] 
+			FROM [checkmk].[config_database] 
 			WHERE [integrity_check_enabled] = 0;
 
 			INSERT INTO @check_output 

@@ -17,7 +17,7 @@ namespace Configg
 
         private void init()
         {
-            _results.TableName = "dbo.konfig_results";
+            _results.TableName = "dbo.service";
             _results.Columns.Add(new DataColumn("class", typeof(SqlString)));
             _results.Columns.Add(new DataColumn("property", typeof(SqlString)));
             _results.Columns.Add(new DataColumn("value", typeof(object)));
@@ -74,8 +74,10 @@ namespace Configg
 
         public void Load(string query, string sqlServer)
         {
-            string host = sqlServer.Split('\\')[0] == "." ? "localhost" : sqlServer.Split('\\')[0];
+            string host = sqlServer.Split('\\')[0] == "." ? Environment.MachineName : sqlServer.Split('\\')[0];
             string instance = sqlServer.Split('\\').Length > 1 ? sqlServer.Split('\\')[1] : "MSSQLSERVER";
+            query = query.Replace("@@HOSTNAME", host);
+            query = query.Replace("@@SERVICENAME", instance);
 
             this._results.BeginLoadData();
 
@@ -83,7 +85,7 @@ namespace Configg
             {
                 string root = String.Empty;
 
-                if (query.Contains("Win32"))
+                if (query.Contains("Win32_"))
                     root = @"\\" + host + @"\root\cimv2";
                 else
                     root = @"\\" + host + @"\root\Microsoft\SqlServer\" + ns;
@@ -92,17 +94,17 @@ namespace Configg
                 {
                     using (var mos = new ManagementObjectSearcher(root, query))
                     {
-                        int count = 0;
+                        int count = 1;
                         string classObj = String.Empty;
 
                         foreach (var obj in mos.Get())
                         {
-                            count++;
                             classObj = string.Concat(host, "/", instance, "/", obj.ClassPath.ClassName.ToString(), "/", count.ToString());
+                            bool loaded = false;
 
                             foreach (PropertyData prop in obj.Properties)
                             {
-                                if (prop.Value != null && !prop.Type.Equals(CimType.Object) && !prop.Type.Equals(CimType.Reference))
+                                if (prop.Value != null && !prop.Type.Equals(CimType.Object))
                                 {
                                     object[] newRow = new object[3];
 
@@ -115,7 +117,13 @@ namespace Configg
                                         newRow[2] = prop.Value.ToString();
 
                                     this._results.LoadDataRow(newRow, true);
+                                    loaded = true;
                                 }
+                            }
+
+                            if (loaded)
+                            {
+                                count++;
                             }
                         }
                     }

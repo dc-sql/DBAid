@@ -22,7 +22,7 @@ BEGIN
 	FROM [master].[sys].[databases] [D]
 		INNER JOIN [master].[sys].[database_mirroring] [M]
 			ON [D].[database_id] = [M].[database_id]
-		INNER JOIN [checkmk].[configuration_database] [C]
+		INNER JOIN [checkmk].[config_database] [C]
 			ON [D].[name] = [C].[name]
 	WHERE [C].[mirroring_check_enabled] = 1
 		AND [M].[mirroring_guid] IS NOT NULL;

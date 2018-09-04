@@ -6,55 +6,75 @@ namespace Configg
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Help()
         {
-            var appSettings = ConfigurationManager.AppSettings;
-            var connectionStrings = ConfigurationManager.ConnectionStrings;
-            SqlConfig config = new SqlConfig();
+            Console.WriteLine("Parameter:");
+            Console.WriteLine("connectionstring");
+            Console.WriteLine("e.g. ");
+            Console.WriteLine("configg.exe \"Server=.;Database=_dbaid;Trusted_Connection=True;\"");
+        }
+        static int Main(string[] args)
+        {
+            if (args.Length == 0) {
+                Help();
+                return 1;
+            }
 
-            foreach (ConnectionStringSettings setting in connectionStrings) {
-                var csb = new SqlConnectionStringBuilder(setting.ConnectionString) {
-                    TrustServerCertificate = true,
-                    Encrypt = true
-                };
+            var csb = new SqlConnectionStringBuilder(args[0]) {
+                TrustServerCertificate = true,
+                Encrypt = true
+            };
 
-                foreach (string key in appSettings.AllKeys) {
-                    config.Load(appSettings[key], csb.DataSource);
-                }
+            using (SqlConnection conn = new SqlConnection(csb.ConnectionString))
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                SqlConfig config = new SqlConfig();
+                string select = @"SELECT [value] FROM [dbo].[config_configg] WHERE [type] = 'wmiquery'";
+                string create = @"IF (SELECT OBJECT_ID(N'" + config.Results.TableName + "')) IS NULL "
+                    + @"CREATE TABLE " + config.Results.TableName
+                    + @"([class] VARCHAR(256),[property] VARCHAR(256),[value] SQL_VARIANT)";
+                string delete = @"DELETE FROM " + config.Results.TableName + ";";
 
-                using (SqlConnection connect = new SqlConnection(csb.ConnectionString))
-                using (SqlCommand command = new SqlCommand())
+                try
                 {
-                    string create = "IF (SELECT OBJECT_ID(N'" + config.Results.TableName + "')) IS NULL "
-                        + "CREATE TABLE " + config.Results.TableName + "([class] VARCHAR(256),[property] VARCHAR(256),[value] SQL_VARIANT)";
-                    string delete = @"DELETE FROM " + config.Results.TableName + ";";
+                    conn.Open();
+                    cmd.Connection = conn;
+                    cmd.CommandText = create;
+                    cmd.ExecuteNonQuery();
 
-                    connect.Open();
+                    cmd.CommandText = select;
+                    SqlDataReader dr = cmd.ExecuteReader();
 
-                    try
+                    while (dr.Read())
                     {
-                        command.Connection = connect;
-                        command.CommandText = create;
-                        command.ExecuteNonQuery();
-                        command.CommandText = delete;
-                        command.ExecuteNonQuery();
-
-                        using (SqlBulkCopy bulk = new SqlBulkCopy(connect))
-                        {
-                            bulk.DestinationTableName = config.Results.TableName;
-                            bulk.WriteToServer(config.Results);
-                        }
+                        config.Load((string)dr["value"], conn.DataSource);
                     }
-                    catch (Exception ex)
+
+                    dr.Close();
+
+                    cmd.CommandText = delete;
+                    cmd.ExecuteNonQuery();
+
+                    using (SqlBulkCopy bulk = new SqlBulkCopy(conn))
                     {
-                        Console.WriteLine(ex.Message);
+                        bulk.DestinationTableName = config.Results.TableName;
+                        bulk.WriteToServer(config.Results);
                     }
-                    finally
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+                finally
+                {
+                    if (conn != null)
                     {
-                        connect.Close();
+                        conn.Close();
                     }
                 }
             }
+
+            return 0;
         }
     }
 }

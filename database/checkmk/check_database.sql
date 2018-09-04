@@ -18,7 +18,7 @@ BEGIN
 			,QUOTENAME([D].[name]) COLLATE Database_Default 
 			+ '=' + UPPER([D].[state_desc]) COLLATE Database_Default AS [message]
 		FROM [sys].[databases] [D]
-			INNER JOIN [checkmk].[configuration_database] [C] 
+			INNER JOIN [checkmk].[config_database] [C] 
 				ON [D].[name] = [C].[name]
 		WHERE [C].[database_check_enabled] = 1
 		ORDER BY [D].[name];

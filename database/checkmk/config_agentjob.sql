@@ -1,4 +1,4 @@
-﻿CREATE TABLE [checkmk].[configuration_agentjob]
+﻿CREATE TABLE [checkmk].[config_agentjob]
 (
 	[name] SYSNAME NOT NULL PRIMARY KEY,
 
@@ -9,7 +9,7 @@
 	[runtime_check_min] INT NOT NULL DEFAULT 200, 
 	[runtime_check_enabled] BIT NOT NULL DEFAULT 1,
 
-    CONSTRAINT [ck_tbl_configuration_agentjob_state] 
+    CONSTRAINT [ck_tbl_config_agentjob_state] 
 		CHECK ([state_check_alert] IN ('WARNING','CRITICAL')
 			AND [runtime_check_alert] IN ('WARNING','CRITICAL')
 			AND [runtime_check_min] > 0)

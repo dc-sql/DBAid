@@ -103,7 +103,7 @@ BEGIN
 		,[backup_check_diff_hour]
 		,[backup_check_tran_hour]
 	FROM @output [O]
-		LEFT JOIN [checkmk].[configuration_database] [C]
+		LEFT JOIN [checkmk].[config_database] [C]
 			ON [O].[database_name] = [C].[name]
 		CROSS APPLY [system].[get_instance_guid]() [I]
 		CROSS APPLY [system].[get_datetimeoffset]([O].[backup_start_date]) [D1]

@@ -5,7 +5,7 @@ BEGIN
 	SET NOCOUNT ON;
 
 	/* Inventory check_job */
-	MERGE INTO [checkmk].[configuration_agentjob] AS [Target]
+	MERGE INTO [checkmk].[config_agentjob] AS [Target]
 	USING(SELECT [J].[name] FROM [msdb].[dbo].[sysjobs] [J]) AS [Source]
 	ON [Target].[name] = [Source].[name]
 	WHEN NOT MATCHED BY TARGET THEN

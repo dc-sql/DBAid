@@ -35,7 +35,7 @@ BEGIN
 			,[S].[cntr_type]
 			,[T].[ms_ticks]
 		FROM [sys].[dm_os_performance_counters] [S]
-			INNER JOIN [checkmk].[configuration_perfmon] [C]
+			INNER JOIN [checkmk].[config_perfmon] [C]
 				ON RTRIM([S].[object_name]) LIKE [C].[object_name] COLLATE Latin1_General_CI_AS
 				AND (RTRIM([S].[counter_name]) LIKE [C].[counter_name] COLLATE Latin1_General_CI_AS 
 					OR ISNULL([C].[counter_name],'') = '')
@@ -54,7 +54,7 @@ BEGIN
 			,[S].[cntr_type]
 			,[T].[ms_ticks]
 		FROM [sys].[dm_os_performance_counters] [S]
-			INNER JOIN [checkmk].[configuration_perfmon] [C]
+			INNER JOIN [checkmk].[config_perfmon] [C]
 				ON RTRIM([S].[object_name]) LIKE [C].[object_name] COLLATE Latin1_General_CI_AS
 				AND (RTRIM([S].[counter_name]) LIKE [C].[counter_name] COLLATE Latin1_General_CI_AS 
 					OR ISNULL([C].[counter_name],'') = '')
@@ -72,7 +72,7 @@ BEGIN
 	FROM @sample1 [S1]
 		INNER JOIN @sample2 [S2]
 			ON [S1].[rownum] = [S2].[rownum]
-		INNER JOIN [checkmk].[configuration_perfmon] [C]
+		INNER JOIN [checkmk].[config_perfmon] [C]
 				ON [S1].[object_name] LIKE [C].[object_name] COLLATE Latin1_General_CI_AS
 				AND ([S1].[counter_name] LIKE [C].[counter_name] COLLATE Latin1_General_CI_AS 
 					OR ISNULL([C].[counter_name],'') = '')

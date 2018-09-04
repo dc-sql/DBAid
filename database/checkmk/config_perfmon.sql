@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE TABLE [checkmk].[configuration_perfmon]
+CREATE TABLE [checkmk].[config_perfmon]
 (
 	[object_name] NVARCHAR(128) NOT NULL
 	,[counter_name] NVARCHAR(128) NULL
@@ -19,4 +19,4 @@ CREATE TABLE [checkmk].[configuration_perfmon]
 ) 
 GO
 
-CREATE UNIQUE CLUSTERED INDEX [ix_performance_counter_1_2_3_unique] ON [checkmk].[configuration_perfmon] ([object_name], [counter_name], [instance_name])
+CREATE UNIQUE CLUSTERED INDEX [ix_performance_counter_1_2_3_unique] ON [checkmk].[config_perfmon] ([object_name], [counter_name], [instance_name])

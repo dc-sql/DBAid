@@ -31,7 +31,7 @@ WHEN NOT MATCHED BY TARGET THEN
 GO
 
 /* General perf counters */
-MERGE INTO [checkmk].[configuration_perfmon] AS [Target] 
+MERGE INTO [checkmk].[config_perfmon] AS [Target] 
 USING (VALUES(N'%:Broker Activation', N'Tasks Running', N'_Total')
 	,(N'%:Broker Activation',N'Tasks Started/sec',N'_Total')
 	,(N'%:Broker Statistics',N'Activation Errors Total',NULL)
@@ -65,6 +65,27 @@ WHEN NOT MATCHED BY TARGET THEN
 	VALUES ([Source].[object_name],
 			[Source].[counter_name],
 			[Source].[instance_name]);
+GO
+
+/* Insert wmi queries */
+MERGE INTO [configg].[wmi_query] AS [Target] 
+USING (VALUES('SELECT * FROM SqlService WHERE DisplayName LIKE ''%@@SERVICENAME%'' OR ServiceName = ''SQLBrowser''')
+,('SELECT * FROM ServerNetworkProtocol WHERE InstanceName LIKE ''%@@SERVICENAME%''')
+,('SELECT * FROM ServerNetworkProtocolProperty WHERE IPAddressName = ''IPAll'' AND InstanceName LIKE ''%@@SERVICENAME%''')
+,('SELECT * FROM SqlServiceAdvancedProperty WHERE ServiceName LIKE ''%@@SERVICENAME%''')
+,('SELECT * FROM ServerSettingsGeneralFlag WHERE InstanceName LIKE ''%@@SERVICENAME%''')
+,('SELECT * FROM Win32_OperatingSystem')
+,('SELECT * FROM Win32_TimeZone')
+,('SELECT * FROM win32_processor')
+,('SELECT * FROM Win32_computerSystem')
+,('SELECT * FROM Win32_NetworkAdapterConfiguration WHERE IPEnabled = ''TRUE''')
+,('SELECT * FROM Win32_Volume WHERE SystemVolume <> ''TRUE'' AND DriveType <> 4 AND DriveType <> 5')
+,('SELECT * FROM Win32_GroupUser WHERE GroupComponent="Win32_Group.Domain=''@@HOSTNAME'',Name=''administrators''"')
+) AS [Source] ([query])  
+ON [Target].[query] = [Source].[query] 
+WHEN NOT MATCHED BY TARGET THEN  
+	INSERT ([query]) 
+	VALUES ([Source].[query]);
 GO
 
 /* execute inventory */

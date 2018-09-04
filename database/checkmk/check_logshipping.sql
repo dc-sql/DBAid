@@ -20,13 +20,13 @@ BEGIN
 
 	SELECT @primarycount = COUNT(*)
 	FROM [msdb].[dbo].[log_shipping_monitor_primary] [L]
-		INNER JOIN [checkmk].[configuration_database] [C]
+		INNER JOIN [checkmk].[config_database] [C]
 				ON [L].[primary_database] = [C].[name] COLLATE Database_Default
 	WHERE [C].[logshipping_check_enabled] = 1;
 
 	SELECT @secondarycount = COUNT(*)
 	FROM [msdb].[dbo].[log_shipping_monitor_secondary] [L]
-		INNER JOIN [checkmk].[configuration_database] [C]
+		INNER JOIN [checkmk].[config_database] [C]
 				ON [L].[primary_database] = [C].[name] COLLATE Database_Default
 	WHERE [C].[logshipping_check_enabled] = 0;
 
@@ -38,7 +38,7 @@ BEGIN
 			+ '; role=PRIMARY; last_backup_minago=' 
 			+ CAST(DATEDIFF(MINUTE, [L].[last_backup_date_utc], @curdate_utc) AS NVARCHAR(10)) AS [message]
 		FROM [msdb].[dbo].[log_shipping_monitor_primary] [L]
-			INNER JOIN [checkmk].[configuration_database] [C]
+			INNER JOIN [checkmk].[config_database] [C]
 					ON [L].[primary_database] = [C].[name] COLLATE Database_Default
 		WHERE [C].[logshipping_check_enabled] = 1
 			AND DATEDIFF(MINUTE, [L].[last_backup_date_utc], @curdate_utc) > [L].[backup_threshold]
@@ -50,7 +50,7 @@ BEGIN
 			+ '.' + QUOTENAME([L].[primary_database])
 			+ '; last_restore_minago=' + CAST(DATEDIFF(MINUTE, [L].[last_restored_date_utc], @curdate_utc) AS NVARCHAR(10)) AS [message]
 		FROM [msdb].[dbo].[log_shipping_monitor_secondary] [L]
-			INNER JOIN [checkmk].[configuration_database] [C]
+			INNER JOIN [checkmk].[config_database] [C]
 					ON [L].[secondary_database] = [C].[name] COLLATE Database_Default
 		WHERE [C].[logshipping_check_enabled] = 1
 			AND DATEDIFF(MINUTE, [L].[last_restored_date_utc], @curdate_utc) > [L].[restore_threshold]

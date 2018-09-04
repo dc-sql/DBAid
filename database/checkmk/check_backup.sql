@@ -66,7 +66,7 @@ BEGIN
 			+ '; last_tran=' + CASE WHEN [C].[backup_check_tran_hour] IS NOT NULL THEN CONVERT(VARCHAR(20), [LB].[tran_backup_date], 120) ELSE 'NULL' END
 			AS [message]
 		FROM sys.databases [DB]
-			INNER JOIN [checkmk].[configuration_database] [C]
+			INNER JOIN [checkmk].[config_database] [C]
 				ON [DB].[name] = [C].[name]
 			LEFT JOIN @last_backup [LB]
 				ON [DB].[name] = [LB].[name]
@@ -74,8 +74,8 @@ BEGIN
 
 	IF (SELECT COUNT(*) FROM @check_output WHERE [state] != 'OK') = 0
 	BEGIN
-		SELECT @backup_enabled = COUNT(*) FROM [checkmk].[configuration_database] WHERE [backup_check_enabled] = 1;
-		SELECT @backup_disabled = COUNT(*) FROM [checkmk].[configuration_database] WHERE [backup_check_enabled] = 0;
+		SELECT @backup_enabled = COUNT(*) FROM [checkmk].[config_database] WHERE [backup_check_enabled] = 1;
+		SELECT @backup_disabled = COUNT(*) FROM [checkmk].[config_database] WHERE [backup_check_enabled] = 0;
 
 		INSERT INTO @check_output VALUES('NA', 'Monitoring databases for backup(s)'
 			+ '; enabled=' + CAST(@backup_enabled AS VARCHAR(8)) 

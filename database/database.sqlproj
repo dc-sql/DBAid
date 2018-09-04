@@ -115,8 +115,8 @@
     <PostDeploy Include="post_script.sql" />
     <PreDeploy Include="pre_script.sql" />
     <Build Include="checkmk\inventory_database.sql" />
-    <Build Include="checkmk\configuration_database.sql" />
-    <Build Include="checkmk\configuration_agentjob.sql" />
+    <Build Include="checkmk\config_database.sql" />
+    <Build Include="checkmk\config_agentjob.sql" />
     <Build Include="checkmk\inventory_agentjob.sql" />
     <Build Include="checkmk\check_agentjob.sql" />
     <Build Include="checkmk\check_backup.sql" />
@@ -127,7 +127,7 @@
     <None Include="checkmk\check_alwayson.sql" />
     <Build Include="checkmk\chart_capacity_fg.sql" />
     <Build Include="checkmk\chart_capacity_db.sql" />
-    <Build Include="checkmk\configuration_perfmon.sql" />
+    <Build Include="checkmk\config_perfmon.sql" />
     <Build Include="checkmk\chart_perfmon.sql" />
     <Build Include="system\security\schemas.sql" />
     <Build Include="audit\procedures\get_cis_benchmark.sql" />
@@ -162,6 +162,7 @@
     <Build Include="system\methods\procedure\get_procedure_list.sql" />
     <Build Include="system\methods\procedure\get_instance_tag.sql" />
     <Build Include="checkmk\check_instance.sql" />
+    <Build Include="configg\tables\wmi_queries.sql" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />

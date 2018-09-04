@@ -1,4 +1,4 @@
-﻿CREATE TABLE [checkmk].[configuration_database]
+﻿CREATE TABLE [checkmk].[config_database]
 (
 	[name] SYSNAME NOT NULL PRIMARY KEY,
 
@@ -27,7 +27,7 @@
 	[capacity_check_critical_free] NUMERIC(5,2) NOT NULL DEFAULT 10.00, 
 	[capacity_check_enabled] BIT NOT NULL DEFAULT 1,
 
-    CONSTRAINT [ck_configuration_database] 
+    CONSTRAINT [ck_config_database] 
 		CHECK ([database_check_alert] IN ('WARNING','CRITICAL') 
 			AND [backup_check_alert] IN ('WARNING','CRITICAL')
 			AND [integrity_check_alert] IN ('WARNING','CRITICAL')
