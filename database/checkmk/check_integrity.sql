@@ -38,7 +38,7 @@ BEGIN
 			LEFT JOIN #dbccinfo [DI]
 				ON [DB].[name] = [DI].[db_name]
 			LEFT JOIN [checkmk].[config_database] [CD]
-					ON [DB].[name] = [CD].[name] COLLATE Database_Default
+					ON [DB].[name] = [CD].[name] COLLATE DATABASE_DEFAULT
 		WHERE [DI].[field] = 'dbi_dbccLastKnownGood'
 			AND [CD].[integrity_check_enabled] = 1
 	)

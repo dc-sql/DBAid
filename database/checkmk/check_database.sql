@@ -15,8 +15,8 @@ BEGIN
 
 	INSERT INTO @check_output
 		SELECT CASE WHEN [D].[state] NOT IN (0,1,2) THEN [C].[database_check_alert] ELSE 'OK' END AS [state]
-			,QUOTENAME([D].[name]) COLLATE Database_Default 
-			+ '=' + UPPER([D].[state_desc]) COLLATE Database_Default AS [message]
+			,QUOTENAME([D].[name]) COLLATE DATABASE_DEFAULT 
+			+ '=' + UPPER([D].[state_desc]) COLLATE DATABASE_DEFAULT AS [message]
 		FROM [sys].[databases] [D]
 			INNER JOIN [checkmk].[config_database] [C] 
 				ON [D].[name] = [C].[name]

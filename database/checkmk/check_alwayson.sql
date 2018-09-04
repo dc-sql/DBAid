@@ -21,16 +21,16 @@ BEGIN
 															OR [RS].[connected_state] NOT IN (1)) 
 														THEN [HA].[ag_state_alert]
 														WHEN [HA].[ag_role_is_enabled] = 1 AND
-															([HA].[ag_role] != [RS].[role_desc] COLLATE Database_Default)
+															([HA].[ag_role] != [RS].[role_desc] COLLATE DATABASE_DEFAULT)
 															THEN [HA].[ag_role_alert]	
 														ELSE ''OK'' END AS [state]
 													,''ag='' 
-													+ [AG].[name] COLLATE Database_Default 
+													+ [AG].[name] COLLATE DATABASE_DEFAULT 
 													+ ''; sync='' 
-													+ [RS].[synchronization_health_desc] COLLATE Database_Default 
-													+ ''; conn='' + [RS].[connected_state_desc] COLLATE Database_Default
+													+ [RS].[synchronization_health_desc] COLLATE DATABASE_DEFAULT 
+													+ ''; conn='' + [RS].[connected_state_desc] COLLATE DATABASE_DEFAULT
 													+ ''; exp_role='' + [HA].[ag_role]
-													+ ''; curr_role='' + [RS].[role_desc] COLLATE Database_Default 
+													+ ''; curr_role='' + [RS].[role_desc] COLLATE DATABASE_DEFAULT 
 													+ ''; '' AS [message]
 												FROM [master].[sys].[dm_hadr_availability_group_states] [GS]
 													INNER JOIN [master].[sys].[availability_groups] [AG] 

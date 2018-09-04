@@ -78,7 +78,7 @@ BEGIN
 					AND CAST(DATEDIFF(MINUTE,[X].[start_execution_date],GETDATE()) AS VARCHAR(10)) > [C].[runtime_check_min] 
 					THEN [C].[runtime_check_alert] 
 				ELSE 'OK' END AS [state]
-			,'job=' + QUOTENAME([J].[name]) COLLATE Database_Default
+			,'job=' + QUOTENAME([J].[name]) COLLATE DATABASE_DEFAULT
 				+ ';state=' 
 				+ [J].[run_status]
 				+ ';runtime_min='

@@ -155,7 +155,7 @@ BEGIN
 				ON [DB].[name] = [FI].[database_name]
 					AND [MF].[file_id] = [FI].[file_id]
 			INNER JOIN @drive_info [DI]
-				ON SUBSTRING([MF].[physical_name],1,1) = [DI].[drive] COLLATE Database_Default;
+				ON SUBSTRING([MF].[physical_name],1,1) = [DI].[drive] COLLATE DATABASE_DEFAULT;
 
 	;WITH Dataset
 	AS

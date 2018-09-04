@@ -14,7 +14,7 @@ BEGIN
 
 	INSERT INTO @last_access
 		SELECT [db_name]
-			,MAX(CASE WHEN [db_last_access] = '19000101' THEN NULL ELSE [db_last_access] END) AS [db_last_access]
+			,MAX([db_last_access]) AS [db_last_access]
 			,[last_server_restart]
 		FROM
 		(SELECT [D].[name] AS [db_name],

@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Configuration;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-
 using System.Text;
+using Microsoft.Win32;
 
 namespace local.dbaid.checkmk
 {
@@ -11,39 +12,62 @@ namespace local.dbaid.checkmk
     {
         static void Main(string[] args)
         {
-            ConnectionStringSettingsCollection settings = ConfigurationManager.ConnectionStrings;
+            List<string> sqlInstances = new List<string>();
+            string getProcListSql = "SELECT QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) AS [procedure] FROM sys.objects "
+                                    + "WHERE[type] = 'P' AND SCHEMA_NAME([schema_id]) = @schema AND([name] LIKE @filter OR @filter IS NULL)";
 
-            foreach (ConnectionStringSettings css in settings)
+            using (RegistryKey hklm = RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, Environment.MachineName))
             {
-                SqlConnectionStringBuilder csb = new SqlConnectionStringBuilder(css.ConnectionString);
-                csb.Encrypt = true;
-                csb.TrustServerCertificate = true;
+                RegistryKey instanceKey = hklm.OpenSubKey(@"SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL", false);
+                RegistryKey wowInstanceKey = hklm.OpenSubKey(@"SOFTWARE\Wow6432Node\Microsoft\Microsoft SQL Server\Instance Names\SQL", false);
 
-                if (String.IsNullOrEmpty(csb.InitialCatalog))
-                    csb.InitialCatalog = "_dbaid";
-                if (String.IsNullOrEmpty(csb.UserID) || String.IsNullOrEmpty(csb.Password))
-                    csb.IntegratedSecurity = true;
-                else csb.IntegratedSecurity = false;
+                if (instanceKey != null)
+                {
+                    foreach (var instanceName in instanceKey.GetValueNames())
+                    {
+                        sqlInstances.Add(instanceName.ToUpper());
+                    }
+                }
+                if (wowInstanceKey != null)
+                {
+                    foreach (var instanceName in wowInstanceKey.GetValueNames())
+                    {
+                        sqlInstances.Add(instanceName.ToUpper());
+                    }
+                }
+            }
+
+            foreach (string instance in sqlInstances)
+            {
+                SqlConnectionStringBuilder csb = new SqlConnectionStringBuilder() {
+                    ApplicationName = "Check_Mk - mssql plugin",
+                    DataSource =  instance == "MSSQLSERVER" ? Environment.MachineName : Environment.MachineName + "\\" + instance,
+                    IntegratedSecurity = true,
+                    InitialCatalog = "_dbaid",
+                    Encrypt = true,
+                    TrustServerCertificate = true
+                };
 
                 using (var con = new SqlConnection(csb.ConnectionString))
                 {
-                    string instanceTag = String.Empty;
-
-                    con.Open();
-
-                    using (var cmd = new SqlCommand("SELECT @@SERVICENAME", con))
+                    try
                     {
-                        cmd.CommandType = CommandType.Text;
-                        SqlDataReader row = cmd.ExecuteReader();
-
-                        row.Read();
-                        instanceTag = row[0].ToString().ToLower();
-                        row.Close();
+                        con.Open();
+                        
+                        Console.WriteLine("{0} mssql_{1}_{2} count={3} {4}{5}", statusCode("OK"), instance, "service", 1, "OK - ", con.ServerVersion);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("{0} mssql_{1}_{2} count={3} {4}{5}", statusCode("CRITICAL"), instance, "service", 1, "CRITICAL - ", e.Message);
+#if DEBUG
+                        Console.ReadKey();
+#endif
+                        return;
                     }
 
-                    using (var cmd = new SqlCommand("[system].[get_procedure_list]", con))
+                    using (var cmd = new SqlCommand(getProcListSql, con))
                     {
-                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.CommandType = CommandType.Text;
                         cmd.Parameters.Add(new SqlParameter("@schema", "checkmk"));
                         cmd.Parameters.Add(new SqlParameter("@filter", "inventory%"));
 
@@ -62,9 +86,9 @@ namespace local.dbaid.checkmk
                         }
                     }
 
-                    using (var cmd = new SqlCommand("[system].[get_procedure_list]", con))
+                    using (var cmd = new SqlCommand(getProcListSql, con))
                     {
-                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.CommandType = CommandType.Text;
                         cmd.Parameters.Add(new SqlParameter("@schema", "checkmk"));
                         cmd.Parameters.Add(new SqlParameter("@filter", "check%"));
 
@@ -96,14 +120,14 @@ namespace local.dbaid.checkmk
                                     }
                                 }
 
-                                Console.WriteLine("{0} mssql_{1}_{2} count={3} {4}", code, instanceTag, procTag, results.Rows.Count, message);
+                                Console.WriteLine("{0} mssql_{1}_{2} count={3} {4}", code, instance, procTag, results.Rows.Count, message);
                             }
                         }
                     }
 
-                    using (var cmd = new SqlCommand("[system].[get_procedure_list]", con))
+                    using (var cmd = new SqlCommand(getProcListSql, con))
                     {
-                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.CommandType = CommandType.Text;
                         cmd.Parameters.Add(new SqlParameter("@schema", "checkmk"));
                         cmd.Parameters.Add(new SqlParameter("@filter", "chart_capacity%"));
 
@@ -157,28 +181,28 @@ namespace local.dbaid.checkmk
 
                                     if (used >= critical && critical != -1)
                                     {
-                                        Console.WriteLine("{0} mssql_{1}_{2} {3} CRITICAL; ", statusCode("CRITICAL"), instanceTag, procTag, name);
+                                        Console.WriteLine("{0} mssql_{1}_{2} {3} CRITICAL; ", statusCode("CRITICAL"), instance, procTag, name);
                                     }
                                     else if (used >= warning && warning != -1)
                                     {
-                                        Console.WriteLine("{0} mssql_{1}_{2} {3} WARNING; ", statusCode("WARNING"), instanceTag, procTag, name);
+                                        Console.WriteLine("{0} mssql_{1}_{2} {3} WARNING; ", statusCode("WARNING"), instance, procTag, name);
                                     }
                                     else if ((used < warning && warning != -1) && (used < critical && critical != -1))
                                     {
-                                        Console.WriteLine("{0} mssql_{1}_{2} {3} OK; ", statusCode("OK"), instanceTag, procTag, name);
+                                        Console.WriteLine("{0} mssql_{1}_{2} {3} OK; ", statusCode("OK"), instance, procTag, name);
                                     }
                                     else
                                     {
-                                        Console.WriteLine("{0} mssql_{1}_{2} {3} NA; ", statusCode("NA"), instanceTag, procTag, name);
+                                        Console.WriteLine("{0} mssql_{1}_{2} {3} NA; ", statusCode("NA"), instance, procTag, name);
                                     }
                                 }
                             }
                         }
                     }
 
-                    using (var cmd = new SqlCommand("[system].[get_procedure_list]", con))
+                    using (var cmd = new SqlCommand(getProcListSql, con))
                     {
-                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.CommandType = CommandType.Text;
                         cmd.Parameters.Add(new SqlParameter("@schema", "checkmk"));
                         cmd.Parameters.Add(new SqlParameter("@filter", "chart_perfmon%"));
 

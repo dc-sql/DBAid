@@ -159,9 +159,7 @@
     <Build Include="system\methods\function\get_instance_guid.sql" />
     <Build Include="system\methods\function\get_product_version.sql" />
     <Build Include="system\methods\function\get_split_string.sql" />
-    <Build Include="system\methods\procedure\get_procedure_list.sql" />
     <Build Include="system\methods\procedure\get_instance_tag.sql" />
-    <Build Include="checkmk\check_instance.sql" />
     <Build Include="configg\tables\wmi_queries.sql" />
   </ItemGroup>
   <ItemGroup>
