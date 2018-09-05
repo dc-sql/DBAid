@@ -56,12 +56,14 @@ namespace collector
                 throw new DirectoryNotFoundException("The output directory -output does not exist");
             }
 
-            var csb = new SqlConnectionStringBuilder();
-            csb.DataSource = server;
-            csb.InitialCatalog = database;
-            csb.IntegratedSecurity = true;
-            csb.Encrypt = true;
-            csb.TrustServerCertificate = true;
+            var csb = new SqlConnectionStringBuilder
+            {
+                DataSource = server,
+                InitialCatalog = database,
+                IntegratedSecurity = true,
+                Encrypt = true,
+                TrustServerCertificate = true
+            };
 
             string getProcListSql = "SELECT QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) AS [procedure] FROM sys.objects "
                                     + "WHERE[type] = 'P' AND SCHEMA_NAME([schema_id]) = @schema AND([name] LIKE @filter OR @filter IS NULL)";
@@ -112,8 +114,7 @@ namespace collector
                         cmd.Parameters.Add(new SqlParameter("@update_execution_timestamp", true));
                         if (sanitize == "false") { cmd.Parameters.Add(new SqlParameter("@sanitize", false)); }
 
-                        DataTable dt = new DataTable();
-                        dt.TableName = procTag;
+                        DataTable dt = new DataTable { TableName = procTag };
                         dt.Load(cmd.ExecuteReader());
                         dt.WriteXml(filepath, XmlWriteMode.WriteSchema);
                     }
