@@ -32,7 +32,7 @@ BEGIN
 			,CASE WHEN [B].[type] = 'I' THEN [B].[backup_finish_date] ELSE NULL END AS [diff_backup_date]
 			,CASE WHEN [B].[type] = 'L' THEN [B].[backup_finish_date] ELSE NULL END AS [tran_backup_date]
 		FROM [sys].[databases] [DB] 
-			INNER JOIN [msdb].[dbo].[backupset] [B]
+			LEFT JOIN [msdb].[dbo].[backupset] [B]
 				ON [DB].[name] = [B].[database_name]
 			OUTER APPLY(SELECT [preferred_backup] FROM @preferred_backup WHERE [name] = [DB].[name]) AS [AG]
 		WHERE ([AG].[preferred_backup] = 1 OR [AG].[preferred_backup] IS NULL)
@@ -49,21 +49,43 @@ BEGIN
 	INSERT INTO @check_output
 		SELECT CASE WHEN ([C].[backup_check_full_hour] IS NOT NULL 
 					AND [DB].[create_date] < DATEADD(DAY, -1, GETDATE()) 
-					AND [LB].[full_backup_date] < DATEADD(HOUR, -[C].[backup_check_full_hour], GETDATE()))
+					AND ISNULL([LB].[full_backup_date], 0) < DATEADD(HOUR, -[C].[backup_check_full_hour], GETDATE()))
 				OR ([C].[backup_check_diff_hour] IS NOT NULL 
 					AND [DB].[create_date] < DATEADD(DAY, -1, GETDATE()) 
-					AND [LB].[full_backup_date] < DATEADD(HOUR, -[C].[backup_check_diff_hour], GETDATE()) 
-					AND [LB].[diff_backup_date] < DATEADD(HOUR, -[C].[backup_check_diff_hour], GETDATE()))
+					AND ISNULL([LB].[full_backup_date], 0) < DATEADD(HOUR, -[C].[backup_check_diff_hour], GETDATE()) 
+					AND ISNULL([LB].[diff_backup_date], 0) < DATEADD(HOUR, -[C].[backup_check_diff_hour], GETDATE()))
 				OR ([C].[backup_check_tran_hour] IS NOT NULL 
 					AND [DB].[create_date] < DATEADD(DAY, -1, GETDATE()) 
 					AND [DB].[recovery_model] IN (1,2) 
-					AND [LB].[tran_backup_date] < DATEADD(HOUR, -[C].[backup_check_tran_hour], GETDATE()))
+					AND ISNULL([LB].[tran_backup_date], 0) < DATEADD(HOUR, -[C].[backup_check_tran_hour], GETDATE()))
 				THEN [C].[backup_check_alert]
 				ELSE 'OK' END AS [state]
 			,QUOTENAME([LB].[name]) 
-			+ '; last_full=' + CASE WHEN [C].[backup_check_full_hour] IS NOT NULL THEN CONVERT(VARCHAR(20), [LB].[full_backup_date], 120) ELSE 'NULL' END
-			+ '; last_diff=' + CASE WHEN [C].[backup_check_diff_hour] IS NOT NULL THEN CONVERT(VARCHAR(20), [LB].[diff_backup_date], 120) ELSE 'NULL' END
-			+ '; last_tran=' + CASE WHEN [C].[backup_check_tran_hour] IS NOT NULL THEN CONVERT(VARCHAR(20), [LB].[tran_backup_date], 120) ELSE 'NULL' END
+			+ '; recovery_model=' + [DB].[recovery_model_desc]
+			+ CASE 
+				WHEN [C].[backup_check_full_hour] IS NOT NULL 
+				THEN '; last_full=' 
+					+ CASE
+					WHEN [LB].[full_backup_date] IS NULL 
+					THEN 'NEVER' 
+					ELSE CONVERT(VARCHAR(20), [LB].[full_backup_date], 120) END
+				ELSE '' END
+			+ CASE 
+				WHEN [C].[backup_check_diff_hour] IS NOT NULL 
+				THEN '; last_diff=' 
+					+ CASE
+					WHEN [LB].[diff_backup_date] IS NULL 
+					THEN 'NEVER' 
+					ELSE CONVERT(VARCHAR(20), [LB].[diff_backup_date], 120) END
+				ELSE '' END
+			+ CASE 
+				WHEN [C].[backup_check_tran_hour] IS NOT NULL 
+				THEN '; last_tran=' 
+					+ CASE
+					WHEN [LB].[tran_backup_date] IS NULL 
+					THEN 'NEVER' 
+					ELSE CONVERT(VARCHAR(20), [LB].[tran_backup_date], 120) END
+				ELSE '' END
 			AS [message]
 		FROM sys.databases [DB]
 			INNER JOIN [checkmk].[config_database] [C]

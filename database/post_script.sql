@@ -29,43 +29,6 @@ WHEN NOT MATCHED BY TARGET THEN
 	VALUES ([Source].[key],[Source].[value]);
 GO
 
-/* General perf counters */
-MERGE INTO [checkmk].[config_perfmon] AS [Target] 
-USING (VALUES(N'%:Broker Activation', N'Tasks Running', N'_Total')
-	,(N'%:Broker Activation',N'Tasks Started/sec',N'_Total')
-	,(N'%:Broker Statistics',N'Activation Errors Total',NULL)
-	,(N'%:Buffer Manager',N'Page life expectancy',NULL)
-	,(N'%:General Statistics',N'Active Temp Tables',NULL)
-	,(N'%:General Statistics',N'Logical Connections',NULL)
-	,(N'%:General Statistics',N'Logins/sec',NULL)
-	,(N'%:General Statistics',N'Logouts/sec',NULL)
-	,(N'%:General Statistics',N'Processes blocked',NULL)
-	,(N'%:General Statistics',N'Transactions',NULL)
-	,(N'%:Locks',N'Number of Deadlocks/sec',N'_Total')
-	,(N'%:SQL Errors',N'Errors/sec',N'_Total')
-	,(N'%:SQL Statistics', N'Batch Requests/sec', NULL)
-	,(N'%:SQL Statistics', N'SQL Compilations/sec', NULL)
-	,(N'%:Locks', N'Average Wait Time (ms)', N'_Total')
-	,(N'%:Locks', N'Average Wait Time Base', N'_Total')
-	,(N'%:Memory Manager', N'Memory Grants Pending', NULL)
-	,(N'%:Availability Replica',N'Bytes Sent to Replica/sec',N'_Total')
-	,(N'%:Availability Replica',N'Bytes Received from Replica/sec',N'_Total')
-	,(N'%:Database Replica',N'Log Send Queue',N'_Total')
-	,(N'%:Database Replica',N'Recovery Queue',N'_Total')
-) AS [Source] ([object_name],[counter_name],[instance_name])  
-ON [Target].[object_name] = [Source].[object_name] 
-	AND [Target].[counter_name] = [Source].[counter_name] 
-	AND ([Target].[instance_name] = [Source].[instance_name]
-		OR ([Target].[instance_name] IS NULL AND [Source].[instance_name] IS NULL))
-WHEN NOT MATCHED BY TARGET THEN  
-	INSERT ([object_name],
-			[counter_name],
-			[instance_name]) 
-	VALUES ([Source].[object_name],
-			[Source].[counter_name],
-			[Source].[instance_name]);
-GO
-
 /* Insert wmi queries */
 MERGE INTO [configg].[wmi_query] AS [Target] 
 USING (VALUES('SELECT * FROM SqlService WHERE DisplayName LIKE ''%@@SERVICENAME%'' OR ServiceName = ''SQLBrowser''')
