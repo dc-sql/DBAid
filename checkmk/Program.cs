@@ -51,8 +51,8 @@ namespace local.dbaid.checkmk
                 {
                     ApplicationName = "Check_Mk - mssql plugin",
                     DataSource = instance == "MSSQLSERVER" ? Environment.MachineName : Environment.MachineName + "\\" + instance,
-                    IntegratedSecurity = true,
                     InitialCatalog = "_dbaid",
+                    IntegratedSecurity = true,
                     Encrypt = true,
                     TrustServerCertificate = true,
                     ConnectTimeout = 5

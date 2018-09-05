@@ -34,10 +34,5 @@
 			AND [logshipping_check_alert] IN ('WARNING','CRITICAL')
 			AND [mirroring_check_alert] IN ('WARNING','CRITICAL')
 			AND [mirroring_check_role] IN (NULL,'PRIMARY','SECONDARY')
-			AND [backup_check_full_hour] > 0
-			AND [backup_check_diff_hour] > 0
-			AND [backup_check_tran_hour] > 0
-			AND [integrity_check_hour] > 0
-			AND [logshipping_check_hour] > 0
 			AND [capacity_check_critical_free] <= [capacity_check_warning_free])
 )

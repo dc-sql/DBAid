@@ -8,7 +8,7 @@ CREATE PROCEDURE [collector].[get_backup_history]
 (
 	@start_datetime DATETIME = NULL,
 	@end_datetime DATETIME = NULL,
-	@sanitize BIT = 1,
+	@sanitise BIT = 1,
 	@update_execution_timestamp BIT = 0
 )
 WITH ENCRYPTION
@@ -51,7 +51,7 @@ BEGIN
 			[B].[backup_finish_date],
 			[MS].[software_name],
 			[B].[user_name],'
-		+ CASE WHEN @sanitize = 0 
+		+ CASE WHEN @sanitise = 0 
 			THEN '[M].[physical_device_name],' 
 			ELSE 'NULL AS [physical_device_name],' END
 		+'CAST(([B].[backup_size]/1024.00)/1024.00 AS NUMERIC(20,2)) AS [backup_size_mb],'
@@ -59,13 +59,13 @@ BEGIN
 			THEN 'CAST(([B].[compressed_backup_size]/1024.00)/1024.00 AS NUMERIC(20,2)) AS [compressed_backup_size_mb],'
 				+ 'CAST((([B].[backup_size]-[B].[compressed_backup_size])/[B].[backup_size])*100.00 AS NUMERIC(5,2)) AS [compression_ratio],' 
 			ELSE 'NULL AS [compressed_backup_size_mb], NULL AS [compression_ratio],' END
-		+ CASE WHEN (SELECT [COLUMN_NAME] FROM [msdb].[INFORMATION_SCHEMA].[COLUMNS] WHERE [TABLE_NAME] = 'backupset' AND [COLUMN_NAME] = 'encryptor_type') = 'encryptor_type' AND @sanitize = 0
+		+ CASE WHEN (SELECT [COLUMN_NAME] FROM [msdb].[INFORMATION_SCHEMA].[COLUMNS] WHERE [TABLE_NAME] = 'backupset' AND [COLUMN_NAME] = 'encryptor_type') = 'encryptor_type' AND @sanitise = 0
 			THEN '[B].[encryptor_type],' 
 			ELSE 'NULL AS [encryptor_type],' END
-		+ CASE WHEN (SELECT [COLUMN_NAME] FROM [msdb].[INFORMATION_SCHEMA].[COLUMNS] WHERE [TABLE_NAME] = 'backupset' AND [COLUMN_NAME] = 'encryptor_thumbprint') = 'encryptor_thumbprint' AND @sanitize = 0
+		+ CASE WHEN (SELECT [COLUMN_NAME] FROM [msdb].[INFORMATION_SCHEMA].[COLUMNS] WHERE [TABLE_NAME] = 'backupset' AND [COLUMN_NAME] = 'encryptor_thumbprint') = 'encryptor_thumbprint' AND @sanitise = 0
 			THEN '[B].[encryptor_thumbprint],' 
 			ELSE 'NULL AS [encryptor_thumbprint],' END
-		+ CASE WHEN (SELECT [COLUMN_NAME] FROM [msdb].[INFORMATION_SCHEMA].[COLUMNS] WHERE [TABLE_NAME] = 'backupset' AND [COLUMN_NAME] = 'Is_password_protected') = 'Is_password_protected' AND @sanitize = 0
+		+ CASE WHEN (SELECT [COLUMN_NAME] FROM [msdb].[INFORMATION_SCHEMA].[COLUMNS] WHERE [TABLE_NAME] = 'backupset' AND [COLUMN_NAME] = 'Is_password_protected') = 'Is_password_protected' AND @sanitise = 0
 			THEN '[B].[Is_password_protected]' 
 			ELSE 'NULL AS [Is_password_protected]' END
 		+ ' FROM [master].[sys].[databases] [D]

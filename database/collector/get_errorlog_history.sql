@@ -8,7 +8,7 @@ CREATE PROCEDURE [collector].[get_errorlog_history]
 (
 	@start_datetime DATETIME = NULL,
 	@end_datetime DATETIME = NULL,
-	@sanitize BIT = 1,
+	@sanitise BIT = 1,
 	@update_execution_timestamp BIT = 0
 )
 WITH ENCRYPTION
@@ -37,6 +37,7 @@ BEGIN
 	CREATE TABLE #__SeverityError ([id] BIGINT IDENTITY(1,1) PRIMARY KEY
 									,[log_date] DATETIME2
 									,[source] NVARCHAR(100)
+									,[message_id] INT
 									,[message_header] NVARCHAR(MAX)
 									,[message] NVARCHAR(MAX));
 
@@ -78,31 +79,30 @@ BEGIN
 			,[E].[source]
 			,[E].[message]
 		FROM #__Errorlog [E]
-	)
-	INSERT INTO #__SeverityError([log_date],[source],[message_header],[message])
+	) 
+	INSERT INTO #__SeverityError([log_date],[source],[message_id],[message_header],[message])
 		SELECT [A].[log_date]
-			,CASE WHEN [B].[message] LIKE N'%found % errors and repaired % errors%'
+			,[source] = CASE WHEN [B].[message] LIKE N'%found % errors and repaired % errors%'
 					OR [B].[message] LIKE N'SQL Server has encountered%' 
 					OR [B].[message] LIKE N'Error:%Severity:%State:%(Params:%)%'
 				THEN N'SQL Server'
-				ELSE [A].[source] END AS [source]
-            ,CASE WHEN [B].[message] LIKE N'%found % errors and repaired % errors%'
+				ELSE [A].[source] END
+			,[message_id] = CAST(SUBSTRING([A].[message],8,CHARINDEX(',',[A].[message])-8) AS INT)
+            ,[message_header] = CASE WHEN [B].[message] LIKE N'%found % errors and repaired % errors%'
 					THEN N'ERROR:DBCC'
 				WHEN [B].[message] LIKE N'SQL Server has encountered%' 
 					THEN N'WARNING:Encountered'
 				WHEN [B].[message] LIKE N'Error:%Severity:%State:%(Params:%)%'
 					THEN SUBSTRING([B].[message], 0, CHARINDEX(N'.', [B].[message])+1)
-				ELSE [A].[message] END AS [message_header]
-			,CASE WHEN @sanitize = 0 THEN [B].[message] ELSE [M].[text] END AS [message]
+				ELSE [A].[message] END
+			,[B].[message] 
 		FROM ErrorSet [A]
 			INNER JOIN ErrorSet [B]
 				ON [A].[id]+1 = [B].[id]
-			INNER JOIN [master].[sys].[messages] [M]
-				ON [M].[language_id] = CAST(SERVERPROPERTY('LCID') AS INT)
-					AND CAST(SUBSTRING([A].[message],8,CHARINDEX(',',[A].[message])-8) AS INT) = [M].[message_id]
 		WHERE [A].[message] LIKE N'Error:%Severity:%State:%'
 			AND [A].[message] NOT LIKE N'Error:%Severity:%State:%(Params:%)%'
-			OR ([B].[message] LIKE N'%found % errors and repaired % errors%' AND [B].[message] NOT LIKE N'%found 0 errors and repaired 0 errors%')
+			OR ([B].[message] LIKE N'%found % errors and repaired % errors%' 
+				AND [B].[message] NOT LIKE N'%found 0 errors and repaired 0 errors%')
 			OR [B].[message] LIKE N'SQL Server has encountered%'
 			OR [B].[message] LIKE N'Error:%Severity:%State:%(Params:%)%'
         ORDER BY [A].[id] ASC;
@@ -111,8 +111,11 @@ BEGIN
 		,[D1].[datetimeoffset] AS [log_date]
 		,[E].[source]
 		,[E].[message_header]
-		,[E].[message]
+		,CASE WHEN @sanitise = 0 THEN [E].[message] ELSE [M].[text] END AS [message]
 	FROM #__SeverityError [E]
+		INNER JOIN [master].[sys].[messages] [M]
+				ON [M].[language_id] = CAST(SERVERPROPERTY('LCID') AS INT)
+					AND [E].[message_id] = [M].[message_id]
 		CROSS APPLY [system].[get_instance_guid]() [I]
 		CROSS APPLY [system].[get_datetimeoffset]([E].[log_date]) [D1]
 	ORDER BY [E].[id] ASC;

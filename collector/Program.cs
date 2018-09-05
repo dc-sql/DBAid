@@ -3,133 +3,134 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
+using Microsoft.Win32;
 
 namespace collector
 {
     class Program
     {
-        static void Help()
-        {
-            Console.WriteLine("-server localhost\\inst (Mandatory)");
-            Console.WriteLine("-database _dbaid (Optional) default _dbaid");
-            Console.WriteLine("-sanitize [true | false] (Optional) default true");
-            Console.WriteLine("-output C:\\Datacom (Optional) default application executable directory");
-            Console.WriteLine("-log [none | verbose] (Optional) default none");
-        }
+        private const string getProcListSql = "";
 
         static void Main(string[] args)
         {
             DateTime runtime = DateTime.UtcNow;
-            var arguments = new Dictionary<string, string>();
+            var sqlInstances = new List<string>();
 
-            if (args.Length == 0)
+            // Get list of local instances
+            using (RegistryKey hklm = RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, Environment.MachineName))
             {
-                Help();
-                throw new ArgumentNullException("No arguments were passed.");
-            }
-            // Begin processing arguments
-            for (int i = 0; i < args.Length; i = i + 2)
-            {
-                if (args[i] == @"/?" || args[i + 1] == @"/?")
+                RegistryKey instanceKey = hklm.OpenSubKey(@"SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL", false);
+                RegistryKey wowInstanceKey = hklm.OpenSubKey(@"SOFTWARE\Wow6432Node\Microsoft\Microsoft SQL Server\Instance Names\SQL", false);
+
+                if (instanceKey != null)
                 {
-                    Help();
-                    return;
+                    foreach (var instanceName in instanceKey.GetValueNames())
+                    {
+                        sqlInstances.Add(instanceName.ToUpper());
+                    }
                 }
-
-                arguments.Add(args[i], args[i + 1]);
-            }
-            // End processing arguments
-
-            if (string.IsNullOrEmpty(arguments["-server"]))
-            {
-                throw new ArgumentNullException("Mandatory argument -server missing. //? for help.");
-            }
-           
-            string server = arguments["-server"];
-            string database = arguments.ContainsKey("-database") ? arguments["-database"] : "_dbaid";
-            string sanitize = arguments.ContainsKey("-sanitize") ? arguments["-sanitize"] : "true";
-            string output = arguments.ContainsKey("-output") ? arguments["-output"] : AppDomain.CurrentDomain.BaseDirectory;
-            string log = arguments.ContainsKey("-log") ? arguments["-log"] : "none";
-
-            if (!Directory.Exists(output))
-            {
-                throw new DirectoryNotFoundException("The output directory -output does not exist");
-            }
-
-            var csb = new SqlConnectionStringBuilder
-            {
-                DataSource = server,
-                InitialCatalog = database,
-                IntegratedSecurity = true,
-                Encrypt = true,
-                TrustServerCertificate = true
-            };
-
-            string getProcListSql = "SELECT QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) AS [procedure] FROM sys.objects "
-                                    + "WHERE[type] = 'P' AND SCHEMA_NAME([schema_id]) = @schema AND([name] LIKE @filter OR @filter IS NULL)";
-
-            using (var con = new SqlConnection(csb.ConnectionString))
-            {
-                string instanceTag = String.Empty;
-                DataRowCollection procedures = null; 
-
-                if (log == "verbose")
+                if (wowInstanceKey != null)
                 {
+                    foreach (var instanceName in wowInstanceKey.GetValueNames())
+                    {
+                        sqlInstances.Add(instanceName.ToUpper());
+                    }
+                }
+            }
+
+            foreach (string instance in sqlInstances)
+            {
+                var csb = new SqlConnectionStringBuilder
+                {
+                    ApplicationName = "DBAid - Collector",
+                    DataSource = instance == "MSSQLSERVER" ? Environment.MachineName : Environment.MachineName + "\\" + instance,
+                    InitialCatalog = "_dbaid",
+                    IntegratedSecurity = true,
+                    Encrypt = true,
+                    TrustServerCertificate = true,
+                    ConnectTimeout = 5
+                };
+
+                using (var con = new SqlConnection(csb.ConnectionString))
+                {
+                    string instanceTag = String.Empty;
+                    bool sanitise = true;
+                    DataRowCollection procedures = null;
+
                     Console.WriteLine("{0} - Initializing Collector", runtime.ToShortTimeString());
-                }
 
-                con.Open();
-
-                using (var cmd = new SqlCommand("[system].[get_instance_tag]", con))
-                {
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    SqlDataReader row = cmd.ExecuteReader();
-
-                    row.Read();
-                    instanceTag = row[0].ToString();
-                    row.Close();
-                }
-
-                using (var cmd = new SqlCommand(getProcListSql, con))
-                {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.Parameters.Add(new SqlParameter("@schema", "collector"));
-
-                    DataTable dt = new DataTable();
-                    dt.Load(cmd.ExecuteReader());
-                    procedures = dt.Rows;
-                }
-
-                foreach (DataRow dr in procedures)  // execute procedures and write contents out to file.
-                {
-                    string proc = dr[0].ToString();
-                    string procTag = proc.ToString().Substring(proc.IndexOf('_') + 1).Replace("]", "");
-                    string file = instanceTag + "_" + procTag + "_" + runtime.ToString("yyyyMMddHHmm") + ".xml";
-                    string filepath = Path.Combine(output, file);
-
-                    using (var cmd = new SqlCommand(proc, con))
+                    try
                     {
-                        cmd.CommandType = CommandType.StoredProcedure;
-                        cmd.Parameters.Add(new SqlParameter("@update_execution_timestamp", true));
-                        if (sanitize == "false") { cmd.Parameters.Add(new SqlParameter("@sanitize", false)); }
+                        con.Open();
 
-                        DataTable dt = new DataTable { TableName = procTag };
-                        dt.Load(cmd.ExecuteReader());
-                        dt.WriteXml(filepath, XmlWriteMode.WriteSchema);
+                        // Get Instance Tag
+                        using (var cmd = new SqlCommand("[system].[get_instance_tag]", con) { CommandType = CommandType.StoredProcedure })
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                                instanceTag = reader.GetString(0);
+                        }
+
+                        // Get Sanitise preference
+                        using (var cmd = new SqlCommand("SELECT CAST([value] AS BIT) FROM [_dbaid].[system].[configuration] WHERE [key] = 'SANITISE_COLLECTOR_DATA'", con) { CommandType = CommandType.Text })
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                                sanitise = reader.GetBoolean(0);
+                        }
+
+                        // Get list of procedures
+                        using (var cmd = new SqlCommand("SELECT QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM sys.objects WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'collector'", con) { CommandType = CommandType.Text })
+                        {
+                            DataTable dt = new DataTable();
+                            dt.Load(cmd.ExecuteReader());
+                            procedures = dt.Rows;
+                        }
+
+                        // execute procedures and write contents out to file.
+                        foreach (DataRow dr in procedures)  
+                        {
+                            string proc = dr[0].ToString();
+                            string procTag = proc.ToString().Substring(proc.IndexOf('_') + 1).Replace("]", "");
+                            string file = instanceTag + "_" + procTag + "_" + runtime.ToString("yyyyMMddHHmm") + ".xml";
+                            string filepath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, file);
+
+                            try
+                            {
+                                using (var cmd = new SqlCommand(proc, con))
+                                {
+                                    cmd.CommandType = CommandType.StoredProcedure;
+                                    cmd.Parameters.Add(new SqlParameter("@update_execution_timestamp", true));
+                                    if (!sanitise) { cmd.Parameters.Add(new SqlParameter("@sanitise", false)); }
+
+                                    DataTable dt = new DataTable { TableName = procTag };
+                                    dt.Load(cmd.ExecuteReader());
+                                    dt.WriteXml(filepath, XmlWriteMode.WriteSchema);
+                                }
+
+                                Console.WriteLine("Output XML file to disk [{0}]", filepath);
+                            }
+                            catch (SqlException e)
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine("Failed to complete collection on {0}", con.DataSource);
+                                Console.WriteLine(e.Message);
+                                Console.ForegroundColor = ConsoleColor.White;
+                            }
+                        }
+
+                        Console.WriteLine("Completed Collection on [{0}]", csb.DataSource);
+                        con.Close();
                     }
-
-                    if (log == "verbose")
+                    catch (SqlException e)
                     {
-                        Console.WriteLine("{0} - Output XML file to disk [{1}]", runtime.ToShortTimeString(), filepath);
+
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Failed to complete collection on {0}", con.DataSource);
+                        Console.WriteLine(e.Message);
+                        Console.ForegroundColor = ConsoleColor.White;
                     }
                 }
-
-                con.Close();
-            }
-
-            if (log == "verbose")
-            {
-                Console.WriteLine("{0} - Completed Collection on [{1}]", runtime.ToShortTimeString(), csb.DataSource);
             }
 #if DEBUG 
             Console.ReadKey();

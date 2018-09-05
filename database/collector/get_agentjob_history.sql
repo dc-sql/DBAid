@@ -8,7 +8,7 @@ CREATE PROCEDURE [collector].[get_agentjob_history]
 (
 	@start_datetime DATETIME = NULL,
 	@end_datetime DATETIME = NULL,
-	@sanitize BIT = 1,
+	@sanitise BIT = 1,
 	@update_execution_timestamp BIT = 0
 )
 WITH ENCRYPTION
@@ -52,7 +52,7 @@ BEGIN
 		SELECT [H].[job_name]
 			,[H].[step_id]
 			,[H].[step_name]
-			,CASE WHEN @sanitize = 0 
+			,CASE WHEN @sanitise = 0 
 				THEN CASE WHEN [H].[run_status] = 0 THEN [H].[message] ELSE NULL END
 				ELSE [M].[text]	END AS [error_message]
 			,CASE [H].[run_status] 
