@@ -56,9 +56,9 @@ BEGIN
 		WHERE [F].[database_id] NOT IN (SELECT [database_id] FROM @file_info);
 
 	SELECT REPLACE(DB_NAME([d].[database_id]) + '_' + REPLACE(REPLACE([d].[volume_mount_point],':',''),'\','_') + '_' + [d].[data_type],'__','_') AS [name]
-		,SUM([f].[size_used_mb]) AS [db_used_mb]
-		,SUM([f].[size_reserved_mb]) AS [db_reserved_mb]
-		,[d].[volume_available_mb]
+		,SUM([f].[size_used_mb]) AS [used]
+		,SUM([f].[size_reserved_mb]) AS [reserved]
+		,[d].[volume_available_mb] AS [max]
 		,'MB' AS [uom]
 	FROM @drive_info [d]
 		INNER JOIN @file_info [f]
