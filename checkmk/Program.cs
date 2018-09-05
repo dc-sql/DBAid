@@ -45,7 +45,8 @@ namespace local.dbaid.checkmk
                     IntegratedSecurity = true,
                     InitialCatalog = "_dbaid",
                     Encrypt = true,
-                    TrustServerCertificate = true
+                    TrustServerCertificate = true,
+                    ConnectTimeout = 5
                 };
 
                 using (var con = new SqlConnection(csb.ConnectionString))
@@ -65,7 +66,7 @@ namespace local.dbaid.checkmk
                         return;
                     }
 
-                    using (var cmd = new SqlCommand(getProcListSql, con))
+                    using (var cmd = new SqlCommand(getProcListSql, con) { CommandTimeout = 5 })
                     {
                         cmd.CommandType = CommandType.Text;
                         cmd.Parameters.Add(new SqlParameter("@schema", "checkmk"));
@@ -86,7 +87,7 @@ namespace local.dbaid.checkmk
                         }
                     }
 
-                    using (var cmd = new SqlCommand(getProcListSql, con))
+                    using (var cmd = new SqlCommand(getProcListSql, con) { CommandTimeout = 45 })
                     {
                         cmd.CommandType = CommandType.Text;
                         cmd.Parameters.Add(new SqlParameter("@schema", "checkmk"));
@@ -125,7 +126,7 @@ namespace local.dbaid.checkmk
                         }
                     }
 
-                    using (var cmd = new SqlCommand(getProcListSql, con))
+                    using (var cmd = new SqlCommand(getProcListSql, con) { CommandTimeout = 45 })
                     {
                         cmd.CommandType = CommandType.Text;
                         cmd.Parameters.Add(new SqlParameter("@schema", "checkmk"));
@@ -181,6 +182,7 @@ namespace local.dbaid.checkmk
 
                                     if (used >= critical && critical != -1)
                                     {
+                                        //'master_ROWS_PRIMARY_used'=3.81;39.50;44.44;0;49.38|'master_ROWS_PRIMARY_reserved'=5.38;;;;
                                         Console.WriteLine("{0} mssql_{1}_{2} {3} CRITICAL; ", statusCode("CRITICAL"), instance, procTag, name);
                                     }
                                     else if (used >= warning && warning != -1)
@@ -200,7 +202,7 @@ namespace local.dbaid.checkmk
                         }
                     }
 
-                    using (var cmd = new SqlCommand(getProcListSql, con))
+                    using (var cmd = new SqlCommand(getProcListSql, con) { CommandTimeout = 5 })
                     {
                         cmd.CommandType = CommandType.Text;
                         cmd.Parameters.Add(new SqlParameter("@schema", "checkmk"));

@@ -128,7 +128,6 @@
     <Build Include="checkmk\chart_capacity_fg.sql" />
     <Build Include="checkmk\chart_capacity_db.sql" />
     <Build Include="checkmk\config_perfmon.sql" />
-    <Build Include="checkmk\chart_perfmon.sql" />
     <Build Include="system\security\schemas.sql" />
     <Build Include="audit\procedures\get_cis_benchmark.sql" />
     <Build Include="audit\procedures\get_database_last_access.sql" />
