@@ -12,7 +12,7 @@ BEGIN
 
 	DECLARE @drive_info AS TABLE(
 		[database_id] INT,
-		[data_type] CHAR(4),
+		[data_type] VARCHAR(4),
 		[volume_mount_point] NVARCHAR(512),
 		[volume_total_mb] NUMERIC(20,2),
 		[volume_available_mb] NUMERIC(20,2)
@@ -20,7 +20,7 @@ BEGIN
 
 	DECLARE @file_info AS TABLE(
 		[database_id] INT,
-		[data_type] CHAR(4),
+		[data_type] VARCHAR(4),
 		[size_used_mb] NUMERIC(20,2),
 		[size_reserved_mb] NUMERIC(20,2));
 
