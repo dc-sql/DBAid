@@ -10,6 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	SELECT 'Database' AS [heading], 'Mirroring' AS [subheading], 'This is a list of mirrored databases' AS [comment]
+
 	SELECT DB_NAME([mirroring].[database_id]) AS [database_name]
 		,[mirroring].[mirroring_role_desc] 
 		,[mirroring].[mirroring_safety_level_desc]

@@ -10,6 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	SELECT 'Replication' AS [heading], 'Subscribers' AS [subheading], '' AS [comment]
+
 	DECLARE @sql_cmd NVARCHAR(4000);
 	DECLARE @db_publication TABLE([db_name] NVARCHAR(128));
 	DECLARE @db_subscription TABLE([db_name] NVARCHAR(128));

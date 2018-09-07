@@ -10,6 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	SELECT 'instance' AS [heading], 'Database Mail' AS [subheading], 'This is a list of database mail profiles' AS [comment]
+
 	DECLARE @mailconfiguration TABLE ([paramname] NVARCHAR(256)
 										,[paramvalue] NVARCHAR(256)
 										,[description] NVARCHAR(256));

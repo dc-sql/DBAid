@@ -10,6 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	SELECT 'Instance' AS [heading], 'Databases' AS [subheading], 'This is a list of databases on the instance' AS [comment]
+
 	DECLARE @cmd NVARCHAR(MAX);
 	DECLARE @columns NVARCHAR(MAX);
 	DECLARE @colist AS TABLE(col NVARCHAR(128));

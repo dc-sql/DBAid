@@ -10,6 +10,8 @@ AS
 BEGIN 
 	SET NOCOUNT ON;
 
+	SELECT 'Instance' AS [heading], 'Server Objects' AS [subheading], '' AS [comment]
+
 	DECLARE @ServerObject TABLE([type] NVARCHAR(128)
 		,[name] NVARCHAR(128)
 		,[configuration] XML)

@@ -10,6 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	SELECT 'Instance' AS [heading], 'Agent Jobs' AS [subheading], 'This is a list of all Agent jobs on the instance' AS [comment]
+
 	SELECT [JO].[job_id]
 		,[JO].[name] AS [job_name]
 		,SUSER_SNAME([JO].[owner_sid]) AS [job_owner]

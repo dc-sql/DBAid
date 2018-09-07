@@ -10,6 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	SELECT 'Instance' AS [heading], 'Resource Governor' AS [subheading], '' AS [comment]
+
 	IF ((SELECT SUBSTRING(CAST(SERVERPROPERTY('ProductVersion') AS NVARCHAR), 1, CHARINDEX('.',  CAST(SERVERPROPERTY('ProductVersion') AS NVARCHAR)) - 1)) != 9)
 	BEGIN
 		EXEC sp_executesql @stmt = N'SELECT

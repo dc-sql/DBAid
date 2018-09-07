@@ -16,6 +16,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	SELECT 'Security' AS [heading], 'Principals' AS [subheading], '' AS [comment]
+
 	DECLARE @loginfo_sid VARBINARY(85);
 	DECLARE @loginfo_cmd VARCHAR(200);
 	DECLARE @loginfo_cmd_list TABLE([group_sid] VARBINARY(85), [logininfo_cmd] VARCHAR(200));

@@ -10,6 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	SELECT 'Instance' AS [heading], 'Maintenance Plans' AS [subheading], '' AS [comment]
+
 	SELECT [P].[name] AS [plan_name]
 		,[plan_description].[clean_string] AS [plan_description]
 		,[S].[subplan_name]

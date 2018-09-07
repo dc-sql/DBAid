@@ -10,6 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	SELECT 'Instance' AS [heading], 'Always On' AS [subheading], 'This is a list of Always-On availability groups' AS [comment]
+
 	IF SERVERPROPERTY('IsHadrEnabled') IS NOT NULL
 	BEGIN
 		EXEC sp_executesql @stmt = N'SELECT [AG].[name] AS [ag_name]

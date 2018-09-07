@@ -10,6 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	SELECT 'Instance' AS [heading], 'Instance Configuration' AS [subheading], '' AS [comment]
+
 	SELECT [name]
 		,[value_in_use]
 	FROM [master].[sys].[configurations]

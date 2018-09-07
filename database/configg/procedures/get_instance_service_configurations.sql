@@ -9,6 +9,9 @@ WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;
+
+	SELECT 'Instance' AS [heading], 'Service Configuration' AS [subheading], '' AS [comment]
+
 	DECLARE @BackupDirectory NVARCHAR(256)
 	DECLARE @DefaultFile NVARCHAR(256)
 	DECLARE @DefaultLog NVARCHAR(256)

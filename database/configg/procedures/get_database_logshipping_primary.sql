@@ -10,7 +10,7 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-	SELECT 'Database' AS [group], 'Logshipping' AS [heading], 'This is a list of primary databases being logshipped' AS [comment]
+	SELECT 'Database' AS [heading], 'Logshipping' AS [subheading], 'This is a list of primary databases being logshipped' AS [comment]
 
 	SELECT [primary_id]
       ,[primary_server]
