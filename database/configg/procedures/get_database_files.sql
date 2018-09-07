@@ -10,6 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	SELECT 'Database' as [group], 'Files' as [heading], 'This is a list of databases files' as [comment]
+
 	SELECT DB_NAME([F].[database_id]) AS [database_name]
 		,[F].[name] AS [file_name]
 		,[F].[type_desc]

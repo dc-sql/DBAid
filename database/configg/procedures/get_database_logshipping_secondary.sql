@@ -10,6 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	SELECT 'Database' AS [group], 'Logshipping' AS [heading], 'This is a list of secondary databases being logshipped' AS [comment]
+
 	SELECT [MS].[secondary_server]
 		  ,[MS].[secondary_database]
 		  ,[MS].[secondary_id]
@@ -19,8 +21,6 @@ BEGIN
 		  ,[MS].[threshold_alert]
 		  ,[MS].[threshold_alert_enabled]
 		  ,[MS].[history_retention_period]
-		  ,[LS].[primary_server]
-		  ,[LS].[primary_database]
 		  ,[LS].[backup_source_directory]
 		  ,[LS].[backup_destination_directory]
 		  ,[LS].[file_retention_period]
