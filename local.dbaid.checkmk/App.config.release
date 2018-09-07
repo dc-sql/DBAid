@@ -19,4 +19,8 @@
     <add key="mssql_checkdb_INST1" value="600" />
     -->
   </checkCache>
+  <startup>
+    <supportedRuntime version="v4.0" />
+    <supportedRuntime version="v2.0.50727"/>
+  </startup>
 </configuration>
