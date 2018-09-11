@@ -46,8 +46,15 @@ BEGIN
 	WHERE [state_check_enabled] = 1
 
 	IF NOT ((SELECT LOWER(CAST(SERVERPROPERTY('Edition') AS VARCHAR(128)))) LIKE '%express%')
+	BEGIN
 		INSERT INTO @jobactivity 
 			EXEC msdb.dbo.sp_help_jobactivity
+	END
+	ELSE
+	BEGIN
+		INSERT INTO @check_output 
+		VALUES('NA', 'SQL Server Express Edition detected.');
+	END
 
 	;WITH [job_data]
 	AS
@@ -96,11 +103,18 @@ BEGIN
 			AND ([J].[run_status] = 'FAIL' OR ([X].[start_execution_date] IS NOT NULL AND [X].[stop_execution_date] IS NULL))
 			AND ([C].[state_check_enabled] = 1 OR [C].[runtime_check_enabled] = 1);
 
-	IF (SELECT COUNT(*) FROM @check_output) < 1
+	IF ((SELECT COUNT(*) FROM @check_output) < 1 AND @countjob > 0)
+	BEGIN
 		INSERT INTO @check_output 
-		VALUES('NA', CAST(@countjob AS VARCHAR(10)) + ' agent job(s) enabled; ' 
+		VALUES('OK', CAST(@countjob AS VARCHAR(10)) + ' agent job(s) enabled; ' 
 			+ CAST(@statusjob AS VARCHAR(10)) + ' monitoring status; ' 
 			+ CAST(@runtimejob AS VARCHAR(10)) + ' monitoring runtime');
+	END
+	ELSE
+	BEGIN
+		INSERT INTO @check_output 
+		VALUES('NA', 'No agent job(s) enabled;');
+	END
 
 	SELECT [state], [message] FROM @check_output;
 END
