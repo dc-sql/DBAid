@@ -27,17 +27,20 @@ SET NOCOUNT ON;
 		DECLARE @to_backup INT;
 		DECLARE @not_backup INT;
 
-		
-		DECLARE @ag_table AS TABLE([name] SYSNAME, 
-							[database_id] INT, 
-							[automated_backup_preference] TINYINT,
-							[role] TINYINT );
+		DECLARE @ag_table AS TABLE (
+			[ag_id] UNIQUEIDENTIFIER,
+			[name] SYSNAME, 
+			[database_id] INT, 
+			[automated_backup_preference] TINYINT,
+			[role] TINYINT
+		);
 
 		INSERT into @ag_table
-		SELECT [AG].[name], 
-				[DS].[database_id], 
-				[AG].[automated_backup_preference],
-				[RS].[role] 
+		SELECT [AG].[group_id],
+			[AG].[name], 
+			[DS].[database_id], 
+			[AG].[automated_backup_preference],
+			[RS].[role] 
 		FROM [master].[sys].[dm_hadr_availability_replica_states] [RS]
 			INNER JOIN [master].[sys].[dm_hadr_database_replica_states] [DS]
 				ON [RS].[group_id] = [DS].[group_id]
@@ -46,12 +49,12 @@ SET NOCOUNT ON;
 			INNER JOIN [master].[sys].[availability_groups] [AG]
 				ON [AG].[group_id] = [RS].[group_id]
 
-
 		SELECT @to_backup=COUNT(*) FROM [dbo].[config_database] [D]
 		LEFT JOIN (SELECT [AG].[name], 
 						[DS].[database_id], 
 						[AG].[automated_backup_preference],
-						[RS].[role] FROM  [master].[sys].[dm_hadr_availability_replica_states] [RS]
+						[RS].[role] 
+					FROM  [master].[sys].[dm_hadr_availability_replica_states] [RS]
 						INNER JOIN [master].[sys].[dm_hadr_database_replica_states] [DS]
 							ON [RS].[group_id] = [DS].[group_id]
 								AND [RS].[is_local] = 1  AND [DS].[is_local] = 1
@@ -97,6 +100,8 @@ SET NOCOUNT ON;
 				ON [B].[database_id] = [D].[database_id]
 			LEFT JOIN @ag_table AS [AGT]
 				ON [AGT].[database_id] = [D].[database_id] 
+			LEFT JOIN [dbo].[config_alwayson] [ca]
+				ON [AGT].[ag_id] = [ca].[ag_id]
 			CROSS APPLY (SELECT CASE WHEN ([B].[backup_finish_date] IS NULL OR DATEDIFF(HOUR, [B].[backup_finish_date], GETDATE()) > ([D].[backup_frequency_hours])) THEN [D].[backup_state_alert] ELSE N''OK'' END AS [state]) [S]
 		WHERE [B].[row] = 1
 			AND [D].[backup_frequency_hours] > 0
@@ -104,6 +109,7 @@ SET NOCOUNT ON;
 			AND LOWER([D].[db_name]) NOT IN (N''tempdb'')
 			AND ISNULL([AGT].[automated_backup_preference],0) = 0
 			AND ISNULL([AGT].[role],1) = 1
+			AND DATEDIFF(HOUR, [ca].[ag_role_change_datetime], GETDATE()) > [D].[backup_frequency_hours]
 			AND [S].[state] NOT IN (N''OK'')
 			AND [D].[is_enabled] = 1
 		ORDER BY [D].[db_name]
