@@ -10,16 +10,10 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-	SELECT 'Instance' AS [heading], 'Service Configuration' AS [subheading], '' AS [comment]
+	SELECT 'Instance' AS [heading], 'Service Configurations' AS [subheading], '' AS [comment]
 
-	DECLARE @BackupDirectory NVARCHAR(256)
-	DECLARE @DefaultFile NVARCHAR(256)
-	DECLARE @DefaultLog NVARCHAR(256)
 	DECLARE @flags TABLE([flag] INT, [enabled] BIT, [global] BIT, [session] INT);
 
-	EXEC [master].[dbo].[xp_instance_regread] N'HKEY_LOCAL_MACHINE', N'Software\Microsoft\MSSQLServer\MSSQLServer', N'BackupDirectory', @BackupDirectory OUTPUT, N'no_ouput'
-	EXEC [master].[dbo].[xp_instance_regread] N'HKEY_LOCAL_MACHINE', N'Software\Microsoft\MSSQLServer\MSSQLServer', N'DefaultData', @DefaultFile OUTPUT, N'no_ouput'
-	EXEC [master].[dbo].[xp_instance_regread] N'HKEY_LOCAL_MACHINE', N'Software\Microsoft\MSSQLServer\MSSQLServer', N'DefaultLog', @DefaultLog OUTPUT, N'no_ouput'
 	INSERT INTO @flags EXEC('DBCC TRACESTATUS (-1) WITH NO_INFOMSGS');
 
 	SELECT N'SqlServiceInstanceProperty/' + CASE WHEN @@SERVICENAME = N'MSSQLSERVER' THEN @@SERVICENAME ELSE N'MSSQL$' + @@SERVICENAME END AS [class_object]
@@ -81,18 +75,6 @@ BEGIN
 	SELECT N'SqlServiceInstanceProperty/' + CASE WHEN @@SERVICENAME = N'MSSQLSERVER' THEN @@SERVICENAME ELSE N'MSSQL$' + @@SERVICENAME END AS [class_object]
 		,N'ServerName' AS [property]
 		,CAST(SERVERPROPERTY('ServerName') AS NVARCHAR(128)) AS [value]
-	UNION ALL
-	SELECT N'SqlServiceInstanceProperty/' + CASE WHEN @@SERVICENAME = N'MSSQLSERVER' THEN @@SERVICENAME ELSE N'MSSQL$' + @@SERVICENAME END AS [class_object]
-		,N'BackupDirectory'
-		,@BackupDirectory AS [value]
-	UNION ALL
-	SELECT N'SqlServiceInstanceProperty/' + CASE WHEN @@SERVICENAME = N'MSSQLSERVER' THEN @@SERVICENAME ELSE N'MSSQL$' + @@SERVICENAME END AS [class_object]
-		,N'DefaultData'
-		,@DefaultFile AS [value]
-	UNION ALL
-	SELECT N'SqlServiceInstanceProperty/' + CASE WHEN @@SERVICENAME = N'MSSQLSERVER' THEN @@SERVICENAME ELSE N'MSSQL$' + @@SERVICENAME END AS [class_object]
-		,N'DefaultLog'
-		,@DefaultLog AS [value]
 	UNION ALL
 	SELECT N'SqlServiceInstanceProperty/' + CASE WHEN @@SERVICENAME = N'MSSQLSERVER' THEN @@SERVICENAME ELSE N'MSSQL$' + @@SERVICENAME END AS [class_object]
 		,N'TraceFlags' AS [property]

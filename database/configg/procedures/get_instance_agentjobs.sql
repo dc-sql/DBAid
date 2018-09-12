@@ -17,14 +17,14 @@ BEGIN
 		,SUSER_SNAME([JO].[owner_sid]) AS [job_owner]
 		,[JO].[enabled] AS [job_enabled]
 		,[job_desc].[clean_string] AS [job_desc]
-		,CAST((SELECT [step].[step_id]
-				,[step].[step_name]
-				,[step].[subsystem]
-				,[step].[database_name]
+		,CAST((SELECT [step].[step_id] AS [@stepid]
+				,[step].[step_name] AS [@step_name]
+				,[step].[subsystem] AS [@subsystem]
+				,[step].[database_name] AS [@database_name]
 				,CASE WHEN [step].[subsystem] = 'TSQL' THEN [step].[database_user_name]
-					ELSE [proxy].[name] END AS [execute_as]
-				,[credential].[name] AS [proxy_credential]
-				,[credential].[credential_identity]
+					ELSE [proxy].[name] END AS [@execute_as]
+				,[credential].[name] AS [@proxy_credential]
+				,[credential].[credential_identity] AS [@credential_identity]
 				,[step].[command] AS [codeblock]
 			FROM [msdb].[dbo].[sysjobs] [job]
 				LEFT JOIN [msdb].[dbo].[sysjobsteps] [step]
@@ -53,7 +53,7 @@ BEGIN
 			ON [JO].[notify_page_operator_id] = [SOP].[id]
 				AND [SOP].[enabled] = 1
 		CROSS APPLY [system].[get_clean_string]([JO].[description]) [job_desc]
-		CROSS APPLY (SELECT(SELECT [S].[enabled] AS [schedule_enabled]
+		CROSS APPLY (SELECT(SELECT [S].[enabled] AS [@schedule_enabled]
 		,CASE
 			WHEN [J].[job_id] IS NULL THEN 'Unscheduled'
 			WHEN [S].[schedule_id] IS NULL THEN 'Unscheduled'
@@ -220,14 +220,14 @@ BEGIN
 						+REPLICATE('0',2 - LEN(CONVERT(char(2),([S].[active_end_time] % 10000)/100))) 
 						+ RTRIM(CONVERT(char(2),([S].[active_end_time] % 10000)/100)) 
 						+ ' PM' END
-				ELSE '' END AS [schedule_desc]
-				,[S].[date_created] AS [schedule_created]
-				,CASE WHEN [S].[date_created] = [S].[date_modified] THEN NULL ELSE [S].[date_modified] END AS [schedule_modified]
+				ELSE '' END AS [@schedule_desc]
+				,[S].[date_created] AS [@schedule_created]
+				,CASE WHEN [S].[date_created] = [S].[date_modified] THEN NULL ELSE [S].[date_modified] END AS [@schedule_modified]
 	FROM [msdb].[dbo].[sysjobs] [J]
 		LEFT JOIN [msdb].[dbo].[sysjobschedules] [JS] 
 			ON [J].[job_id] = [JS].[job_id] 
 		LEFT JOIN [msdb].[dbo].[sysschedules] [S]
 			ON [JS].[schedule_id] = [S].[schedule_id]
 	WHERE [J].[job_id] = [JO].[job_id]
-	FOR XML PATH('schedule_config'), ROOT('table')) AS [schedule_detail]) [SD]
+	FOR XML PATH('row'), ROOT('table')) AS [schedule_detail]) [SD]
 END

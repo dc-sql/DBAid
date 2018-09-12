@@ -10,7 +10,7 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-	SELECT 'Instance' AS [heading], 'Instance Configuration' AS [subheading], '' AS [comment]
+	SELECT 'Instance' AS [heading], 'System Configurations' AS [subheading], '' AS [comment]
 
 	SELECT [name]
 		,[value_in_use]

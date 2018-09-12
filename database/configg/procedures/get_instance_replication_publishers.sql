@@ -108,39 +108,39 @@ BEGIN
 							,CAST([A].[articles] AS XML) AS [articles]
 							,CAST([B].[subscribers] AS XML) AS [subscribers]
 						FROM [' + @db_name + '].[dbo].[syspublications] [P]
-							CROSS APPLY (SELECT (SELECT [OB].[type_desc] AS [article_type]
-														,[EX].[dest_owner]
-														,[EX].[name] AS [local_object_name]
-														,[EX].[dest_table] AS [dest_object_name]
+							CROSS APPLY (SELECT (SELECT [OB].[type_desc] AS [@article_type]
+														,[EX].[dest_owner] AS [@dest_owner]
+														,[EX].[name] AS [@local_object_name]
+														,[EX].[dest_table] AS [@dest_object_name]
 														,CASE [EX].[pre_creation_cmd]
 															WHEN 0 THEN N''None''
 															WHEN 1 THEN N''Drop''
 															WHEN 2 THEN N''Delete''
 															WHEN 3 THEN N''Truncate''
-															END AS [pre_creation_cmd]
-														,[filter_clause]
-														,[ins_cmd]
-														,[upd_cmd]
-														,[del_cmd]
-														,[ins_scripting_proc]
-														,[upd_scripting_proc]
-														,[del_scripting_proc]
-														,[custom_script]
-														,[fire_triggers_on_snapshot]
+															END AS [@pre_creation_cmd]
+														,[filter_clause] AS [@filter_clause]
+														,[ins_cmd] AS [@ins_cmd]
+														,[upd_cmd] AS [@upd_cmd]
+														,[del_cmd] AS [@del_cmd]
+														,[ins_scripting_proc] AS [@ins_scripting_proc]
+														,[upd_scripting_proc] AS [@upd_scripting_proc]
+														,[del_scripting_proc] AS [@del_scripting_proc]
+														,[custom_script] AS [@custom_script]
+														,[fire_triggers_on_snapshot] AS [@fire_triggers_on_snapshot]
 													FROM [' + @db_name + '].[dbo].[sysextendedarticlesview] [EX]
 														INNER JOIN [' + @db_name + '].[sys].[all_objects] [OB]
 															ON [EX].[objid] = [OB].[object_id]
-													FOR XML PATH(''article''), ROOT(''table'')) AS [articles]) [A]
-							CROSS APPLY (SELECT (SELECT DISTINCT [srvname] AS [dest_server] 
-												,[dest_db]
-												,[login_name]
+													FOR XML PATH(''row''), ROOT(''table'')) AS [articles]) [A]
+							CROSS APPLY (SELECT (SELECT DISTINCT [srvname] AS [@dest_server] 
+												,[dest_db] AS [@dest_db]
+												,[login_name] AS [@login_name]
 												,CASE [subscription_type]
 													WHEN 0 THEN N''Push''
 													WHEN 1 THEN N''Pull''
-													END AS [subscription_type]
+													END AS [@subscription_type]
 											FROM [' + @db_name + '].[dbo].[syssubscriptions]
 											WHERE [srvid] >= 0
-											FOR XML PATH(''subscriber'')) AS [subscribers]) [B]';
+											FOR XML PATH(''row'')) AS [subscribers]) [B]';
 		
 		INSERT INTO @publications
 			EXEC sp_executesql @stmt = @sql_cmd;

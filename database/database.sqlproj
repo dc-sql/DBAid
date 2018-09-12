@@ -144,7 +144,7 @@
     <Build Include="configg\procedures\get_instance_replication_subscribers.sql" />
     <Build Include="configg\procedures\get_instance_resource_governors.sql" />
     <Build Include="configg\procedures\get_instance_security_principals.sql" />
-    <Build Include="configg\procedures\get_instance_server_objects.sql" />
+    <Build Include="configg\procedures\get_instance_server_triggers.sql" />
     <Build Include="configg\procedures\get_instance_service_configurations.sql" />
     <Build Include="configg\procedures\get_instance_sysconfigurations.sql" />
     <Build Include="configg\tables\wmi_service_property.sql" />
@@ -159,6 +159,7 @@
     <Build Include="system\methods\function\get_split_string.sql" />
     <Build Include="system\methods\procedure\get_instance_tag.sql" />
     <Build Include="configg\tables\wmi_queries.sql" />
+    <Build Include="configg\procedures\get_instance_link_servers.sql" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -179,6 +180,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="database.publish.xml" />
+    <None Include="test_procedures.sql" />
   </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>
