@@ -10,13 +10,13 @@ Date: 04/03/2013
 Desc: Returns login information, SQL, Windows, and Group logins. Login details with server and database role mappings, and simple bad password checking capability. 
 */
 
-CREATE PROCEDURE [configg].[get_instance_security_principals]
+CREATE PROCEDURE [configg].[get_security_principal]
 WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;
 
-	SELECT 'Security' AS [heading], 'Principals' AS [subheading], '' AS [comment]
+	SELECT 'SECURITY' AS [heading], 'Principals' AS [subheading], '' AS [comment]
 
 	DECLARE @loginfo_sid VARBINARY(85);
 	DECLARE @loginfo_cmd VARCHAR(200);

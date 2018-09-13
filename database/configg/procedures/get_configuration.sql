@@ -4,13 +4,13 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [configg].[get_instance_sysconfigurations]
+CREATE PROCEDURE [configg].[get_configuration]
 WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;
 
-	SELECT 'Instance' AS [heading], 'System Configurations' AS [subheading], '' AS [comment]
+	SELECT 'INSTANCE' AS [heading], 'Configurations' AS [subheading], '' AS [comment]
 
 	SELECT [name]
 		,[value_in_use]

@@ -4,14 +4,14 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [configg].[get_instance_resource_governors]
+CREATE PROCEDURE [configg].[get_resource_governor]
 WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;
 	DECLARE @sql NVARCHAR(MAX);
 
-	SELECT 'Instance' AS [heading], 'Resource Governor' AS [subheading], '' AS [comment]
+	SELECT 'INSTANCE' AS [heading], 'Resource Governor' AS [subheading], '' AS [comment]
 
 	SELECT @sql = 'SELECT
 	(SELECT [is_enabled] FROM [master].[sys].[resource_governor_configuration]) AS [is_enabled], CAST((' 

@@ -4,13 +4,13 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [configg].[get_instance_agentjobs]
+CREATE PROCEDURE [configg].[get_agent_job]
 WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;
 
-	SELECT 'Instance' AS [heading], 'Agent Jobs' AS [subheading], 'This is a list of all Agent jobs on the instance' AS [comment]
+	SELECT 'SQL AGENT' AS [heading], 'Jobs' AS [subheading], 'This is a list of all Agent jobs on the instance' AS [comment]
 
 	SELECT [JO].[job_id]
 		,[JO].[name] AS [job_name]

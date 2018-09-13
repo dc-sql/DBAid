@@ -4,13 +4,13 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [configg].[get_database_mirroring]
+CREATE PROCEDURE [configg].[get_mirroring]
 WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;
 
-	SELECT 'Database' AS [heading], 'Mirroring' AS [subheading], 'This is a list of mirrored databases' AS [comment]
+	SELECT 'HADR' AS [heading], 'Mirroring' AS [subheading], 'This is a list of mirrored databases' AS [comment]
 
 	SELECT DB_NAME([mirroring].[database_id]) AS [database_name]
 		,[mirroring].[mirroring_role_desc] 

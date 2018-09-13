@@ -4,13 +4,13 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [configg].[get_instance_databases]
+CREATE PROCEDURE [configg].[get_database]
 WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;
 
-	SELECT 'Instance' AS [heading], 'Databases' AS [subheading], 'This is a list of databases on the instance' AS [comment]
+	SELECT 'DATABASE' AS [heading], 'Databases' AS [subheading], 'This is a list of databases on the instance' AS [comment]
 
 	DECLARE @cmd NVARCHAR(MAX);
 	DECLARE @columns NVARCHAR(MAX);

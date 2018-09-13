@@ -1,10 +1,10 @@
-﻿CREATE PROCEDURE [configg].[get_instance_link_servers]
+﻿CREATE PROCEDURE [configg].[get_link_server]
 WITH ENCRYPTION
 AS
 BEGIN 
 	SET NOCOUNT ON;
 
-	SELECT 'Instance' AS [heading], 'Link Servers' AS [subheading], '' AS [comment]
+	SELECT 'INSTANCE' AS [heading], 'Link Servers' AS [subheading], '' AS [comment]
 
 	SELECT [A].[name]
 		,[A].[product]

@@ -4,13 +4,13 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [configg].[get_instance_databasemail_profiles]
+CREATE PROCEDURE [configg].[get_database_mail]
 WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;
 
-	SELECT 'instance' AS [heading], 'Database Mail' AS [subheading], 'This is a list of database mail profiles' AS [comment]
+	SELECT 'INSTANCE' AS [heading], 'Database Mail' AS [subheading], 'This is a list of database mail profiles' AS [comment]
 
 	DECLARE @mailconfiguration TABLE ([paramname] NVARCHAR(256)
 										,[paramvalue] NVARCHAR(256)

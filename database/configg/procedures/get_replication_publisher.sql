@@ -4,13 +4,13 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [configg].[get_instance_replication_publishers]
+CREATE PROCEDURE [configg].[get_replication_publisher]
 WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;
 
-	SELECT 'Replication' AS [heading], 'Publishers' AS [subheading], '' AS [comment]
+	SELECT 'HADR' AS [heading], 'Replication' AS [subheading], '**Publishers**' AS [comment]
 
 	DECLARE @sql_cmd NVARCHAR(4000);
 	DECLARE @db_publication TABLE([db_name] NVARCHAR(128));

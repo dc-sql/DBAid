@@ -4,13 +4,13 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [configg].[get_instance_maintenance_plans]
+CREATE PROCEDURE [configg].[get_maintenance_plan]
 WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;
 
-	SELECT 'Instance' AS [heading], 'Maintenance Plans' AS [subheading], '' AS [comment]
+	SELECT 'INSTANCE' AS [heading], 'Maintenance Plans' AS [subheading], '' AS [comment]
 
 	SELECT [P].[name] AS [plan_name]
 		,[plan_description].[clean_string] AS [plan_description]

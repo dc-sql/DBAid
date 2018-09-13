@@ -4,13 +4,13 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [configg].[get_instance_server_triggers]
+CREATE PROCEDURE [configg].[get_server_trigger]
 WITH ENCRYPTION
 AS
 BEGIN 
 	SET NOCOUNT ON;
 
-	SELECT 'Instance' AS [heading], 'Server Triggers' AS [subheading], '' AS [comment]
+	SELECT 'INSTANCE' AS [heading], 'Server Triggers' AS [subheading], '' AS [comment]
 
 	SELECT [T].[create_date]
 			,[T].[modify_date]

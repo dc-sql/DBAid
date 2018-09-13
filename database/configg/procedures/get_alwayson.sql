@@ -4,13 +4,13 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [configg].[get_instance_alwayson_groups]
+CREATE PROCEDURE [configg].[get_alwayson]
 WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;
 
-	SELECT 'Instance' AS [heading], 'Always On' AS [subheading], 'This is a list of Always-On availability groups' AS [comment]
+	SELECT 'HADR' AS [heading], 'Always On' AS [subheading], 'This is a list of Always-On availability groups' AS [comment]
 
 	IF SERVERPROPERTY('IsHadrEnabled') IS NOT NULL
 	BEGIN

@@ -4,13 +4,13 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [configg].[get_database_files]
+CREATE PROCEDURE [configg].[get_database_file]
 WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;
 
-	SELECT 'Database' as [heading], 'Files' as [subheading], 'This is a list of databases files' as [comment]
+	SELECT 'DATABASE' as [heading], 'Files' as [subheading], 'This is a list of databases files' as [comment]
 
 	SELECT DB_NAME([F].[database_id]) AS [database_name]
 		,[F].[name] AS [file_name]

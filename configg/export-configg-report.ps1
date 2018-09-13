@@ -119,20 +119,20 @@ foreach($proc in $procedures) {
 
 $toc = [System.Text.StringBuilder]::new()
 $md = [System.Text.StringBuilder]::new()
-$group = $collection | Group-Object -Property heading
+$group = $collection | Sort-Object -Property heading, subheading | Group-Object -Property heading
 
 foreach ($section in $group) { 
     $heading = $section.Group.heading | Sort-Object -Unique
-    $toc.AppendLine("[$heading](#$($heading.ToLower()))  ") | Out-Null
-    $md.AppendLine("# $heading  ") | Out-Null
+    $toc.AppendLine("[$heading](#$($heading.Replace(' ','-').ToLower()))  ") | Out-Null
+    $md.AppendLine("## $heading  ") | Out-Null
 
-    $subGroups = $section.Group | Select subheading, comment, datatable | Group-Object -Property subheading
+    $subGroups = $section.Group | Select subheading, comment, datatable | Sort-Object -Property subheading | Group-Object -Property subheading
 
     foreach ($subSection in $subGroups) {
         $subHeading = $subSection.Group.subheading | Sort-Object -Unique
         
         $toc.AppendLine("&nbsp;&nbsp;&nbsp;&nbsp;[$subHeading](#$($subHeading.Replace(' ','-').ToLower()))  ") | Out-Null
-        $md.AppendLine("## $subHeading  ") | Out-Null
+        $md.AppendLine("### $subHeading  ") | Out-Null
 
         $dataTables = $subSection.Group | Select comment, datatable
 
@@ -151,6 +151,10 @@ foreach ($section in $group) {
         }
     }
 }
-$toc.AppendLine('') | Out-Null
+$title = '# [' + (Invoke-Sqlcmd -ServerInstance $SQLServer -Query 'EXEC [_dbaid].[system].[get_instance_tag]')[0] + ']'
+
+$title
+''
 $toc.ToString()
+''
 $md.ToString()

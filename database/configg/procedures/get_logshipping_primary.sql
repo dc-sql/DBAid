@@ -4,13 +4,13 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [configg].[get_database_logshipping_primary]
+CREATE PROCEDURE [configg].[get_logshipping_primary]
 WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;
 
-	SELECT 'Database' AS [heading], 'Logshipping' AS [subheading], 'This is a list of primary databases being logshipped' AS [comment]
+	SELECT 'HADR' AS [heading], 'Logshipping' AS [subheading], '**Primary**' AS [comment]
 
 	SELECT [primary_id]
       ,[primary_server]
