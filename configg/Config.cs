@@ -15,7 +15,7 @@ namespace Configg
             get { return this._results; }
         }
 
-        private void init()
+        private void Init()
         {
             _results.TableName = "configg.wmi_service_property";
             _results.Columns.Add(new DataColumn("class", typeof(SqlString)));
@@ -26,7 +26,7 @@ namespace Configg
         public SqlConfig()
         {
             Clear();
-            init();
+            Init();
         }
 
         public void Clear()
