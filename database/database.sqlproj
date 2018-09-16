@@ -95,7 +95,6 @@
     <Folder Include="checkmk" />
     <Folder Include="system" />
     <Folder Include="configg" />
-    <Folder Include="system\methods" />
     <Folder Include="collector" />
     <Folder Include="audit" />
     <Folder Include="system\security" />
@@ -103,8 +102,9 @@
     <Folder Include="audit\tables" />
     <Folder Include="configg\tables" />
     <Folder Include="configg\procedures" />
-    <Folder Include="system\methods\function" />
-    <Folder Include="system\methods\procedure" />
+    <Folder Include="system\function" />
+    <Folder Include="system\procedure" />
+    <Folder Include="system\procedure\configuration" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="system\configuration.sql" />
@@ -148,20 +148,20 @@
     <Build Include="configg\procedures\get_server_property.sql" />
     <Build Include="configg\procedures\get_configuration.sql" />
     <Build Include="configg\tables\wmi_service_property.sql" />
-    <Build Include="system\methods\procedure\delete_system_history.sql" />
-    <Build Include="system\methods\procedure\execute_foreach_db.sql">
-      <QuotedIdentifier>ProjectDefault</QuotedIdentifier>
-    </Build>
-    <Build Include="system\methods\function\get_clean_string.sql" />
-    <Build Include="system\methods\function\get_datetimeoffset.sql" />
-    <Build Include="system\methods\function\get_instance_guid.sql" />
-    <Build Include="system\methods\function\get_product_version.sql" />
-    <Build Include="system\methods\function\get_split_string.sql" />
-    <Build Include="system\methods\procedure\get_instance_tag.sql" />
     <Build Include="configg\tables\wmi_queries.sql" />
     <Build Include="configg\procedures\get_link_server.sql" />
     <Build Include="configg\procedures\get_cis_benchmark.sql" />
     <Build Include="configg\procedures\get_agent_property.sql" />
+    <Build Include="system\function\get_clean_string.sql" />
+    <Build Include="system\function\get_datetimeoffset.sql" />
+    <Build Include="system\function\get_instance_guid.sql" />
+    <Build Include="system\function\get_product_version.sql" />
+    <Build Include="system\function\get_split_string.sql" />
+    <Build Include="system\procedure\delete_system_history.sql" />
+    <Build Include="system\procedure\execute_foreach_db.sql" />
+    <Build Include="system\procedure\get_instance_tag.sql" />
+    <Build Include="system\procedure\configuration\set_default_db_performance_configuration.sql" />
+    <Build Include="system\procedure\configuration\set_default_agentjob_configuration.sql" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
