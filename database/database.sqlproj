@@ -162,6 +162,7 @@
     <Build Include="system\procedure\get_instance_tag.sql" />
     <Build Include="system\procedure\configuration\set_default_db_performance_configuration.sql" />
     <Build Include="system\procedure\configuration\set_default_agentjob_configuration.sql" />
+    <Build Include="system\procedure\generate_secret.sql" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
