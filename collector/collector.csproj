@@ -98,6 +98,9 @@
     <None Include="App.config" />
     <None Include="comcryptor.ps1" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="7za.exe" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>PowerShell.exe -Command "if ('$(ConfigurationName)' -eq 'Release') { Copy-Item '$(ProjectDir)App.config.release' '$(TargetDir)$(TargetFileName).config' -Force }"</PreBuildEvent>
