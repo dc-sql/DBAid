@@ -19,7 +19,7 @@ BEGIN
 
 	IF (@sanitise = 1)
 	BEGIN
-		SELECT [value] FROM [system].[configuration] WHERE [key] = N'INSTANCE_GUID'
+		SELECT CAST([value] AS VARCHAR(36)) FROM [system].[configuration] WHERE [key] = N'INSTANCE_GUID'
 	END
 	ELSE
 	BEGIN
