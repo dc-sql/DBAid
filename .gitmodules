@@ -1,0 +1,3 @@
+[submodule "database/sql-server-maintenance-solution"]
+	path = database/sql-server-maintenance-solution
+	url = https://github.com/olahallengren/sql-server-maintenance-solution.git
