@@ -3,10 +3,12 @@
   <PropertyGroup>
     <IncludeCompositeObjects>True</IncludeCompositeObjects>
     <TargetDatabaseName>_dbaid</TargetDatabaseName>
-    <DeployScriptFileName>mssql-dbaid-database-deployment.sql</DeployScriptFileName>
+    <DeployScriptFileName>dbaid-publish.sql</DeployScriptFileName>
     <TargetConnectionString>Data Source=.;Integrated Security=True;Persist Security Info=False;Pooling=False;MultipleActiveResultSets=False;Connect Timeout=60;Encrypt=False;TrustServerCertificate=True</TargetConnectionString>
     <BlockOnPossibleDataLoss>False</BlockOnPossibleDataLoss>
     <CreateNewDatabase>True</CreateNewDatabase>
     <ProfileVersionNumber>1</ProfileVersionNumber>
+    <BlockWhenDriftDetected>False</BlockWhenDriftDetected>
+    <RegisterDataTierApplication>False</RegisterDataTierApplication>
   </PropertyGroup>
 </Project>

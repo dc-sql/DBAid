@@ -58,19 +58,21 @@
     <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <DebugType>none</DebugType>
-    <Optimize>true</Optimize>
+    <Optimize>false</Optimize>
     <DefineDebug>false</DefineDebug>
     <DefineTrace>false</DefineTrace>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-    <SqlTargetName>dbaid_release</SqlTargetName>
+    <SqlTargetName>dbaid-release</SqlTargetName>
     <TreatTSqlWarningsAsErrors>False</TreatTSqlWarningsAsErrors>
-    <SqlCodeAnalysisRules>-Microsoft.Rules.Data.SR0001;-Microsoft.Rules.Data.SR0004;-Microsoft.Rules.Data.SR0005;-Microsoft.Rules.Data.SR0007</SqlCodeAnalysisRules>
+    <SqlCodeAnalysisRules>-Microsoft.Rules.Data.SR0001;-Microsoft.Rules.Data.SR0004;-Microsoft.Rules.Data.SR0005;-Microsoft.Rules.Data.SR0006;-Microsoft.Rules.Data.SR0007;-Microsoft.Rules.Data.SR0008;-Microsoft.Rules.Data.SR0009;-Microsoft.Rules.Data.SR0010;-Microsoft.Rules.Data.SR0011;-Microsoft.Rules.Data.SR0012;-Microsoft.Rules.Data.SR0013;-Microsoft.Rules.Data.SR0014;-Microsoft.Rules.Data.SR0015;-Microsoft.Rules.Data.SR0016</SqlCodeAnalysisRules>
     <RunSqlCodeAnalysis>False</RunSqlCodeAnalysis>
     <SuppressTSqlWarnings>
     </SuppressTSqlWarnings>
+    <NoStdLib>False</NoStdLib>
+    <FileAlignment>1024</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <OutputPath>bin\Debug\</OutputPath>
@@ -85,7 +87,8 @@
     <WarningLevel>4</WarningLevel>
     <FileAlignment>8192</FileAlignment>
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
-    <SqlTargetName>mssql-dbaid-database-deployment</SqlTargetName>
+    <SqlTargetName>dbaid-debug</SqlTargetName>
+    <SqlCodeAnalysisRules>-Microsoft.Rules.Data.SR0001;-Microsoft.Rules.Data.SR0004;-Microsoft.Rules.Data.SR0005;-Microsoft.Rules.Data.SR0006;-Microsoft.Rules.Data.SR0007;-Microsoft.Rules.Data.SR0008;-Microsoft.Rules.Data.SR0009;-Microsoft.Rules.Data.SR0010;-Microsoft.Rules.Data.SR0011;-Microsoft.Rules.Data.SR0012;-Microsoft.Rules.Data.SR0013;-Microsoft.Rules.Data.SR0014;-Microsoft.Rules.Data.SR0015;-Microsoft.Rules.Data.SR0016</SqlCodeAnalysisRules>
   </PropertyGroup>
   <!-- VS10 without SP1 will not have VisualStudioVersion set, so do that here -->
   <PropertyGroup />
@@ -105,6 +108,7 @@
     <Folder Include="system\function" />
     <Folder Include="system\procedure" />
     <Folder Include="system\procedure\configuration" />
+    <Folder Include="sql-server-maintenance-solution" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="system\configuration.sql" />
@@ -163,9 +167,16 @@
     <Build Include="system\procedure\configuration\set_default_db_performance_configuration.sql" />
     <Build Include="system\procedure\configuration\set_default_agentjob_configuration.sql" />
     <Build Include="system\procedure\generate_secret.sql" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="sql-server-maintenance-solution\CommandExecute.sql" />
+    <None Include="sql-server-maintenance-solution\CommandLog.sql" />
+    <None Include="sql-server-maintenance-solution\DatabaseBackup.sql" />
+    <None Include="sql-server-maintenance-solution\DatabaseIntegrityCheck.sql" />
+    <None Include="sql-server-maintenance-solution\IndexOptimize.sql" />
+    <None Include="sql-server-maintenance-solution\MaintenanceSolution.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="sql-server-maintenance-solution\Queue.sql" />
+    <None Include="sql-server-maintenance-solution\QueueDatabase.sql" />
   </ItemGroup>
   <ItemGroup>
     <ArtifactReference Include="$(DacPacRootPath)\Extensions\Microsoft\SQLDB\Extensions\SqlServer\100\SqlSchemas\master.dacpac">
@@ -184,6 +195,8 @@
   <ItemGroup>
     <None Include="database.publish.xml" />
     <None Include="test_procedures.sql" />
+    <None Include="sql-server-maintenance-solution\LICENSE" />
+    <None Include="sql-server-maintenance-solution\README.md" />
   </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>
