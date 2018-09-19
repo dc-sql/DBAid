@@ -38,7 +38,7 @@ BEGIN
 	CREATE TABLE #__clr_assembly ([count] INT);
 		 
 	SET @Version = CAST(LEFT(CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max)),CHARINDEX('.',CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max))) - 1) + '.' + REPLACE(RIGHT(CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max)), LEN(CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max))) - CHARINDEX('.',CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(max)))),'.','') AS numeric(18,10))
-	IF @Version >= 10
+	IF @Version >= 10.0
 	BEGIN
 		SET @SQLString =  N'INSERT INTO #__clr_assembly
 							SELECT COUNT([permission_set_desc]) FROM [master].[sys].[assemblies] WHERE [is_user_defined] = 1 AND [permission_set_desc] != ''SAFE_ACCESS'''

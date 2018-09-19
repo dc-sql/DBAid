@@ -6,6 +6,8 @@
 $database = '_dbaid'
 $getProcedureSql = "SELECT 'EXEC [configg].' + QUOTENAME([name]) AS [procedure] FROM sys.objects WHERE[type] = 'P' AND SCHEMA_NAME([schema_id]) = 'configg'"
 
+CD $PSScriptRoot
+
 #region: Example Stored Procedure code
 <# This PowerShell script expects two datatables. The first must select heading, subheading, and comment. You can pass blank strings if you like " '' as [comment] ". The second is the datatable you want converted to a markdown table
 

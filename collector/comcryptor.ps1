@@ -5,6 +5,8 @@ Param(
     [string]$Smtp = 'smtp.domain.co.nz'
 )
 
+CD $PSScriptRoot
+
 $SQLServer = (Invoke-Sqlcmd -ServerInstance $SQLServer -Query "SELECT @@SERVERNAME")[0]
 [string]$secret = (Invoke-Sqlcmd -ServerInstance $SQLServer -Query "SELECT [value] FROM [_dbaid].[system].[configuration] WHERE [key] = N'COLLECTOR_SECRET'")[0]
 [string]$instanceTag = (Invoke-Sqlcmd -ServerInstance $SQLServer -Query "EXEC [_dbaid].[system].[get_instance_tag];")[0]

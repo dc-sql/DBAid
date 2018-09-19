@@ -58,20 +58,19 @@
     <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <DebugType>none</DebugType>
-    <Optimize>false</Optimize>
+    <Optimize>true</Optimize>
     <DefineDebug>false</DefineDebug>
     <DefineTrace>false</DefineTrace>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
-    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
     <SqlTargetName>dbaid-release</SqlTargetName>
     <TreatTSqlWarningsAsErrors>False</TreatTSqlWarningsAsErrors>
     <SqlCodeAnalysisRules>-Microsoft.Rules.Data.SR0001;-Microsoft.Rules.Data.SR0004;-Microsoft.Rules.Data.SR0005;-Microsoft.Rules.Data.SR0006;-Microsoft.Rules.Data.SR0007;-Microsoft.Rules.Data.SR0008;-Microsoft.Rules.Data.SR0009;-Microsoft.Rules.Data.SR0010;-Microsoft.Rules.Data.SR0011;-Microsoft.Rules.Data.SR0012;-Microsoft.Rules.Data.SR0013;-Microsoft.Rules.Data.SR0014;-Microsoft.Rules.Data.SR0015;-Microsoft.Rules.Data.SR0016</SqlCodeAnalysisRules>
     <RunSqlCodeAnalysis>False</RunSqlCodeAnalysis>
     <SuppressTSqlWarnings>
     </SuppressTSqlWarnings>
-    <NoStdLib>False</NoStdLib>
     <FileAlignment>1024</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -85,10 +84,13 @@
     <DefineTrace>true</DefineTrace>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <FileAlignment>8192</FileAlignment>
+    <FileAlignment>1024</FileAlignment>
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
     <SqlTargetName>dbaid-debug</SqlTargetName>
-    <SqlCodeAnalysisRules>-Microsoft.Rules.Data.SR0001;-Microsoft.Rules.Data.SR0004;-Microsoft.Rules.Data.SR0005;-Microsoft.Rules.Data.SR0006;-Microsoft.Rules.Data.SR0007;-Microsoft.Rules.Data.SR0008;-Microsoft.Rules.Data.SR0009;-Microsoft.Rules.Data.SR0010;-Microsoft.Rules.Data.SR0011;-Microsoft.Rules.Data.SR0012;-Microsoft.Rules.Data.SR0013;-Microsoft.Rules.Data.SR0014;-Microsoft.Rules.Data.SR0015;-Microsoft.Rules.Data.SR0016</SqlCodeAnalysisRules>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+    <SqlCodeAnalysisRules>
+    </SqlCodeAnalysisRules>
+    <RunSqlCodeAnalysis>False</RunSqlCodeAnalysis>
   </PropertyGroup>
   <!-- VS10 without SP1 will not have VisualStudioVersion set, so do that here -->
   <PropertyGroup />
@@ -105,78 +107,93 @@
     <Folder Include="audit\tables" />
     <Folder Include="configg\tables" />
     <Folder Include="configg\procedures" />
+    <Folder Include="sql-server-maintenance-solution" />
+    <Folder Include="who-is-active" />
     <Folder Include="system\function" />
     <Folder Include="system\procedure" />
     <Folder Include="system\procedure\configuration" />
-    <Folder Include="sql-server-maintenance-solution" />
+    <Folder Include="collector\procedures" />
+    <Folder Include="collector\tables" />
+    <Folder Include="checkmk\tables" />
+    <Folder Include="checkmk\procedures" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="system\configuration.sql" />
-    <Build Include="collector\get_backup_history.sql" />
-    <Build Include="collector\get_errorlog_history.sql" />
-    <Build Include="collector\get_agentjob_history.sql" />
-    <Build Include="collector\last_execution.sql" />
     <PostDeploy Include="post_script.sql" />
     <PreDeploy Include="pre_script.sql" />
-    <Build Include="checkmk\inventory_database.sql" />
-    <Build Include="checkmk\config_database.sql" />
-    <Build Include="checkmk\config_agentjob.sql" />
-    <Build Include="checkmk\inventory_agentjob.sql" />
-    <Build Include="checkmk\check_agentjob.sql" />
-    <Build Include="checkmk\check_backup.sql" />
-    <Build Include="checkmk\check_integrity.sql" />
-    <Build Include="checkmk\check_database.sql" />
-    <Build Include="checkmk\check_logshipping.sql" />
-    <Build Include="checkmk\check_mirroring.sql" />
-    <None Include="checkmk\check_alwayson.sql" />
-    <Build Include="checkmk\chart_capacity_fg.sql" />
-    <Build Include="checkmk\chart_capacity_db.sql" />
     <Build Include="system\security\schemas.sql" />
     <Build Include="audit\procedures\get_cis_benchmark.sql" />
     <Build Include="audit\procedures\get_database_last_access.sql" />
     <Build Include="audit\tables\database_last_access.sql" />
-    <Build Include="configg\procedures\get_database_file.sql" />
-    <Build Include="configg\procedures\get_logshipping_primary.sql" />
-    <Build Include="configg\procedures\get_logshipping_secondary.sql" />
-    <Build Include="configg\procedures\get_mirroring.sql" />
-    <Build Include="configg\procedures\get_agent_job.sql" />
-    <Build Include="configg\procedures\get_alwayson.sql" />
-    <Build Include="configg\procedures\get_database_mail.sql" />
-    <Build Include="configg\procedures\get_database.sql" />
-    <Build Include="configg\procedures\get_maintenance_plan.sql" />
-    <Build Include="configg\procedures\get_replication_publisher.sql" />
-    <Build Include="configg\procedures\get_replication_subscriber.sql" />
-    <Build Include="configg\procedures\get_resource_governor.sql" />
-    <Build Include="configg\procedures\get_security_principal.sql" />
-    <Build Include="configg\procedures\get_server_trigger.sql" />
-    <Build Include="configg\procedures\get_server_property.sql" />
-    <Build Include="configg\procedures\get_configuration.sql" />
-    <Build Include="configg\tables\wmi_service_property.sql" />
     <Build Include="configg\tables\wmi_queries.sql" />
-    <Build Include="configg\procedures\get_link_server.sql" />
-    <Build Include="configg\procedures\get_cis_benchmark.sql" />
-    <Build Include="configg\procedures\get_agent_property.sql" />
+    <Build Include="sql-server-maintenance-solution\CommandExecute.sql" />
+    <Build Include="sql-server-maintenance-solution\CommandLog.sql" />
+    <Build Include="sql-server-maintenance-solution\DatabaseBackup.sql">
+      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
+    </Build>
+    <Build Include="sql-server-maintenance-solution\DatabaseIntegrityCheck.sql">
+      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
+    </Build>
+    <Build Include="sql-server-maintenance-solution\IndexOptimize.sql">
+      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
+    </Build>
+    <Build Include="sql-server-maintenance-solution\Queue.sql" />
+    <Build Include="sql-server-maintenance-solution\QueueDatabase.sql" />
+    <Build Include="who-is-active\who_is_active.sql">
+      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
+    </Build>
+    <None Include="test_procedures.sql" />
     <Build Include="system\function\get_clean_string.sql" />
     <Build Include="system\function\get_datetimeoffset.sql" />
     <Build Include="system\function\get_instance_guid.sql" />
     <Build Include="system\function\get_product_version.sql" />
     <Build Include="system\function\get_split_string.sql" />
+    <Build Include="system\procedure\configuration\set_default_agentjob_configuration.sql" />
+    <Build Include="system\procedure\configuration\set_default_db_performance_configuration.sql" />
     <Build Include="system\procedure\delete_system_history.sql" />
     <Build Include="system\procedure\execute_foreach_db.sql" />
-    <Build Include="system\procedure\get_instance_tag.sql" />
-    <Build Include="system\procedure\configuration\set_default_db_performance_configuration.sql" />
-    <Build Include="system\procedure\configuration\set_default_agentjob_configuration.sql" />
     <Build Include="system\procedure\generate_secret.sql" />
-    <None Include="sql-server-maintenance-solution\CommandExecute.sql" />
-    <None Include="sql-server-maintenance-solution\CommandLog.sql" />
-    <None Include="sql-server-maintenance-solution\DatabaseBackup.sql" />
-    <None Include="sql-server-maintenance-solution\DatabaseIntegrityCheck.sql" />
-    <None Include="sql-server-maintenance-solution\IndexOptimize.sql" />
-    <None Include="sql-server-maintenance-solution\MaintenanceSolution.sql">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="sql-server-maintenance-solution\Queue.sql" />
-    <None Include="sql-server-maintenance-solution\QueueDatabase.sql" />
+    <Build Include="system\procedure\get_instance_tag.sql" />
+    <Build Include="configg\procedures\get_link_server.sql" />
+    <Build Include="configg\procedures\get_logshipping_primary.sql" />
+    <Build Include="configg\procedures\get_logshipping_secondary.sql" />
+    <Build Include="configg\procedures\get_maintenance_plan.sql" />
+    <Build Include="configg\procedures\get_mirroring.sql" />
+    <Build Include="configg\procedures\get_replication_publisher.sql" />
+    <Build Include="configg\procedures\get_replication_subscriber.sql" />
+    <Build Include="configg\procedures\get_resource_governor.sql" />
+    <Build Include="configg\procedures\get_security_principal.sql" />
+    <Build Include="configg\procedures\get_server_property.sql" />
+    <Build Include="configg\procedures\get_server_trigger.sql" />
+    <Build Include="configg\procedures\get_database_mail.sql" />
+    <Build Include="configg\procedures\get_database_file.sql" />
+    <Build Include="configg\procedures\get_agent_job.sql" />
+    <Build Include="configg\procedures\get_agent_property.sql" />
+    <Build Include="configg\procedures\get_alwayson.sql" />
+    <Build Include="configg\procedures\get_cis_benchmark.sql" />
+    <Build Include="configg\procedures\get_configuration.sql" />
+    <Build Include="configg\procedures\get_database.sql" />
+    <Build Include="configg\tables\wmi_service_property.sql" />
+    <Build Include="collector\procedures\get_agentjob_history.sql" />
+    <Build Include="collector\procedures\get_backup_history.sql" />
+    <Build Include="collector\procedures\get_errorlog_history.sql" />
+    <Build Include="collector\tables\last_execution.sql" />
+    <Build Include="checkmk\tables\config_database.sql" />
+    <Build Include="checkmk\tables\config_agentjob.sql" />
+    <Build Include="checkmk\procedures\chart_capacity_db.sql" />
+    <Build Include="checkmk\procedures\chart_capacity_fg.sql" />
+    <Build Include="checkmk\procedures\check_agentjob.sql" />
+    <None Include="checkmk\procedures\check_alwayson.sql" />
+    <Build Include="checkmk\procedures\check_backup.sql" />
+    <Build Include="checkmk\procedures\check_database.sql" />
+    <Build Include="checkmk\procedures\check_integrity.sql" />
+    <Build Include="checkmk\procedures\check_logshipping.sql" />
+    <Build Include="checkmk\procedures\check_mirroring.sql" />
+    <Build Include="checkmk\procedures\inventory_agentjob.sql" />
+    <Build Include="checkmk\procedures\inventory_database.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <ArtifactReference Include="$(DacPacRootPath)\Extensions\Microsoft\SQLDB\Extensions\SqlServer\100\SqlSchemas\master.dacpac">
@@ -194,9 +211,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="database.publish.xml" />
-    <None Include="test_procedures.sql" />
-    <None Include="sql-server-maintenance-solution\LICENSE" />
-    <None Include="sql-server-maintenance-solution\README.md" />
+    <None Include="sql-server-maintenance-solution\.git" />
+    <None Include="update-submodules.ps1" />
   </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>
