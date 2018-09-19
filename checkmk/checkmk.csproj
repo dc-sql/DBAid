@@ -70,6 +70,7 @@
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Management" />
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
@@ -84,7 +85,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>PowerShell.exe -Command "if ('$(ConfigurationName)' -eq 'Release') { Copy-Item '$(ProjectDir)App.config.release' '$(TargetDir)$(TargetFileName).config' -Force }"</PreBuildEvent>
+    <PreBuildEvent>
+    </PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
