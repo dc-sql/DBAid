@@ -107,7 +107,6 @@
     <Folder Include="audit\tables" />
     <Folder Include="configg\tables" />
     <Folder Include="configg\procedures" />
-    <Folder Include="sql-server-maintenance-solution" />
     <Folder Include="who-is-active" />
     <Folder Include="system\function" />
     <Folder Include="system\procedure" />
@@ -116,6 +115,7 @@
     <Folder Include="collector\tables" />
     <Folder Include="checkmk\tables" />
     <Folder Include="checkmk\procedures" />
+    <Folder Include="ola-maintenance-solution" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="system\configuration.sql" />
@@ -126,19 +126,6 @@
     <Build Include="audit\procedures\get_database_last_access.sql" />
     <Build Include="audit\tables\database_last_access.sql" />
     <Build Include="configg\tables\wmi_queries.sql" />
-    <Build Include="sql-server-maintenance-solution\CommandExecute.sql" />
-    <Build Include="sql-server-maintenance-solution\CommandLog.sql" />
-    <Build Include="sql-server-maintenance-solution\DatabaseBackup.sql">
-      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
-    </Build>
-    <Build Include="sql-server-maintenance-solution\DatabaseIntegrityCheck.sql">
-      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
-    </Build>
-    <Build Include="sql-server-maintenance-solution\IndexOptimize.sql">
-      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
-    </Build>
-    <Build Include="sql-server-maintenance-solution\Queue.sql" />
-    <Build Include="sql-server-maintenance-solution\QueueDatabase.sql" />
     <Build Include="who-is-active\who_is_active.sql">
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>
@@ -191,6 +178,21 @@
     <Build Include="checkmk\procedures\check_mirroring.sql" />
     <Build Include="checkmk\procedures\inventory_agentjob.sql" />
     <Build Include="checkmk\procedures\inventory_database.sql" />
+    <Build Include="ola-maintenance-solution\CommandExecute.sql">
+      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
+    </Build>
+    <Build Include="ola-maintenance-solution\CommandLog.sql" />
+    <Build Include="ola-maintenance-solution\DatabaseBackup.sql">
+      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
+    </Build>
+    <Build Include="ola-maintenance-solution\DatabaseIntegrityCheck.sql">
+      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
+    </Build>
+    <Build Include="ola-maintenance-solution\IndexOptimize.sql">
+      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
+    </Build>
+    <Build Include="ola-maintenance-solution\Queue.sql" />
+    <Build Include="ola-maintenance-solution\QueueDatabase.sql" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -211,7 +213,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="database.publish.xml" />
-    <None Include="sql-server-maintenance-solution\.git" />
     <None Include="update-submodules.ps1" />
   </ItemGroup>
   <PropertyGroup>

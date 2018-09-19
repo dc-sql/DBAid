@@ -1,6 +1,7 @@
 ﻿CREATE PROCEDURE [system].[set_default_db_performance_configuration] (
 	@db_name SYSNAME
 )
+WITH ENCRYPTION
 AS
 BEGIN
 	DECLARE @loop INT, @count INT, @path NVARCHAR(256), @logical_name SYSNAME, @cmd NVARCHAR(1000);

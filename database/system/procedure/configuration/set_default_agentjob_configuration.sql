@@ -1,4 +1,5 @@
 ﻿CREATE PROCEDURE [system].[set_default_agentjob_configuration]
+WITH ENCRYPTION
 AS
 BEGIN
 	EXEC msdb.dbo.sp_set_sqlagent_properties 
