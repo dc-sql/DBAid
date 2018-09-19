@@ -97,7 +97,7 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="comcryptor.ps1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <ItemGroup>

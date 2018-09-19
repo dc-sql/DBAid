@@ -108,7 +108,7 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="export-configg-report.ps1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
