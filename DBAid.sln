@@ -4,12 +4,21 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 15.0.27703.2042
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "checkmk", "checkmk\checkmk.csproj", "{117BF6E5-916A-4060-982E-D7B0C1CDA6DD}"
+	ProjectSection(ProjectDependencies) = postProject
+		{30BBB9FF-8CB9-44CB-B27E-D722FA8552E4} = {30BBB9FF-8CB9-44CB-B27E-D722FA8552E4}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "collector", "collector\collector.csproj", "{A55B67DB-74C8-4DB1-AAB3-003E8B53531B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{30BBB9FF-8CB9-44CB-B27E-D722FA8552E4} = {30BBB9FF-8CB9-44CB-B27E-D722FA8552E4}
+	EndProjectSection
 EndProject
 Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "database", "database\database.sqlproj", "{30BBB9FF-8CB9-44CB-B27E-D722FA8552E4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "configg", "configg\configg.csproj", "{65C90572-6278-464C-A1E2-B4087388D85F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{30BBB9FF-8CB9-44CB-B27E-D722FA8552E4} = {30BBB9FF-8CB9-44CB-B27E-D722FA8552E4}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{DDE1873A-4B95-4B40-B3F6-5CA2DEE2D933}"
 	ProjectSection(SolutionItems) = preProject
