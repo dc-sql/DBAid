@@ -41,6 +41,6 @@ BEGIN
 END
 GO
 
-USE [$(DatabaseName)]
+USE [_dbaid]
 GO
 
