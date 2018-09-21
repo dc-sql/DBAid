@@ -54,7 +54,6 @@ namespace collector
                 using (var con = new SqlConnection(csb.ConnectionString))
                 {
                     string instanceTag = String.Empty;
-                    bool sanitise = true;
                     DataRowCollection procedures = null;
 
                     Console.WriteLine("{0} - Initializing Collector", runtime.ToShortTimeString());
@@ -69,14 +68,6 @@ namespace collector
                         {
                             if (reader.Read())
                                 instanceTag = reader.GetString(0);
-                        }
-
-                        // Get Sanitise preference
-                        using (var cmd = new SqlCommand("SELECT CAST([value] AS BIT) FROM [_dbaid].[system].[configuration] WHERE [key] = 'SANITISE_COLLECTOR_DATA'", con) { CommandType = CommandType.Text })
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            if (reader.Read())
-                                sanitise = reader.GetBoolean(0);
                         }
 
                         // Get list of procedures
@@ -101,7 +92,6 @@ namespace collector
                                 {
                                     cmd.CommandType = CommandType.StoredProcedure;
                                     cmd.Parameters.Add(new SqlParameter("@update_execution_timestamp", true));
-                                    if (!sanitise) { cmd.Parameters.Add(new SqlParameter("@sanitise", false)); }
 
                                     DataTable dt = new DataTable { TableName = procTag };
                                     dt.Load(cmd.ExecuteReader());

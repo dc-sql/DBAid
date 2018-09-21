@@ -8,7 +8,7 @@ CREATE PROCEDURE [collector].[get_agentjob_history]
 (
 	@start_datetime DATETIME = NULL,
 	@end_datetime DATETIME = NULL,
-	@sanitise BIT = 1,
+	@sanitise BIT = NULL,
 	@update_execution_timestamp BIT = 0
 )
 WITH ENCRYPTION
@@ -34,6 +34,9 @@ BEGIN
 		,[retries_attempted] INT
 		,[server] NVARCHAR(128));
 	
+	IF (@sanitise IS NULL)
+		SELECT @sanitise=CAST([value] AS BIT) FROM [system].[configuration] WHERE [key] = 'SANITISE_COLLECTOR_DATA';
+
 	IF (@start_datetime IS NULL)
 	BEGIN
 		SELECT @start_datetime=ISNULL([last_execution], DATEADD(DAY,-1,GETDATE())) 
