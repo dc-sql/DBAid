@@ -14,11 +14,13 @@ BEGIN
 	DECLARE @onlinecount INT, @restorecount INT, @recovercount INT;
 
 	INSERT INTO @check_output
-		SELECT CASE WHEN [D].[state] NOT IN (0,1,2) THEN [C].[database_check_alert] ELSE 'OK' END AS [state]
-			,QUOTENAME([D].[name]) COLLATE DATABASE_DEFAULT 
-			+ '=' + UPPER([D].[state_desc]) COLLATE DATABASE_DEFAULT AS [message]
+		SELECT CASE WHEN [D].[state] IS NULL THEN [C].[database_check_alert] 
+			WHEN [D].[state] NOT IN (0,1,2) THEN [C].[database_check_alert] 
+			ELSE 'OK' END AS [state]
+			,QUOTENAME([C].[name]) COLLATE DATABASE_DEFAULT 
+			+ '=' + UPPER(ISNULL([D].[state_desc],'REMOVED')) COLLATE DATABASE_DEFAULT AS [message]
 		FROM [sys].[databases] [D]
-			INNER JOIN [checkmk].[config_database] [C] 
+			RIGHT JOIN [checkmk].[config_database] [C] 
 				ON [D].[name] = [C].[name]
 		WHERE [C].[database_check_enabled] = 1
 		ORDER BY [D].[name];

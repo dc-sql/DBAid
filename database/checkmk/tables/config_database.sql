@@ -1,7 +1,7 @@
 ﻿CREATE TABLE [checkmk].[config_database]
 (
 	[name] SYSNAME NOT NULL PRIMARY KEY,
-
+	
 	[database_check_alert] VARCHAR(10) NOT NULL DEFAULT 'CRITICAL',
 	[database_check_enabled] BIT NOT NULL DEFAULT 1,
 
@@ -26,6 +26,8 @@
 	[capacity_check_warning_free] NUMERIC(5,2) NOT NULL DEFAULT 20.00,
 	[capacity_check_critical_free] NUMERIC(5,2) NOT NULL DEFAULT 10.00, 
 	[capacity_check_enabled] BIT NOT NULL DEFAULT 1,
+
+	[inventory_date] DATETIME DEFAULT GETDATE(),
 
     CONSTRAINT [ck_config_database] 
 		CHECK ([database_check_alert] IN ('WARNING','CRITICAL') 
