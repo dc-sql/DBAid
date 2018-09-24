@@ -1,6 +1,7 @@
 ﻿CD $PSScriptRoot
 
 # Update submodules
+git submodule update --init --recursive
 git submodule foreach git pull origin master
 
 Get-ChildItem -Path ".\sql-server-maintenance-solution" -Filter *.sql -Exclude MaintenanceSolution.sql -File -Recurse | Copy-Item -Destination ".\ola-maintenance-solution"
