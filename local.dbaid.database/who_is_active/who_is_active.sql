@@ -12,7 +12,7 @@ License:
 	of Who is Active?, in whole or in part, is prohibited without the author's express 
 	written consent.
 *********************************************************************************************/
-CREATE PROCEDURE dbo.sp_WhoIsActive
+CREATE PROC dbo.sp_WhoIsActive
 (
 --~
 	--Filters--Both inclusive and exclusive
