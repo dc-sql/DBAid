@@ -229,7 +229,7 @@
     <Build Include="Database\Procedure\fact\fact_logshipping_secondary.sql" />
     <Build Include="Database\Procedure\Health\running_queries.sql" />
     <Build Include="Database\Procedure\fact\fact_cis_benchmark.sql" />
-    <Build Include="who_is_active\who_is_active_v11_17.sql" />
+    <Build Include="who_is_active\who_is_active.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Database\Script.PostDeployment.sql" />
