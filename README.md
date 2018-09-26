@@ -1,8 +1,8 @@
-##The Datacom Microsoft SQL Server monitoring and management solution.
+# DBAid
+## Overview
+The Datacom Microsoft SQL Server monitoring and management solution.
 
-Compatible and tested with 2008 SP2+, 2008 R2, 2012, 2014, 2016, 2017
-
- 
+Compatible and tested with 2008 SP2+, 2008 R2, 2012, 2014, 2016, 2017. N.B. Microsoft is removing extended support of SQL Server 2008 and SQL Server 2008 R2 in July 2019. DBAid will not be developed for 2008 and 2008 R2 compatibility after July 2019. 
 
 Our goal is to provide a free repository of helpful monitoring and informational tools, that allow individuals to take control and manage large SQL Server environments.
 
