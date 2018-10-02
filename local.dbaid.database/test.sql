@@ -76,9 +76,13 @@ EXEC [fact].[logshipping_primary];
 EXEC [fact].[logshipping_secondary];
 EXEC [fact].[cis_benchmark];
 
+REVERT;
+
 UPDATE [_dbaid].[dbo].[static_parameters]
 SET value = 0
 WHERE name = 'SANITIZE_DATASET'
+
+EXECUTE AS LOGIN = N'low-priv-acct-admin';
 
 EXEC [log].[backup];
 EXEC [log].[error];
@@ -86,9 +90,13 @@ EXEC [log].[job];
 EXEC [log].[maintenance];
 EXEC [log].[capacity];
 
+REVERT;
+
 UPDATE [_dbaid].[dbo].[static_parameters]
 SET value = 1
 WHERE name = 'SANITIZE_DATASET'
+
+EXECUTE AS LOGIN = N'low-priv-acct-admin';
 
 EXEC [log].[backup];
 EXEC [log].[error];

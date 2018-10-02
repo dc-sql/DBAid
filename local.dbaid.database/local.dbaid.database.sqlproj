@@ -102,7 +102,7 @@
     <Folder Include="Database\View" />
     <Folder Include="Database\Table" />
     <Folder Include="Database\Procedure\fact" />
-    <Folder Include="OlaHallengren" />
+    <Folder Include="ola-maintenance-solution" />
     <Folder Include="express_scheduled_task_templates" />
     <Folder Include="Database\Procedure\Health" />
     <Folder Include="who_is_active" />
@@ -189,19 +189,19 @@
     <Build Include="Database\Procedure\fact\fact_resource_governor.sql" />
     <Build Include="Database\Procedure\Control\control_log.sql" />
     <Build Include="Database\Function\dbo_string_date_with_offset.sql" />
-    <Build Include="OlaHallengren\dbo_command_execute.sql">
+    <Build Include="ola-maintenance-solution\CommandExecute.sql">
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>
-    <Build Include="OlaHallengren\maintenance_index_optimize.sql">
+    <Build Include="ola-maintenance-solution\IndexOptimize.sql">
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>
-    <Build Include="OlaHallengren\maintenance_integrity_check.sql">
+    <Build Include="ola-maintenance-solution\DatabaseIntegrityCheck.sql">
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>
-    <Build Include="OlaHallengren\maintenance_database_backup.sql">
+    <Build Include="ola-maintenance-solution\DatabaseBackup.sql">
       <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
     </Build>
-    <Build Include="OlaHallengren\dbo_command_log.sql">
+    <Build Include="ola-maintenance-solution\CommandLog.sql">
       <SuppressTSqlWarnings>
       </SuppressTSqlWarnings>
     </Build>
@@ -230,6 +230,8 @@
     <Build Include="Database\Procedure\Health\running_queries.sql" />
     <Build Include="Database\Procedure\fact\fact_cis_benchmark.sql" />
     <Build Include="who_is_active\who_is_active.sql" />
+    <Build Include="ola-maintenance-solution\Queue.sql" />
+    <Build Include="ola-maintenance-solution\QueueDatabase.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Database\Script.PostDeployment.sql" />
