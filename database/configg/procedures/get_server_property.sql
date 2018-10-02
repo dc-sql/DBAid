@@ -13,7 +13,7 @@ BEGIN
 	SELECT 'INSTANCE' AS [heading], 'Server Property' AS [subheading], 'Results are from SERVERPROPERTY() system function.' AS [comment]
 
 	DECLARE @flags TABLE([flag] INT, [enabled] BIT, [global] BIT, [session] INT);
-	DECLARE @server_properties TABLE ([property] SYSNAME); 
+	DECLARE @server_properties TABLE ([property] sysname); 
 
 	INSERT INTO @flags EXEC('DBCC TRACESTATUS (-1) WITH NO_INFOMSGS');
 

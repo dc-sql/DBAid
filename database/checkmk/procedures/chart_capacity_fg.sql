@@ -15,7 +15,7 @@ BEGIN
 	DECLARE @drive_info AS TABLE([drive] CHAR(1),
 								[mb_free] NUMERIC(20,2));
 
-	DECLARE @file_info AS TABLE([database_name] SYSNAME,
+	DECLARE @file_info AS TABLE([database_name] sysname,
 								[filegroup_id] INT,
 								[filegroup_name] NVARCHAR(128),
 								[filegroup_is_readonly] BIT,
@@ -25,7 +25,7 @@ BEGIN
 								[size_used_mb] NUMERIC(20,2),
 								[size_reserved_mb] NUMERIC(20,2));
 
-	DECLARE @space_info AS TABLE([database_name] SYSNAME,
+	DECLARE @space_info AS TABLE([database_name] sysname,
 								[file_id] INT,
 								[size_available_mb] NUMERIC(20,2),
 								[disk_available_mb] NUMERIC(20,2));
@@ -152,7 +152,7 @@ BEGIN
 			INNER JOIN sys.master_files [MF]
 				ON [DB].[database_id] = [MF].[database_id]
 			INNER JOIN @file_info [FI]
-				ON [DB].[name] = [FI].[database_name]
+				ON [DB].[name] = [FI].[database_name] COLLATE DATABASE_DEFAULT
 					AND [MF].[file_id] = [FI].[file_id]
 			INNER JOIN @drive_info [DI]
 				ON SUBSTRING([MF].[physical_name],1,1) = [DI].[drive] COLLATE DATABASE_DEFAULT;
@@ -177,7 +177,7 @@ BEGIN
 				END AS [max]
 		FROM [checkmk].[config_database] [C]
 			INNER JOIN [sys].[databases] [DB]
-				ON [C].[name] = [DB].[name]
+				ON [C].[name] = [DB].[name] COLLATE DATABASE_DEFAULT
 			INNER JOIN @file_info [F]
 				ON [C].[name] = [F].[database_name]
 			CROSS APPLY (SELECT SUM([A].[fg_size_available_mb]) AS [fg_size_available_mb]

@@ -21,7 +21,7 @@ BEGIN
 			+ '=' + UPPER(ISNULL([D].[state_desc],'REMOVED')) COLLATE DATABASE_DEFAULT AS [message]
 		FROM [sys].[databases] [D]
 			RIGHT JOIN [checkmk].[config_database] [C] 
-				ON [D].[name] = [C].[name]
+				ON [D].[name] = [C].[name] COLLATE DATABASE_DEFAULT
 		WHERE [C].[database_check_enabled] = 1
 		ORDER BY [D].[name];
 

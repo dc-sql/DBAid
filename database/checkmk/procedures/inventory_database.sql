@@ -7,7 +7,7 @@ BEGIN
 	/* Inventory check_database state_desc */
 	MERGE INTO [checkmk].[config_database] [target]
 	USING sys.databases [source]
-	ON [target].[name] = [source].[name]
+	ON [target].[name] = [source].[name] COLLATE DATABASE_DEFAULT
 	WHEN NOT MATCHED BY TARGET THEN
 		INSERT ([name]) VALUES ([source].[name])
 	WHEN MATCHED THEN

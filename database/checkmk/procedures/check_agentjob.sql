@@ -96,7 +96,7 @@ BEGIN
 				+ CAST([C].[runtime_check_min] AS VARCHAR(10)) AS [message]
 		FROM [job_data] [J]
 			INNER JOIN [checkmk].[config_agentjob] [C]
-				ON [J].[name] = [C].[name]
+				ON [J].[name] = [C].[name] COLLATE DATABASE_DEFAULT
 			LEFT JOIN @jobactivity [X]
 				ON [J].[job_id] = [X].[job_id]
 		WHERE [J].[row] = 1

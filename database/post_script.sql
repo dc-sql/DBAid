@@ -94,7 +94,7 @@ BEGIN
 		BEGIN TRANSACTION
 			EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_config_genie', 
 					@enabled=0, @category_name=N'_dbaid_maintenance', @description=N'Executes the C# wmi query application to insert service information into the [_dbaid] database.', 
-					@owner_login_name=N'_dbaid_sa', @job_id = @jobId OUTPUT;
+					@job_id = @jobId OUTPUT;
 
 			SET @cmd = N'C:\Datacom\dbaid.configg.exe "Server=' + @JobTokenServer + ';Database=_dbaid;Trusted_Connection=True;"';
 
@@ -122,7 +122,7 @@ BEGIN
 		BEGIN TRANSACTION
 			EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_delete_system_history', 
 					@enabled=0, @category_name=N'_dbaid_maintenance', @description=N'Executes [system].[delete_system_history] to cleanup job, backup, cmdlog history in [_dbaid] and msdb database.', 
-					@owner_login_name=N'_dbaid_sa', @job_id = @jobId OUTPUT;
+					@job_id = @jobId OUTPUT;
 
 			SET @out = @JobTokenLogDir + N'\_dbaid_maintenance_history_' + @JobTokenDateTime + N'.log';
 
@@ -158,7 +158,7 @@ BEGIN
 			EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_backup_user_full', 
 					@enabled=0, 
 					@category_name=N'_dbaid_maintenance', 
-					@owner_login_name=N'_dbaid_sa', @job_id = @jobId OUTPUT;
+					@job_id = @jobId OUTPUT;
 
 			SET @cmd = N'sqlcmd -E -S "' + @JobTokenServer 
 						+ N'" -d "_dbaid" -Q "EXECUTE [dbo].[DatabaseBackup] @Databases = ''USER_DATABASES'', @BackupType = ''FULL'', @CheckSum = ''Y'', @CleanupTime = 72" -b';
@@ -186,7 +186,7 @@ BEGIN
 			EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_backup_user_tran', 
 					@enabled=0, 
 					@category_name=N'_dbaid_maintenance', 
-					@owner_login_name=N'_dbaid_sa', @job_id = @jobId OUTPUT;
+					@job_id = @jobId OUTPUT;
 				
 			SET @cmd = N'sqlcmd -E -S "' + @JobTokenServer
 						+ N'" -d "_dbaid" -Q "EXECUTE [dbo].[DatabaseBackup] @Databases = ''USER_DATABASES'', @BackupType = ''LOG'', @CheckSum = ''Y'', @CleanupTime = 72" -b';
@@ -214,7 +214,7 @@ BEGIN
 			EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_backup_system_full', 
 					@enabled=0, 
 					@category_name=N'_dbaid_maintenance', 
-					@owner_login_name=N'_dbaid_sa', @job_id = @jobId OUTPUT;
+					@job_id = @jobId OUTPUT;
 
 			SET @cmd = N'sqlcmd -E -S "' + @JobTokenServer
 						+ N'" -d "_dbaid" -Q "EXECUTE [dbo].[DatabaseBackup] @Databases = ''SYSTEM_DATABASES'', @BackupType = ''FULL'', @CheckSum = ''Y'', @CleanupTime = 72" -b';
@@ -242,7 +242,7 @@ BEGIN
 			EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_index_optimise_user', 
 					@enabled=0, 
 					@category_name=N'_dbaid_maintenance', 
-					@owner_login_name=N'_dbaid_sa', @job_id = @jobId OUTPUT;
+					@job_id = @jobId OUTPUT;
 
 			SET @cmd = N'sqlcmd -E -S "' + @JobTokenServer 
 						+ N'" -d "_dbaid" -Q "EXECUTE [dbo].[IndexOptimize] @Databases = ''USER_DATABASES'', @FragmentationLow = NULL, @FragmentationMedium = ''INDEX_REORGANIZE,INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE'', @FragmentationHigh = ''INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE'', @UpdateStatistics = ''ALL''" -b';
@@ -270,7 +270,7 @@ BEGIN
 			EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_index_optimise_system', 
 					@enabled=0, 
 					@category_name=N'_dbaid_maintenance', 
-					@owner_login_name=N'_dbaid_sa', @job_id = @jobId OUTPUT;
+					@job_id = @jobId OUTPUT;
 
 			SET @cmd = N'sqlcmd -E -S "' + @JobTokenServer
 						+ N'" -d "_dbaid" -Q "EXECUTE [dbo].[IndexOptimize] @Databases = ''SYSTEM_DATABASES'', @FragmentationLow = NULL, @FragmentationMedium = ''INDEX_REORGANIZE,INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE'', @FragmentationHigh = ''INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE'', @UpdateStatistics = ''ALL''" -b';
@@ -298,7 +298,7 @@ BEGIN
 			EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_integrity_check_user', 
 					@enabled=0, 
 					@category_name=N'_dbaid_maintenance', 
-					@owner_login_name=N'_dbaid_sa', @job_id = @jobId OUTPUT;
+					@job_id = @jobId OUTPUT;
 
 			SET @cmd = N'sqlcmd -E -S "' + @JobTokenServer 
 						+ N'" -d "_dbaid" -Q "EXECUTE [dbo].[DatabaseIntegrityCheck] @Databases = ''USER_DATABASES'', @CheckCommands = ''CHECKDB''" -b'
@@ -326,7 +326,7 @@ BEGIN
 			EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_integrity_check_system', 
 					@enabled=0, 
 					@category_name=N'_dbaid_maintenance', 
-					@owner_login_name=N'_dbaid_sa', @job_id = @jobId OUTPUT;
+					@job_id = @jobId OUTPUT;
 
 			SET @cmd = N'sqlcmd -E -S "' + @JobTokenServer 
 						+ N'" -d "_dbaid" -Q "EXECUTE [dbo].[DatabaseIntegrityCheck] @Databases = ''SYSTEM_DATABASES'', @CheckCommands = ''CHECKDB''" -b'

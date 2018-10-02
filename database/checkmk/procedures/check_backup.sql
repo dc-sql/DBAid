@@ -11,8 +11,8 @@ BEGIN
 	SET NOCOUNT ON;
 
 	DECLARE @backup_enabled INT, @backup_disabled INT, @major_version INT;
-	DECLARE @preferred_backup TABLE ([name] SYSNAME, [preferred_backup] BIT);
-	DECLARE @last_backup TABLE ([name] SYSNAME, [full_backup_date] DATETIME, [diff_backup_date] DATETIME, [tran_backup_date] DATETIME);
+	DECLARE @preferred_backup TABLE ([name] sysname, [preferred_backup] BIT);
+	DECLARE @last_backup TABLE ([name] sysname, [full_backup_date] DATETIME, [diff_backup_date] DATETIME, [tran_backup_date] DATETIME);
 	DECLARE @check_output TABLE([state] VARCHAR(8), [message] VARCHAR(4000));
 
 	SELECT @major_version = [major] FROM [system].[get_product_version]();
@@ -33,8 +33,8 @@ BEGIN
 			,CASE WHEN [B].[type] = 'L' THEN [B].[backup_finish_date] ELSE NULL END AS [tran_backup_date]
 		FROM [sys].[databases] [DB] 
 			LEFT JOIN [msdb].[dbo].[backupset] [B]
-				ON [DB].[name] = [B].[database_name]
-			OUTER APPLY(SELECT [preferred_backup] FROM @preferred_backup WHERE [name] = [DB].[name]) AS [AG]
+				ON [DB].[name] = [B].[database_name] COLLATE DATABASE_DEFAULT
+			OUTER APPLY(SELECT [preferred_backup] FROM @preferred_backup WHERE [name] = [DB].[name] COLLATE DATABASE_DEFAULT) AS [AG]
 		WHERE ([AG].[preferred_backup] = 1 OR [AG].[preferred_backup] IS NULL)
 	)
 	INSERT INTO @last_backup
@@ -89,9 +89,9 @@ BEGIN
 			AS [message]
 		FROM sys.databases [DB]
 			INNER JOIN [checkmk].[config_database] [C]
-				ON [DB].[name] = [C].[name]
+				ON [DB].[name] = [C].[name] COLLATE DATABASE_DEFAULT
 			LEFT JOIN @last_backup [LB]
-				ON [DB].[name] = [LB].[name]
+				ON [DB].[name] = [LB].[name] COLLATE DATABASE_DEFAULT
 		WHERE [C].[backup_check_enabled] = 1
 
 	IF (SELECT COUNT(*) FROM @check_output WHERE [state] != 'OK') = 0

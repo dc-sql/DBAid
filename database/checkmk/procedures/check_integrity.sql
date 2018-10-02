@@ -36,7 +36,7 @@ BEGIN
 			,CAST([DI].[value] AS DATETIME) AS [last_dbcc_datetime]
 		FROM [sys].[databases] [DB]
 			LEFT JOIN #dbccinfo [DI]
-				ON [DB].[name] = [DI].[db_name]
+				ON [DB].[name] = [DI].[db_name] COLLATE DATABASE_DEFAULT
 			LEFT JOIN [checkmk].[config_database] [CD]
 					ON [DB].[name] = [CD].[name] COLLATE DATABASE_DEFAULT
 		WHERE [DI].[field] = 'dbi_dbccLastKnownGood'

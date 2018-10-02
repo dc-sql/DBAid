@@ -1,6 +1,6 @@
 ﻿CREATE TABLE [checkmk].[config_agentjob]
 (
-	[name] SYSNAME NOT NULL PRIMARY KEY,
+	[name] sysname NOT NULL PRIMARY KEY,
 
 	[state_check_alert] VARCHAR(10) NOT NULL DEFAULT 'WARNING',
 	[state_check_enabled] BIT NOT NULL DEFAULT 1,

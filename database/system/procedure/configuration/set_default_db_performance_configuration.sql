@@ -1,10 +1,10 @@
 ﻿CREATE PROCEDURE [system].[set_default_db_performance_configuration] (
-	@db_name SYSNAME
+	@db_name sysname
 )
 WITH ENCRYPTION
 AS
 BEGIN
-	DECLARE @loop INT, @count INT, @path NVARCHAR(256), @logical_name SYSNAME, @cmd NVARCHAR(1000);
+	DECLARE @loop INT, @count INT, @path NVARCHAR(256), @logical_name sysname, @cmd NVARCHAR(1000);
 	SET @count = 8;
 
 	SELECT @path=SUBSTRING([physical_name], 0, LEN([physical_name])-(CHARINDEX('\', REVERSE([physical_name]))-2))
