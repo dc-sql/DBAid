@@ -46,10 +46,12 @@ BEGIN
 		SELECT @countjobenabled=COUNT(*)
 		FROM [dbo].[config_job]
 		WHERE [is_enabled] = 1
+			AND [max_exec_time_min] > 0
 
 		SELECT @countjobdisabled=COUNT(*)
 		FROM [dbo].[config_job]
 		WHERE [is_enabled] = 0
+			OR [max_exec_time_min] <= 0
 
 		INSERT INTO @jobactivity
 			EXEC msdb.dbo.sp_help_jobactivity
@@ -59,12 +61,12 @@ BEGIN
 					+ QUOTENAME([J].[job_name]) 
 					+ N'; run_duration_min=' + CAST(DATEDIFF(MINUTE,[J].[start_execution_date],GETDATE()) AS NVARCHAR(20)) 
 					+ N'; max_threshold_min=' + CAST([C].[max_exec_time_min] AS NVARCHAR(20)) AS [message]
-				,CASE WHEN DATEDIFF(MINUTE,[J].[start_execution_date],GETDATE()) >= [C].[max_exec_time_min] THEN [C].[change_state_alert] ELSE N'OK' END AS [state]
+				,[C].[change_state_alert] AS [state]
 			FROM @jobactivity [J]
 				INNER JOIN [dbo].[config_job] [C]
 					ON [J].[job_id] = [C].[job_id]
 			WHERE [C].[is_enabled] = 1
-				AND [C].[max_exec_time_min] != 0
+				AND [C].[max_exec_time_min] > 0
 				AND [J].[start_execution_date] IS NOT NULL
 				AND [J].[stop_execution_date] IS NULL
 				AND DATEDIFF(MINUTE,[J].[start_execution_date],GETDATE()) > [C].[max_exec_time_min];
