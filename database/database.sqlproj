@@ -28,6 +28,7 @@
     <ReadCommittedSnapshot>False</ReadCommittedSnapshot>
     <DacVersion>2.0.0.0</DacVersion>
     <GenerateSqlClrSymbols>False</GenerateSqlClrSymbols>
+    <CloseCursorOnCommitEnabled>True</CloseCursorOnCommitEnabled>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
