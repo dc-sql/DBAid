@@ -11,4 +11,9 @@
     <BlockWhenDriftDetected>True</BlockWhenDriftDetected>
     <RegisterDataTierApplication>True</RegisterDataTierApplication>
   </PropertyGroup>
+  <ItemGroup>
+    <SqlCmdVariable Include="Version">
+      <Value>10.0</Value>
+    </SqlCmdVariable>
+  </ItemGroup>
 </Project>

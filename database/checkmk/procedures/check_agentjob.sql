@@ -10,7 +10,7 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-	DECLARE @countjob INT, @runtimejob INT, @statusjob INT;
+	DECLARE @countjob INT, @runtimejob INT, @failstatusjob INT, @cancelstatusjob INT;
 	DECLARE @check_output TABLE([state] VARCHAR(8), [message] VARCHAR(4000));
 
 	DECLARE @jobactivity TABLE (
@@ -38,12 +38,25 @@ BEGIN
 	WHERE [enabled] = 1
 
 	SELECT @runtimejob=COUNT(*)
-	FROM [checkmk].[config_agentjob]
-	WHERE [runtime_check_enabled] = 1
+	FROM [checkmk].[config_agentjob] [c]
+		INNER JOIN [msdb].[dbo].[sysjobs] [j]
+			ON [c].[name] = [j].[name] COLLATE DATABASE_DEFAULT
+	WHERE [j].[enabled] = 1
+		AND [c].[runtime_check_enabled] = 1
 
-	SELECT @statusjob=COUNT(*)
-	FROM [checkmk].[config_agentjob]
-	WHERE [state_check_enabled] = 1
+	SELECT @failstatusjob=COUNT(*)
+	FROM [checkmk].[config_agentjob] [c]
+		INNER JOIN [msdb].[dbo].[sysjobs] [j]
+			ON [c].[name] = [j].[name] COLLATE DATABASE_DEFAULT
+	WHERE [j].[enabled] = 1
+		AND [c].[state_fail_check_enabled] = 1
+
+	SELECT @cancelstatusjob=COUNT(*)
+	FROM [checkmk].[config_agentjob] [c]
+		INNER JOIN [msdb].[dbo].[sysjobs] [j]
+			ON [c].[name] = [j].[name] COLLATE DATABASE_DEFAULT
+	WHERE [j].[enabled] = 1
+		AND [c].[state_cancel_check_enabled] = 1
 
 	IF NOT ((SELECT LOWER(CAST(SERVERPROPERTY('Edition') AS VARCHAR(128)))) LIKE '%express%')
 	BEGIN
@@ -78,42 +91,66 @@ BEGIN
 	)
 	INSERT INTO @check_output
 		SELECT CASE 
-				WHEN [J].[run_status] = 'FAIL' 
-					THEN [C].[state_check_alert] 
-				WHEN [X].[start_execution_date] IS NOT NULL 
+				WHEN ([C].[state_fail_check_enabled] = 1 
+						AND [J].[run_status] = 'FAIL') 
+					OR ([C].[state_cancel_check_enabled] = 1 
+						AND [J].[run_status] = 'CANCEL')
+					THEN [C].[state_check_alert]
+				WHEN [C].[runtime_check_enabled] = 1
+					AND [X].[start_execution_date] IS NOT NULL 
 					AND [X].[stop_execution_date] IS NULL 
 					AND CAST(DATEDIFF(MINUTE,[X].[start_execution_date],GETDATE()) AS VARCHAR(10)) > [C].[runtime_check_min] 
 					THEN [C].[runtime_check_alert] 
 				ELSE 'OK' END AS [state]
 			,'job=' + QUOTENAME([J].[name]) COLLATE DATABASE_DEFAULT
-				+ ';state=' 
-				+ [J].[run_status]
-				+ ';runtime_min='
-				+ CASE WHEN [X].[start_execution_date] IS NOT NULL AND [X].[stop_execution_date] IS NULL
-					THEN CAST(DATEDIFF(MINUTE,[X].[start_execution_date],GETDATE()) AS VARCHAR(10))
-					ELSE CAST([J].[run_duration]/100.00%100 AS VARCHAR(10)) END 
-				+ ';runtime_check_min=' 
-				+ CAST([C].[runtime_check_min] AS VARCHAR(10)) AS [message]
+			+ CASE 
+				WHEN [C].[state_fail_check_enabled] = 1 
+					OR [C].[state_cancel_check_enabled] = 1 
+					THEN ';state='
+					ELSE '' END
+			+ CASE 
+				WHEN [X].[start_execution_date] IS NOT NULL 
+					AND [X].[stop_execution_date] IS NULL
+					THEN 'RUNNING' 
+					ELSE [J].[run_status] END
+			+ CASE 
+				WHEN [C].[runtime_check_enabled] = 1 
+					THEN ';runtime_min=' 
+						+ CASE 
+							WHEN [X].[start_execution_date] IS NOT NULL 
+								AND [X].[stop_execution_date] IS NULL
+								THEN CAST(DATEDIFF(MINUTE,[X].[start_execution_date],GETDATE()) AS VARCHAR(10))
+								ELSE CAST(CAST(ROUND([J].[run_duration]/100.00%100, 2) AS NUMERIC(18,2)) AS VARCHAR(10)) END
+						+ ';runtime_check_min=' 
+						+ CAST([C].[runtime_check_min] AS VARCHAR(10))
+					ELSE '' END
+				AS [message]
 		FROM [job_data] [J]
 			INNER JOIN [checkmk].[config_agentjob] [C]
 				ON [J].[name] = [C].[name] COLLATE DATABASE_DEFAULT
 			LEFT JOIN @jobactivity [X]
 				ON [J].[job_id] = [X].[job_id]
 		WHERE [J].[row] = 1
-			AND ([J].[run_status] = 'FAIL' OR ([X].[start_execution_date] IS NOT NULL AND [X].[stop_execution_date] IS NULL))
-			AND ([C].[state_check_enabled] = 1 OR [C].[runtime_check_enabled] = 1);
+			AND (([C].[state_fail_check_enabled] = 1 
+				AND [J].[run_status] = 'FAIL')
+				OR ([C].[state_cancel_check_enabled] = 1 
+					AND [J].[run_status] = 'CANCEL')
+				OR ([C].[runtime_check_enabled] = 1 
+					AND [X].[start_execution_date] IS NOT NULL 
+					AND [X].[stop_execution_date] IS NULL 
+					AND CAST(DATEDIFF(MINUTE,[X].[start_execution_date],GETDATE()) AS VARCHAR(10)) > [C].[runtime_check_min]));
 
-	IF ((SELECT COUNT(*) FROM @check_output) < 1 AND @countjob > 0)
+	IF ((SELECT COUNT(*) FROM @check_output) = 0)
 	BEGIN
-		INSERT INTO @check_output 
-		VALUES('OK', CAST(@countjob AS VARCHAR(10)) + ' agent job(s) enabled; ' 
-			+ CAST(@statusjob AS VARCHAR(10)) + ' monitoring status; ' 
-			+ CAST(@runtimejob AS VARCHAR(10)) + ' monitoring runtime');
-	END
-	ELSE
-	BEGIN
-		INSERT INTO @check_output 
-		VALUES('NA', 'No agent job(s) enabled;');
+		IF (@countjob > 0)
+			INSERT INTO @check_output 
+			VALUES('OK', CAST(@countjob AS VARCHAR(10)) + ' agent job(s) enabled; ' 
+				+ CAST(@failstatusjob AS VARCHAR(10)) + ' monitor fail status; ' 
+				+ CAST(@cancelstatusjob AS VARCHAR(10)) + ' monitor cancel status; ' 
+				+ CAST(@runtimejob AS VARCHAR(10)) + ' monitor runtime');
+		ELSE
+			INSERT INTO @check_output 
+			VALUES('NA', 'No agent job(s) enabled;');
 	END
 
 	SELECT [state], [message] FROM @check_output;
