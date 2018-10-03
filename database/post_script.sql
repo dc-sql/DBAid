@@ -18,6 +18,20 @@ Post-Deployment Script Template
 USE [_dbaid];
 GO
 
+DECLARE @date VARCHAR(8);
+SELECT @date = CONVERT(VARCHAR(8), GETDATE(), 112);
+
+IF EXISTS (SELECT [name] FROM sys.extended_properties WHERE [name] = N'Install Date')
+	EXEC sys.sp_updateextendedproperty @name=N'Install Date', @value=@date
+ELSE 
+	EXEC sys.sp_addextendedproperty @name=N'Install Date', @value=@date
+
+IF EXISTS (SELECT [name] FROM sys.extended_properties WHERE [name] = N'Version')
+	EXEC sys.sp_updateextendedproperty @name=N'Version', @value=N'$(Version)' 
+ELSE
+	EXEC sys.sp_addextendedproperty @name=N'Version', @value=N'$(Version)' 
+GO
+
 DECLARE @collector_secret VARCHAR(20);
 EXEC [system].[generate_secret] @length=20, @secret=@collector_secret OUT
 

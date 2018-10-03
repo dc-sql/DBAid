@@ -216,6 +216,12 @@
     <None Include="database.publish.xml" />
     <None Include="update-submodules.ps1" />
   </ItemGroup>
+  <ItemGroup>
+    <SqlCmdVariable Include="Version">
+      <DefaultValue>10.0</DefaultValue>
+      <Value>$(SqlCmdVar__1)</Value>
+    </SqlCmdVariable>
+  </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>
     </PostBuildEvent>

@@ -12,6 +12,7 @@ namespace local.dbaid.checkmk
     class Program
     {
         private const string getProcListSql = "SELECT '[checkmk].' + QUOTENAME([name]) AS [procedure] FROM sys.objects WHERE[type] = 'P' AND SCHEMA_NAME([schema_id]) = 'checkmk' AND([name] LIKE @filter OR @filter IS NULL)";
+        private const string getDbaidVersion = "SELECT CAST([value] AS VARCHAR(10)) FROM sys.extended_properties WHERE [name] = N'Version'";
 
         static void Main(string[] args)
         {
@@ -61,6 +62,7 @@ namespace local.dbaid.checkmk
                 {
                     bool isClustered = false;
                     string netBIOSname = Environment.MachineName;
+                    string dbaidVersion = String.Empty;
 
                     try
                     {
@@ -86,8 +88,15 @@ namespace local.dbaid.checkmk
                             continue;
                         }
 
+                        using (var cmd = new SqlCommand(getDbaidVersion, conn) { CommandTimeout = 5, CommandType = CommandType.Text })
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                                dbaidVersion = reader.GetString(0);
+                        }
+
                         // Output instance service check
-                        Console.WriteLine("{0} mssql_{1}_{2} count={3} {4}{5}", StatusCode("OK"), instance, "service", 1, "OK - ", conn.ServerVersion);
+                        Console.WriteLine("{0} mssql_{1}_{2} count={3} {4} - SQL Version={5}; DBAid Version={6}", StatusCode("OK"), instance, "service", 1, "OK", conn.ServerVersion, dbaidVersion);
 
                         // Inventory the SQL Instance
                         using (var cmd = new SqlCommand(getProcListSql, conn) { CommandTimeout = 5, CommandType = CommandType.Text })
@@ -117,7 +126,7 @@ namespace local.dbaid.checkmk
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine("{0} mssql_{1}_{2} count={3} {4}{5}", StatusCode("CRITICAL"), instance, "service", 1, "CRITICAL - ", e.Message);
+                        Console.WriteLine("{0} mssql_{1}_{2} count={3} {4} - {5}", StatusCode("CRITICAL"), instance, "service", 1, "CRITICAL", e.Message);
 #if DEBUG
                         Console.ReadKey();
 #endif
