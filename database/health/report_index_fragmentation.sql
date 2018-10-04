@@ -1,6 +1,6 @@
 ﻿CREATE PROCEDURE [health].[report_index_fragmentation]
-	@param1 int = 0,
-	@param2 int
+WITH ENCRYPTION
 AS
-	SELECT @param1, @param2
-RETURN 0
+BEGIN
+	PRINT 'Do something fancy with Ola Hallegren log data. Check for indexes that are constantly fragmented and could benefit from fillfactor change. etc...'
+END
