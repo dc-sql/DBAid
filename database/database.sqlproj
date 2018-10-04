@@ -117,6 +117,7 @@
     <Folder Include="checkmk\tables" />
     <Folder Include="checkmk\procedures" />
     <Folder Include="ola-maintenance-solution" />
+    <Folder Include="health" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="system\configuration.sql" />
@@ -194,6 +195,8 @@
     </Build>
     <Build Include="ola-maintenance-solution\Queue.sql" />
     <Build Include="ola-maintenance-solution\QueueDatabase.sql" />
+    <Build Include="health\report_transaction_log.sql" />
+    <Build Include="health\report_index_fragmentation.sql" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -215,6 +218,9 @@
   <ItemGroup>
     <None Include="database.publish.xml" />
     <None Include="update-submodules.ps1" />
+    <None Include="deploy-database.ps1">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <SqlCmdVariable Include="Version">
