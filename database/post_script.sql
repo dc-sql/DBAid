@@ -65,11 +65,12 @@ GO
 USE [msdb]
 GO
 
-DECLARE @jobId BINARY(16),@JobTokenServer CHAR(22),@JobTokenLogDir NVARCHAR(260),@JobTokenDateTime CHAR(49),@cmd NVARCHAR(4000),@out NVARCHAR(260),@schid INT;
+DECLARE @jobId BINARY(16),@JobTokenServer CHAR(22),@JobTokenLogDir NVARCHAR(260),@JobTokenDateTime CHAR(49),@cmd NVARCHAR(4000),@out NVARCHAR(260),@owner sysname,@schid INT;
 
 SELECT @JobTokenServer = N'$' + N'(ESCAPE_DQUOTE(SRVR))'
 	,@JobTokenLogDir = LEFT(CAST(SERVERPROPERTY('ErrorLogFileName') AS NVARCHAR(260)),LEN(CAST(SERVERPROPERTY('ErrorLogFileName') AS NVARCHAR(260))) - CHARINDEX('\',REVERSE(CAST(SERVERPROPERTY('ErrorLogFileName') AS NVARCHAR(260)))))
-	,@JobTokenDateTime = N'$' + N'(ESCAPE_DQUOTE(STEPID))_' + N'$' + N'(ESCAPE_DQUOTE(STRTDT))_' + N'$' + N'(ESCAPE_DQUOTE(STRTTM))';
+	,@JobTokenDateTime = N'$' + N'(ESCAPE_DQUOTE(STEPID))_' + N'$' + N'(ESCAPE_DQUOTE(STRTDT))_' + N'$' + N'(ESCAPE_DQUOTE(STRTTM))'
+	,@owner = (SELECT [name] FROM sys.server_principals WHERE [sid] = 0x01);
 
 IF ((SELECT LOWER(CAST(SERVERPROPERTY('Edition') AS NVARCHAR(128)))) LIKE '%express%')
 	PRINT 'Express Edition Detected. No SQL Agent.';
@@ -89,7 +90,7 @@ BEGIN
 	END 
 
 	BEGIN TRANSACTION
-		EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_config_genie', 
+		EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_config_genie', @owner_login_name=@owner,
 				@enabled=0, @category_name=N'_dbaid_maintenance', @description=N'Executes the C# wmi query application to insert service information into the [_dbaid] database.', 
 				@job_id = @jobId OUTPUT;
 
@@ -126,7 +127,7 @@ BEGIN
 	END
 
 	BEGIN TRANSACTION
-		EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_delete_system_history', 
+		EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_delete_system_history', @owner_login_name=@owner,
 				@enabled=0, @category_name=N'_dbaid_maintenance', @description=N'Executes [system].[delete_system_history] to cleanup job, backup, cmdlog history in [_dbaid] and msdb database.', 
 				@job_id = @jobId OUTPUT;
 
@@ -170,7 +171,7 @@ BEGIN
 	END
 
 	BEGIN TRANSACTION
-		EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_backup_user_full', 
+		EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_backup_user_full', @owner_login_name=@owner,
 				@enabled=0, 
 				@category_name=N'_dbaid_maintenance', 
 				@job_id = @jobId OUTPUT;
@@ -207,7 +208,7 @@ BEGIN
 	END
 
 	BEGIN TRANSACTION
-		EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_backup_user_tran', 
+		EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_backup_user_tran', @owner_login_name=@owner,
 				@enabled=0, 
 				@category_name=N'_dbaid_maintenance', 
 				@job_id = @jobId OUTPUT;
@@ -244,7 +245,7 @@ BEGIN
 	END
 
 	BEGIN TRANSACTION
-		EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_backup_system_full', 
+		EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_backup_system_full', @owner_login_name=@owner,
 				@enabled=0, 
 				@category_name=N'_dbaid_maintenance', 
 				@job_id = @jobId OUTPUT;
@@ -281,7 +282,7 @@ BEGIN
 	END
 
 	BEGIN TRANSACTION
-		EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_index_optimise_user', 
+		EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_index_optimise_user', @owner_login_name=@owner,
 				@enabled=0, 
 				@category_name=N'_dbaid_maintenance', 
 				@job_id = @jobId OUTPUT;
@@ -318,7 +319,7 @@ BEGIN
 	END
 
 	BEGIN TRANSACTION
-		EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_index_optimise_system', 
+		EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_index_optimise_system', @owner_login_name=@owner,
 				@enabled=0, 
 				@category_name=N'_dbaid_maintenance', 
 				@job_id = @jobId OUTPUT;
@@ -355,7 +356,7 @@ BEGIN
 	END
 
 	BEGIN TRANSACTION
-		EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_integrity_check_user', 
+		EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_integrity_check_user', @owner_login_name=@owner,
 				@enabled=0, 
 				@category_name=N'_dbaid_maintenance', 
 				@job_id = @jobId OUTPUT;
@@ -392,7 +393,7 @@ BEGIN
 	END
 
 	BEGIN TRANSACTION
-		EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_integrity_check_system',
+		EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_integrity_check_system', @owner_login_name=@owner,
 				@enabled=0,
 				@category_name=N'_dbaid_maintenance',
 				@job_id = @jobId OUTPUT;
