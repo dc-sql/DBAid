@@ -18,25 +18,6 @@ Post-Deployment Script Template
 USE [_dbaid];
 GO
 
-DECLARE @date VARCHAR(8), @user SYSNAME;
-SELECT @date = CONVERT(VARCHAR(8), GETDATE(), 112), @user = SUSER_SNAME();
-
-IF EXISTS (SELECT [name] FROM sys.extended_properties WHERE [name] = N'Installer')
-	EXEC sys.sp_updateextendedproperty @name=N'Installer', @value=@user
-ELSE 
-	EXEC sys.sp_addextendedproperty @name=N'Installer', @value=@user
-
-IF EXISTS (SELECT [name] FROM sys.extended_properties WHERE [name] = N'Installed')
-	EXEC sys.sp_updateextendedproperty @name=N'Installed', @value=@date
-ELSE 
-	EXEC sys.sp_addextendedproperty @name=N'Installed', @value=@date
-
-IF EXISTS (SELECT [name] FROM sys.extended_properties WHERE [name] = N'Version')
-	EXEC sys.sp_updateextendedproperty @name=N'Version', @value=N'$(Version)' 
-ELSE
-	EXEC sys.sp_addextendedproperty @name=N'Version', @value=N'$(Version)' 
-GO
-
 DECLARE @collector_secret VARCHAR(20);
 EXEC [system].[generate_secret] @length=20, @secret=@collector_secret OUT
 

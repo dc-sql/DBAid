@@ -12,7 +12,7 @@ namespace local.dbaid.checkmk
     class Program
     {
         private const string getProcListSql = "SELECT '[checkmk].' + QUOTENAME([name]) AS [procedure] FROM sys.objects WHERE[type] = 'P' AND SCHEMA_NAME([schema_id]) = 'checkmk' AND([name] LIKE @filter OR @filter IS NULL)";
-        private const string getDbaidVersion = "SELECT CAST([value] AS VARCHAR(10)) FROM sys.extended_properties WHERE [name] = N'Version'";
+        private const string getDbaidVersion = "SELECT [type_version] FROM msdb.dbo.sysdac_instances WHERE [instance_name] = N'_dbaid'";
 
         static void Main(string[] args)
         {

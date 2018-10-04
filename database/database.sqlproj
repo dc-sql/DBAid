@@ -26,7 +26,7 @@
     <EnableFullTextSearch>False</EnableFullTextSearch>
     <AllowSnapshotIsolation>False</AllowSnapshotIsolation>
     <ReadCommittedSnapshot>False</ReadCommittedSnapshot>
-    <DacVersion>2.0.0.0</DacVersion>
+    <DacVersion>10.0</DacVersion>
     <GenerateSqlClrSymbols>False</GenerateSqlClrSymbols>
     <CloseCursorOnCommitEnabled>True</CloseCursorOnCommitEnabled>
   </PropertyGroup>
@@ -218,15 +218,6 @@
   <ItemGroup>
     <None Include="database.publish.xml" />
     <None Include="update-submodules.ps1" />
-    <None Include="deploy-database.ps1">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <SqlCmdVariable Include="Version">
-      <DefaultValue>10.0</DefaultValue>
-      <Value>$(SqlCmdVar__1)</Value>
-    </SqlCmdVariable>
   </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>
