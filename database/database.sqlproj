@@ -195,11 +195,11 @@
     </Build>
     <Build Include="ola-maintenance-solution\Queue.sql" />
     <Build Include="ola-maintenance-solution\QueueDatabase.sql" />
-    <Build Include="health\report_transaction_log.sql" />
+    <Build Include="health\get_transaction_log.sql" />
     <Build Include="health\report_index_fragmentation.sql" />
     <Build Include="health\report_statistic_state.sql" />
-    <Build Include="health\file_io_performance.sql" />
-    <Build Include="health\report_block_process_history.sql" />
+    <Build Include="health\get_file_io_performance.sql" />
+    <Build Include="health\get_block_process_history.sql" />
     <Build Include="health\report_dead_lock_history.sql" />
   </ItemGroup>
   <ItemGroup>

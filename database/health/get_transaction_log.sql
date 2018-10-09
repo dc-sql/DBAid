@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE [health].[report_transaction_log]
+﻿CREATE PROCEDURE [health].[get_transaction_log]
 WITH ENCRYPTION
 AS
 BEGIN
@@ -100,6 +100,8 @@ BEGIN
 		DELETE FROM @dbccloginfo2012;
 		DELETE FROM @databases WHERE db_name = @db_name;
 	END
+
+	SELECT 'DATABASE' AS [header], 'Transaction Log' AS [subheader], '' AS [comment];
 
 	SELECT [db_name]
 		,[file_name]
