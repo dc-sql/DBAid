@@ -4,7 +4,6 @@ using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.Text;
-using Microsoft.Win32;
 using System.IO;
 
 namespace local.dbaid.checkmk
@@ -12,47 +11,24 @@ namespace local.dbaid.checkmk
     class Program
     {
         private const string getProcListSql = "SELECT '[checkmk].' + QUOTENAME([name]) AS [procedure] FROM sys.objects WHERE[type] = 'P' AND SCHEMA_NAME([schema_id]) = 'checkmk' AND([name] LIKE @filter OR @filter IS NULL)";
-        private const string getDbaidVersion = "SELECT [type_version] FROM msdb.dbo.sysdac_instances WHERE [instance_name] = N'_dbaid'";
+        private const string getDbaidVersionSql = "SELECT [type_version] FROM msdb.dbo.sysdac_instances WHERE [instance_name] = N'_dbaid'";
 
         static void Main(string[] args)
         {
             var appSettings = new Dictionary<string, uint>();
-            var sqlInstances = new List<string>();
 
             foreach (var key in ConfigurationManager.AppSettings.AllKeys)
             {
                 appSettings.Add(key, uint.Parse(ConfigurationManager.AppSettings[key]));
             }
-            
-            using (RegistryKey hklm = RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, Environment.MachineName))
-            {
-                RegistryKey instanceKey = hklm.OpenSubKey(@"SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL", false);
-                RegistryKey wowInstanceKey = hklm.OpenSubKey(@"SOFTWARE\Wow6432Node\Microsoft\Microsoft SQL Server\Instance Names\SQL", false);
 
-                if (instanceKey != null)
-                {
-                    foreach (var instanceName in instanceKey.GetValueNames())
-                    {
-                        sqlInstances.Add(instanceName.ToUpper());
-                    }
-                }
-                if (wowInstanceKey != null)
-                {
-                    foreach (var instanceName in wowInstanceKey.GetValueNames())
-                    {
-                        sqlInstances.Add(instanceName.ToUpper());
-                    }
-                }
-            }
+            ConnectionStringSettingsCollection settings = ConfigurationManager.ConnectionStrings;
 
-            foreach (string instance in sqlInstances)
+            foreach (ConnectionStringSettings cs in settings)
             {
-                SqlConnectionStringBuilder csb = new SqlConnectionStringBuilder()
+                SqlConnectionStringBuilder csb = new SqlConnectionStringBuilder(cs.ConnectionString)
                 {
-                    ApplicationName = "Check_Mk - mssql plugin",
-                    DataSource = instance == "MSSQLSERVER" ? Environment.MachineName : Environment.MachineName + "\\" + instance,
-                    InitialCatalog = "_dbaid",
-                    IntegratedSecurity = true,
+                    ApplicationName = "dbaid-checkmk",
                     Encrypt = true,
                     TrustServerCertificate = true,
                     ConnectTimeout = 5
@@ -88,7 +64,7 @@ namespace local.dbaid.checkmk
                             continue;
                         }
 
-                        using (var cmd = new SqlCommand(getDbaidVersion, conn) { CommandTimeout = 5, CommandType = CommandType.Text })
+                        using (var cmd = new SqlCommand(getDbaidVersionSql, conn) { CommandTimeout = 5, CommandType = CommandType.Text })
                         using (var reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
@@ -96,7 +72,7 @@ namespace local.dbaid.checkmk
                         }
 
                         // Output instance service check
-                        Console.WriteLine("{0} mssql_{1}_{2} count={3} {4} - SQL Version={5}; DBAid Version={6}", StatusCode("OK"), instance, "service", 1, "OK", conn.ServerVersion, dbaidVersion);
+                        Console.WriteLine("{0} mssql_{1}_{2} count={3} {4} - SQL Version={5}; DBAid Version={6}", StatusCode("OK"), cs.Name, "service", 1, "OK", conn.ServerVersion, dbaidVersion);
 
                         // Inventory the SQL Instance
                         using (var cmd = new SqlCommand(getProcListSql, conn) { CommandTimeout = 5, CommandType = CommandType.Text })
@@ -119,25 +95,14 @@ namespace local.dbaid.checkmk
                         }
 
                         // output check procedures
-                        DoCheck(conn, instance, ref appSettings);
+                        DoCheck(conn, cs.Name, ref appSettings);
 
                         // output chart procedures
-                        DoChart(conn, instance, ref appSettings);
+                        DoChart(conn, cs.Name, ref appSettings);
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine("{0} mssql_{1}_{2} count={3} {4} - {5}", StatusCode("CRITICAL"), instance, "service", 1, "CRITICAL", e.Message);
-#if DEBUG
-                        Console.ReadKey();
-#endif
-                        return;
-                    }
-                    finally
-                    {
-                        if (conn != null)
-                        {
-                            conn.Close();
-                        }
+                        Console.WriteLine("{0} mssql_{1}_{2} count={3} {4} - {5}", StatusCode("CRITICAL"), cs.Name, "service", 1, "CRITICAL", e.Message);
                     }
                 }
             }
@@ -159,18 +124,19 @@ namespace local.dbaid.checkmk
                 {
                     string procedure = dr[0].ToString();
                     string cacheName = "cache_" + procedure.Substring(procedure.IndexOf(".") + 1).TrimStart('[').TrimEnd(']');
+                    string cacheFile = instance + "_" + cacheName;
                     bool refreshCache = false;
 
                     if (appSettings.ContainsKey(cacheName))
                     {
                         uint cacheSeconds = appSettings[cacheName];
-                        if (File.Exists(cacheName))
+                        if (File.Exists(cacheFile))
                         {
-                            DateTime cacheDate = File.GetLastWriteTime(cacheName);
+                            DateTime cacheDate = File.GetLastWriteTime(cacheFile);
 
                             if ((DateTime.Now - cacheDate).TotalSeconds < cacheSeconds)
                             {
-                                Console.WriteLine(File.ReadAllText(cacheName));
+                                Console.WriteLine(File.ReadAllText(cacheFile));
                                 continue;
                             }
                             else
@@ -204,7 +170,7 @@ namespace local.dbaid.checkmk
                         }
 
                         if (refreshCache)
-                            File.WriteAllText(cacheName, string.Format("{0} mssql_{1}_{2} count={3} {4}", code, instance, procTag, results.Rows.Count, message));
+                            File.WriteAllText(cacheFile, string.Format("{0} mssql_{1}_{2} count={3} {4}", code, instance, procTag, results.Rows.Count, message));
 
                         Console.WriteLine("{0} mssql_{1}_{2} count={3} {4}", code, instance, procTag, results.Rows.Count, message);
                     }
@@ -225,18 +191,19 @@ namespace local.dbaid.checkmk
                 {
                     string procedure = dr[0].ToString();
                     string cacheName = "cache_" + procedure.Substring(procedure.IndexOf(".")+1).TrimStart('[').TrimEnd(']');
+                    string cacheFile = instance + "_" + cacheName;
                     bool refreshCache = false;
 
                     if (appSettings.ContainsKey(cacheName))
                     {
                         uint cacheSeconds = appSettings[cacheName];
-                        if (File.Exists(cacheName))
+                        if (File.Exists(cacheFile))
                         {
-                            DateTime cacheDate = File.GetLastWriteTime(cacheName);
+                            DateTime cacheDate = File.GetLastWriteTime(cacheFile);
 
                             if ((DateTime.Now - cacheDate).TotalSeconds < cacheSeconds)
                             {
-                                Console.WriteLine(File.ReadAllText(cacheName));
+                                Console.WriteLine(File.ReadAllText(cacheFile));
                                 continue;
                             }
                             else
@@ -334,7 +301,7 @@ namespace local.dbaid.checkmk
                         }
 
                         if (refreshCache)
-                            File.WriteAllText(cacheName, string.Format("{0} mssql_{1}_{2} {3}", returnCode, instance, procTag, pnpData, message));
+                            File.WriteAllText(cacheFile, string.Format("{0} mssql_{1}_{2} {3}", returnCode, instance, procTag, pnpData, message));
 
                         Console.WriteLine("{0} mssql_{1}_{2} {3}", returnCode, instance, procTag, pnpData, message);
                     }

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
@@ -14,38 +14,13 @@ namespace collector
         static void Main(string[] args)
         {
             DateTime runtime = DateTime.UtcNow;
-            var sqlInstances = new List<string>();
+            ConnectionStringSettingsCollection settings = ConfigurationManager.ConnectionStrings;
 
-            // Get list of local instances
-            using (RegistryKey hklm = RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, Environment.MachineName))
+            foreach (ConnectionStringSettings cs in settings)
             {
-                RegistryKey instanceKey = hklm.OpenSubKey(@"SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL", false);
-                RegistryKey wowInstanceKey = hklm.OpenSubKey(@"SOFTWARE\Wow6432Node\Microsoft\Microsoft SQL Server\Instance Names\SQL", false);
-
-                if (instanceKey != null)
+                var csb = new SqlConnectionStringBuilder(cs.ConnectionString)
                 {
-                    foreach (var instanceName in instanceKey.GetValueNames())
-                    {
-                        sqlInstances.Add(instanceName.ToUpper());
-                    }
-                }
-                if (wowInstanceKey != null)
-                {
-                    foreach (var instanceName in wowInstanceKey.GetValueNames())
-                    {
-                        sqlInstances.Add(instanceName.ToUpper());
-                    }
-                }
-            }
-
-            foreach (string instance in sqlInstances)
-            {
-                var csb = new SqlConnectionStringBuilder
-                {
-                    ApplicationName = "DBAid - Collector",
-                    DataSource = instance == "MSSQLSERVER" ? Environment.MachineName : Environment.MachineName + "\\" + instance,
-                    InitialCatalog = "_dbaid",
-                    IntegratedSecurity = true,
+                    ApplicationName = "dbaid-collector",
                     Encrypt = true,
                     TrustServerCertificate = true,
                     ConnectTimeout = 5
