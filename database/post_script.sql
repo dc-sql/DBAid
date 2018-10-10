@@ -65,12 +65,21 @@ GO
 USE [msdb]
 GO
 
-DECLARE @jobId BINARY(16),@JobTokenServer CHAR(22),@JobTokenLogDir NVARCHAR(260),@JobTokenDateTime CHAR(49),@cmd NVARCHAR(4000),@out NVARCHAR(260),@owner sysname,@schid INT;
+DECLARE @jobId BINARY(16)
+	,@JobTokenServer CHAR(22)
+	,@JobTokenLogDir NVARCHAR(260)
+	,@JobTokenDateTime CHAR(49)
+	,@cmd NVARCHAR(4000)
+	,@out NVARCHAR(260)
+	,@owner sysname
+	,@schid INT
+	,@timestamp NVARCHAR(13);
 
 SELECT @JobTokenServer = N'$' + N'(ESCAPE_DQUOTE(SRVR))'
 	,@JobTokenLogDir = LEFT(CAST(SERVERPROPERTY('ErrorLogFileName') AS NVARCHAR(260)),LEN(CAST(SERVERPROPERTY('ErrorLogFileName') AS NVARCHAR(260))) - CHARINDEX('\',REVERSE(CAST(SERVERPROPERTY('ErrorLogFileName') AS NVARCHAR(260)))))
 	,@JobTokenDateTime = N'$' + N'(ESCAPE_DQUOTE(STEPID))_' + N'$' + N'(ESCAPE_DQUOTE(STRTDT))_' + N'$' + N'(ESCAPE_DQUOTE(STRTTM))'
-	,@owner = (SELECT [name] FROM sys.server_principals WHERE [sid] = 0x01);
+	,@owner = (SELECT [name] FROM sys.server_principals WHERE [sid] = 0x01)
+	,@timestamp = CONVERT(VARCHAR(8), GETDATE(), 112) + CAST(DATEPART(HOUR, GETDATE()) AS VARCHAR(2)) + CAST(DATEPART(MINUTE, GETDATE()) AS VARCHAR(2)) + CAST(DATEPART(SECOND, GETDATE()) AS VARCHAR(2));
 
 IF ((SELECT LOWER(CAST(SERVERPROPERTY('Edition') AS NVARCHAR(128)))) LIKE '%express%')
 	PRINT 'Express Edition Detected. No SQL Agent.';
@@ -86,7 +95,8 @@ BEGIN
 
 	IF EXISTS (SELECT [job_id] FROM [msdb].[dbo].[sysjobs_view] WHERE [name] = N'_dbaid_config_genie')
 	BEGIN
-		EXEC msdb.dbo.sp_update_job @job_name=N'_dbaid_config_genie', @new_name=N'__DELETE_dbaid_config_genie', @enabled = 0;
+		SET @cmd = N'__DELETE_dbaid_config_genie_' + @timestamp
+		EXEC msdb.dbo.sp_update_job @job_name=N'_dbaid_config_genie', @new_name=@cmd, @enabled = 0;
 	END 
 
 	BEGIN TRANSACTION
@@ -123,7 +133,8 @@ BEGIN
 
 	IF EXISTS (SELECT [job_id] FROM [msdb].[dbo].[sysjobs_view] WHERE [name] = N'_dbaid_delete_system_history')
 	BEGIN
-		EXEC msdb.dbo.sp_update_job @job_name=N'_dbaid_delete_system_history', @new_name=N'__DELETE_dbaid_delete_system_history', @enabled = 0;
+		SET @cmd = N'__DELETE_dbaid_delete_system_history_' + @timestamp
+		EXEC msdb.dbo.sp_update_job @job_name=N'_dbaid_delete_system_history', @new_name=@cmd, @enabled = 0;
 	END
 
 	BEGIN TRANSACTION
@@ -167,7 +178,8 @@ BEGIN
 
 	IF EXISTS (SELECT [job_id] FROM [msdb].[dbo].[sysjobs_view] WHERE [name] = N'_dbaid_backup_user_full')
 	BEGIN
-		EXEC msdb.dbo.sp_update_job @job_name=N'_dbaid_backup_user_full', @new_name=N'__DELETE_dbaid_backup_user_full', @enabled = 0;
+		SET @cmd = N'__DELETE_dbaid_backup_user_full_' + @timestamp
+		EXEC msdb.dbo.sp_update_job @job_name=N'_dbaid_backup_user_full', @new_name=@cmd, @enabled = 0;
 	END
 
 	BEGIN TRANSACTION
@@ -204,7 +216,8 @@ BEGIN
 
 	IF EXISTS (SELECT [job_id] FROM [msdb].[dbo].[sysjobs_view] WHERE [name] = N'_dbaid_backup_user_tran')
 	BEGIN
-		EXEC msdb.dbo.sp_update_job @job_name=N'_dbaid_backup_user_tran', @new_name=N'__DELETE_dbaid_backup_user_tran', @enabled = 0;
+		SET @cmd = N'__DELETE_dbaid_backup_user_tran_' + @timestamp
+		EXEC msdb.dbo.sp_update_job @job_name=N'_dbaid_backup_user_tran', @new_name=@cmd, @enabled = 0;
 	END
 
 	BEGIN TRANSACTION
@@ -241,7 +254,8 @@ BEGIN
 
 	IF EXISTS (SELECT [job_id] FROM [msdb].[dbo].[sysjobs_view] WHERE [name] = N'_dbaid_backup_system_full')
 	BEGIN
-		EXEC msdb.dbo.sp_update_job @job_name=N'_dbaid_backup_system_full', @new_name=N'__DELETE_dbaid_backup_system_full', @enabled = 0;
+		SET @cmd = N'__DELETE_dbaid_backup_system_full_' + @timestamp
+		EXEC msdb.dbo.sp_update_job @job_name=N'_dbaid_backup_system_full', @new_name=@cmd, @enabled = 0;
 	END
 
 	BEGIN TRANSACTION
@@ -278,7 +292,8 @@ BEGIN
 
 	IF EXISTS (SELECT [job_id] FROM [msdb].[dbo].[sysjobs_view] WHERE [name] = N'_dbaid_index_optimise_user')
 	BEGIN
-		EXEC msdb.dbo.sp_update_job @job_name=N'_dbaid_index_optimise_user', @new_name=N'__DELETE_dbaid_index_optimise_user', @enabled = 0;
+		SET @cmd = N'__DELETE_dbaid_index_optimise_user_' + @timestamp
+		EXEC msdb.dbo.sp_update_job @job_name=N'_dbaid_index_optimise_user', @new_name=@cmd, @enabled = 0;
 	END
 
 	BEGIN TRANSACTION
@@ -315,7 +330,8 @@ BEGIN
 
 	IF EXISTS (SELECT [job_id] FROM [msdb].[dbo].[sysjobs_view] WHERE [name] = N'_dbaid_index_optimise_system')
 	BEGIN
-		EXEC msdb.dbo.sp_update_job @job_name=N'_dbaid_index_optimise_system', @new_name=N'__DELETE_dbaid_index_optimise_system', @enabled = 0;
+		SET @cmd = N'__DELETE_dbaid_index_optimise_system_' + @timestamp
+		EXEC msdb.dbo.sp_update_job @job_name=N'_dbaid_index_optimise_system', @new_name=@cmd, @enabled = 0;
 	END
 
 	BEGIN TRANSACTION
@@ -352,7 +368,8 @@ BEGIN
 
 	IF EXISTS (SELECT [job_id] FROM [msdb].[dbo].[sysjobs_view] WHERE [name] = N'_dbaid_integrity_check_user')
 	BEGIN
-		EXEC msdb.dbo.sp_update_job @job_name=N'_dbaid_integrity_check_user', @new_name=N'__DELETE_dbaid_integrity_check_user', @enabled = 0;
+		SET @cmd = N'__DELETE_dbaid_integrity_check_user_' + @timestamp
+		EXEC msdb.dbo.sp_update_job @job_name=N'_dbaid_integrity_check_user', @new_name=@cmd, @enabled = 0;
 	END
 
 	BEGIN TRANSACTION
@@ -389,7 +406,8 @@ BEGIN
 
 	IF EXISTS (SELECT [job_id] FROM [msdb].[dbo].[sysjobs_view] WHERE [name] = N'_dbaid_integrity_check_system')
 	BEGIN
-		EXEC msdb.dbo.sp_update_job @job_name=N'_dbaid_integrity_check_system', @new_name=N'__DELETE_dbaid_integrity_check_system', @enabled = 0;
+		SET @cmd = N'__DELETE_dbaid_integrity_check_system_' + @timestamp
+		EXEC msdb.dbo.sp_update_job @job_name=N'_dbaid_integrity_check_system', @new_name=@cmd, @enabled = 0;
 	END
 
 	BEGIN TRANSACTION
