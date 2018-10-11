@@ -118,7 +118,9 @@ BEGIN
 
 	--get errorlog count
 	DECLARE @NumErrorLogs INT
-	    EXEC [master].[dbo].[xp_instance_regread] N'HKEY_LOCAL_MACHINE', N'Software\Microsoft\MSSQLServer\MSSQLServer', N'NumErrorLogs', @NumErrorLogs OUTPUT
+	DECLARE @enumerrorlogs TABLE ([archive] INT, [date] DATETIME, [file_size_byte] BIGINT);
+	INSERT INTO @enumerrorlogs EXEC [master].[dbo].[xp_enumerrorlogs];
+	SELECT @NumErrorLogs=COUNT(*) FROM @enumerrorlogs
 
 	--get audit level
 	DECLARE @loginfo_cmd_list TABLE([property] NVARCHAR(200), [value] NVARCHAR(200));
