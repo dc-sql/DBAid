@@ -201,6 +201,8 @@
     <Build Include="health\get_file_io_performance.sql" />
     <Build Include="health\get_block_process_history.sql" />
     <Build Include="health\report_dead_lock_history.sql" />
+    <Build Include="system\procedure\generate_login_script.sql" />
+    <Build Include="system\function\get_hexadecimal.sql" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
