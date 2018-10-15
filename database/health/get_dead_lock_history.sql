@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE [health].[report_dead_lock_history]
+﻿CREATE PROCEDURE [health].[get_dead_lock_history]
 WITH ENCRYPTION
 AS
 BEGIN

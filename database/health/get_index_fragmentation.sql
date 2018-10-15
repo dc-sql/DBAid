@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE [health].[report_index_fragmentation]
+﻿CREATE PROCEDURE [health].[get_index_fragmentation]
 WITH ENCRYPTION
 AS
 BEGIN

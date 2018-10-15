@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE [health].[report_statistic_state]
+﻿CREATE PROCEDURE [health].[get_statistic_state]
 WITH ENCRYPTION
 AS
 BEGIN
