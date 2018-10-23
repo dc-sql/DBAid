@@ -101,6 +101,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="get-latest-7za.ps1" />
+    <None Include="set-app-config-defaults.ps1" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="7za.exe">

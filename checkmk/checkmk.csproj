@@ -81,6 +81,7 @@
       <SubType>Designer</SubType>
     </None>
     <None Include="PNP4nagios_php_templates\mssql_capacity.php" />
+    <None Include="set-app-config-defaults.ps1" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
