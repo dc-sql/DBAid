@@ -84,19 +84,22 @@ BEGIN
 			,[run_datetime] = CAST(CAST([H].[run_date] AS CHAR(8)) + ' ' + STUFF(STUFF(REPLACE(STR([H].[run_time],6,0),' ','0'),3,0,':'),6,0,':') AS DATETIME)
 			,[H].[run_duration]
 		FROM [msdb].[dbo].[sysjobs] [J]
-			INNER JOIN [msdb].[dbo].[sysjobhistory] [H]
+			LEFT JOIN [msdb].[dbo].[sysjobhistory] [H]
 				ON [J].[job_id] = [H].[job_id]
 		WHERE [J].[enabled] = 1
-			AND [H].[step_id] = 0
+			AND ([H].[step_id] = 0 OR [H].[step_id] IS NULL)
 	)
 	INSERT INTO @check_output
 		SELECT CASE 
-				WHEN ([C].[state_fail_check_enabled] = 1 
-						AND [J].[run_status] = 'FAIL') 
-					OR ([C].[state_cancel_check_enabled] = 1 
-						AND [J].[run_status] = 'CANCEL')
-					THEN [C].[state_check_alert]
-				WHEN [C].[runtime_check_enabled] = 1
+				WHEN (([C].[state_fail_check_enabled] = 1 AND [J].[run_status] = 'FAIL') OR ([C].[state_cancel_check_enabled] = 1 AND [J].[run_status] = 'CANCEL'))
+					THEN CASE /* Job status reports as failed or canceled */
+						WHEN [C].[is_continuous_running_job] = 0 /* If job is not continuous, raise alert */
+							THEN [C].[state_check_alert] 
+						WHEN [C].[is_continuous_running_job] = 1 AND [X].[stop_execution_date] IS NOT NULL /* If job is continuous and not running, raise alert */
+							THEN [C].[state_check_alert] 
+						END
+				WHEN [C].[runtime_check_enabled] = 1 /* If a non-continuous job is running and exceeded the configured runtime, raise alert  */
+					AND [C].[is_continuous_running_job] = 0
 					AND [X].[start_execution_date] IS NOT NULL 
 					AND [X].[stop_execution_date] IS NULL 
 					AND CAST(DATEDIFF(MINUTE,[X].[start_execution_date],GETDATE()) AS VARCHAR(10)) > [C].[runtime_check_min] 

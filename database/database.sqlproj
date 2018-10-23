@@ -223,7 +223,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="database.publish.xml" />
-    <None Include="update-submodules.ps1" />
+    <None Include="get-latest-submodules.ps1" />
   </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>
@@ -263,5 +263,8 @@
     <FileAlignment>8192</FileAlignment>
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
     <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>PowerShell.exe -ExecutionPolicy bypass -File "$(ProjectDir)get-latest-submodules.ps1"</PreBuildEvent>
   </PropertyGroup>
 </Project>
