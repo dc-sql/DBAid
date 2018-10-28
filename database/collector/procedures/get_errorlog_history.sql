@@ -90,7 +90,9 @@ BEGIN
 					OR [B].[message] LIKE N'Error:%Severity:%State:%(Params:%)%'
 				THEN N'SQL Server'
 				ELSE [A].[source] END
-			,[message_id] = CAST(SUBSTRING([A].[message],8,CHARINDEX(',',[A].[message])-8) AS INT)
+			,[message_id] = CASE WHEN [A].[message] LIKE N'Error:%Severity:%State:%'
+				THEN CAST(SUBSTRING([A].[message],8,CHARINDEX(',',[A].[message])-8) AS INT)
+				ELSE NULL END
             ,[message_header] = CASE WHEN [B].[message] LIKE N'%found % errors and repaired % errors%'
 					THEN N'ERROR:DBCC'
 				WHEN [B].[message] LIKE N'SQL Server has encountered%' 
