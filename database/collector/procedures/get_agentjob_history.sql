@@ -90,7 +90,11 @@ BEGIN
 	ORDER BY [H].[run_datetime];
 
 	IF (@update_execution_timestamp = 1)
-		UPDATE [collector].[last_execution] 
-		SET [last_execution] = @end_datetime 
-		WHERE [object_name] = OBJECT_NAME(@@PROCID);
+		MERGE INTO [collector].[last_execution] AS [Target]
+		USING (SELECT OBJECT_NAME(@@PROCID), @end_datetime) AS [Source]([object_name],[last_execution])
+		ON [Target].[object_name] = [Source].[object_name]
+		WHEN MATCHED THEN
+			UPDATE SET [Target].[last_execution] = [Source].[last_execution]
+		WHEN NOT MATCHED BY TARGET THEN 
+			INSERT ([object_name],[last_execution]) VALUES ([Source].[object_name],[Source].[last_execution]);
 END;
