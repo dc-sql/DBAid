@@ -66,6 +66,7 @@ Foreach ($file in (Get-ChildItem -Path $LoadDirectory -File -Filter '*.xml')) {
         $bc.BulkCopyTimeout = 1000
         $bc.DestinationTableName = $tblName
         $bc.WriteToServer($dt)
+        Rename-Item -Path $filePath -NewName "$fileName.processed"
     } catch {
         $_.Exception | Write-Output
     } finally {
