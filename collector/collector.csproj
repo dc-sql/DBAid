@@ -75,6 +75,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.XML" />
   </ItemGroup>
@@ -99,6 +100,9 @@
     <None Include="comcryptor.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="get-latest-7za.ps1" />
+    <None Include="load-xml.ps1" />
+    <None Include="set-app-config-defaults.ps1" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="7za.exe">
@@ -107,8 +111,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
+    <PreBuildEvent>PowerShell.exe -ExecutionPolicy bypass -File "$(ProjectDir)get-latest-7za.ps1"</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

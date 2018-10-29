@@ -90,7 +90,9 @@ BEGIN
 					OR [B].[message] LIKE N'Error:%Severity:%State:%(Params:%)%'
 				THEN N'SQL Server'
 				ELSE [A].[source] END
-			,[message_id] = CAST(SUBSTRING([A].[message],8,CHARINDEX(',',[A].[message])-8) AS INT)
+			,[message_id] = CASE WHEN [A].[message] LIKE N'Error:%Severity:%State:%'
+				THEN CAST(SUBSTRING([A].[message],8,CHARINDEX(',',[A].[message])-8) AS INT)
+				ELSE NULL END
             ,[message_header] = CASE WHEN [B].[message] LIKE N'%found % errors and repaired % errors%'
 					THEN N'ERROR:DBCC'
 				WHEN [B].[message] LIKE N'SQL Server has encountered%' 
@@ -124,7 +126,11 @@ BEGIN
 	ORDER BY [E].[id] ASC;
 
 	IF (@update_execution_timestamp = 1)
-		UPDATE [collector].[last_execution] 
-		SET [last_execution] = @end_datetime 
-		WHERE [object_name] = OBJECT_NAME(@@PROCID);
+		MERGE INTO [collector].[last_execution] AS [Target]
+		USING (SELECT OBJECT_NAME(@@PROCID), @end_datetime) AS [Source]([object_name],[last_execution])
+		ON [Target].[object_name] = [Source].[object_name]
+		WHEN MATCHED THEN
+			UPDATE SET [Target].[last_execution] = [Source].[last_execution]
+		WHEN NOT MATCHED BY TARGET THEN 
+			INSERT ([object_name],[last_execution]) VALUES ([Source].[object_name],[Source].[last_execution]);
 END;

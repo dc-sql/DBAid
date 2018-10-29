@@ -26,7 +26,7 @@
     <EnableFullTextSearch>False</EnableFullTextSearch>
     <AllowSnapshotIsolation>False</AllowSnapshotIsolation>
     <ReadCommittedSnapshot>False</ReadCommittedSnapshot>
-    <DacVersion>2.0.0.0</DacVersion>
+    <DacVersion>10.0</DacVersion>
     <GenerateSqlClrSymbols>False</GenerateSqlClrSymbols>
     <CloseCursorOnCommitEnabled>True</CloseCursorOnCommitEnabled>
   </PropertyGroup>
@@ -117,6 +117,7 @@
     <Folder Include="checkmk\tables" />
     <Folder Include="checkmk\procedures" />
     <Folder Include="ola-maintenance-solution" />
+    <Folder Include="health" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="system\configuration.sql" />
@@ -194,6 +195,14 @@
     </Build>
     <Build Include="ola-maintenance-solution\Queue.sql" />
     <Build Include="ola-maintenance-solution\QueueDatabase.sql" />
+    <Build Include="health\get_transaction_log.sql" />
+    <Build Include="health\get_index_fragmentation.sql" />
+    <Build Include="health\get_statistic_state.sql" />
+    <Build Include="health\get_file_io_performance.sql" />
+    <Build Include="health\get_block_process_history.sql" />
+    <Build Include="health\get_dead_lock_history.sql" />
+    <Build Include="system\procedure\generate_login_script.sql" />
+    <Build Include="system\function\get_hexadecimal.sql" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -214,7 +223,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="database.publish.xml" />
-    <None Include="update-submodules.ps1" />
+    <None Include="get-latest-submodules.ps1" />
   </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>
@@ -254,5 +263,9 @@
     <FileAlignment>8192</FileAlignment>
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
     <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
   </PropertyGroup>
 </Project>

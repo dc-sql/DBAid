@@ -12,6 +12,8 @@ CREATE SCHEMA [configg];
 GO
 CREATE SCHEMA [collector];
 GO
+CREATE SCHEMA [health];
+GO
 CREATE SCHEMA [system];
 GO
 

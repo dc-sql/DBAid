@@ -64,7 +64,7 @@ BEGIN
   --// Source:  https://ola.hallengren.com                                                        //--
   --// License: https://ola.hallengren.com/license.html                                           //--
   --// GitHub:  https://github.com/olahallengren/sql-server-maintenance-solution                  //--
-  --// Version: 2018-07-16 18:32:21                                                               //--
+  --// Version: 2018-10-28 14:45:02                                                               //--
   ----------------------------------------------------------------------------------------------------
 
   SET NOCOUNT ON
@@ -1604,6 +1604,7 @@ BEGIN
         SET DatabaseOrder = tmpDatabases.[Order]
         FROM dbo.QueueDatabase QueueDatabase
         INNER JOIN @tmpDatabases tmpDatabases ON QueueDatabase.DatabaseName = tmpDatabases.DatabaseName
+        WHERE QueueID = @QueueID
       END
 
       COMMIT TRANSACTION
