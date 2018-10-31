@@ -2,8 +2,6 @@
 WITH ENCRYPTION
 AS
 BEGIN
-	SELECT 'DATABASE' AS [heading], 'IO Performance' AS [subheading], '' AS [comment]
-
 	SELECT [db_name] = DB_NAME ([vfs].[database_id])
 		,[mf].[physical_name]
 		,[avg_latency_read_ms] = CASE WHEN [num_of_reads] = 0 THEN 0 ELSE ([io_stall_read_ms] / [num_of_reads]) END
