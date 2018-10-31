@@ -53,7 +53,7 @@ foreach ($i in $SqlServers) {
             $NewConnection = $AppConfigContent.CreateElement("add")
             $NewConnection.SetAttribute("name",$Name);
             $NewConnection.SetAttribute("connectionString",$ConnectionString);
-            $AppConfigContent.configuration.connectionStrings.AppendChild($NewConnection) #| Out-Null
+            $AppConfigContent.configuration.connectionStrings.AppendChild($NewConnection)
         }
     }
 }
