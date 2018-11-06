@@ -239,9 +239,7 @@
   <ItemGroup>
     <None Include="database.publish.xml" />
     <None Include="get-latest-submodules.ps1" />
-  </ItemGroup>
-  <ItemGroup>
-    <RefactorLog Include="database.refactorlog" />
+    <None Include="datamart\load-collector-xml-into-datamart.ps1" />
   </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>
