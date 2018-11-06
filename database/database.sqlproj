@@ -118,6 +118,9 @@
     <Folder Include="checkmk\procedures" />
     <Folder Include="ola-maintenance-solution" />
     <Folder Include="health" />
+    <Folder Include="datamart" />
+    <Folder Include="datamart\tables" />
+    <Folder Include="datamart\procedures" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="system\configuration.sql" />
@@ -203,6 +206,10 @@
     <Build Include="health\get_dead_lock_history.sql" />
     <Build Include="system\procedure\generate_login_script.sql" />
     <Build Include="system\function\get_hexadecimal.sql" />
+    <Build Include="datamart\tables\stage_agentjob_history.sql" />
+    <Build Include="datamart\tables\stage_backup_history.sql" />
+    <Build Include="datamart\tables\stage_errorlog_history.sql" />
+    <Build Include="datamart\tables\load_file_log.sql" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -224,6 +231,9 @@
   <ItemGroup>
     <None Include="database.publish.xml" />
     <None Include="get-latest-submodules.ps1" />
+  </ItemGroup>
+  <ItemGroup>
+    <RefactorLog Include="database.refactorlog" />
   </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>
