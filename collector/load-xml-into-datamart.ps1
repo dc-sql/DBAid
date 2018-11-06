@@ -1,16 +1,15 @@
 ﻿$DestDataSource = '.\SQL2012'
-$DestIntialCatalog = 'test'
 $LoadDirectory = 'C:\temp\'
 
 # Open connection to SQL Server destination
-$cn = new-object System.Data.SqlClient.SqlConnection("Data Source=$DestDataSource;Integrated Security=SSPI;Initial Catalog=$DestIntialCatalog");
+$cn = new-object System.Data.SqlClient.SqlConnection("Data Source=_dbaid;Integrated Security=SSPI;Initial Catalog=$DestIntialCatalog");
 $cn.Open()
 
 # Loop each xml file to load into destination
 Foreach ($file in (Get-ChildItem -Path $LoadDirectory -File -Filter '*.xml')) {
     $filePath = $File.FullName
     $fileName = $File.Name
-    $tblName = 'staging.' + $fileName.Split('_')[1] + '_' + $fileName.Split('_')[2]
+    $tblName = 'datamart.stage_' + $fileName.Split('_')[1] + '_' + $fileName.Split('_')[2]
 
     # check if destination table exists 
     $tblExistsCmd = "SELECT [object_id] FROM sys.tables WHERE SCHEMA_NAME([schema_id]) + '.' + [name] = N'$tblName'"
@@ -66,7 +65,10 @@ Foreach ($file in (Get-ChildItem -Path $LoadDirectory -File -Filter '*.xml')) {
         $bc.BulkCopyTimeout = 1000
         $bc.DestinationTableName = $tblName
         $bc.WriteToServer($dt)
-        Rename-Item -Path $filePath -NewName "$fileName.processed"
+		Rename-Item -Path $filePath -NewName "$fileName.processed"
+
+		$logInsert = "INSERT INTO [_dbaid].[datamart].[load_file_log] ([file_name]) VALUES ($filePath)"
+		(New-Object System.Data.SqlClient.SqlCommand($logInsert, $cn)).ExecuteNonQuery()
     } catch {
         $_.Exception | Write-Output
     } finally {
