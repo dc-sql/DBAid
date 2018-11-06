@@ -4,7 +4,10 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [checkmk].[chart_capacity_db]
+CREATE PROCEDURE [collector].[get_capacity_db]
+(
+	@update_execution_timestamp BIT = 0
+)
 WITH ENCRYPTION
 AS
 BEGIN
@@ -55,19 +58,35 @@ BEGIN
 		FROM [sys].[master_files] [F]
 		WHERE [F].[database_id] NOT IN (SELECT [database_id] FROM @file_info);
 
-	SELECT REPLACE(DB_NAME([d].[database_id]) + '_' + REPLACE(REPLACE([d].[volume_mount_point],':',''),'\','_') + '_' + [d].[data_type],'__','_') AS [name]
-		,SUM([f].[size_used_mb]) AS [used]
-		,SUM([f].[size_reserved_mb]) AS [reserved]
-		,[d].[volume_available_mb] AS [max]
-		,'MB' AS [uom]
+	SELECT [I].[instance_guid]
+		,[D1].[datetimeoffset]
+		,[database_name] = DB_NAME([d].[database_id])
+		,[d].[volume_mount_point]
+		,[d].[data_type]
+		,SUM([f].[size_used_mb]) AS [size_used_mb]
+		,SUM([f].[size_reserved_mb]) AS [size_reserved_mb]
+		,[d].[volume_available_mb]
 	FROM @drive_info [d]
 		INNER JOIN @file_info [f]
 			ON [d].[database_id] = [f].[database_id]
 				AND [d].[data_type] = [f].[data_type]
-	GROUP BY [d].[database_id], 
-		[d].[volume_mount_point],
-		[d].[volume_available_mb],
-		[d].[data_type]
+		CROSS APPLY [system].[get_instance_guid]() [I]
+		CROSS APPLY [system].[get_datetimeoffset](SYSDATETIME()) [D1]
+	GROUP BY [I].[instance_guid]
+		,[D1].[datetimeoffset]
+		,[d].[database_id]
+		,[d].[volume_mount_point]
+		,[d].[volume_available_mb]
+		,[d].[data_type]
 	ORDER BY DB_NAME([d].[database_id])
 		,[d].[data_type]
+
+	IF (@update_execution_timestamp = 1)
+		MERGE INTO [collector].[last_execution] AS [Target]
+		USING (SELECT OBJECT_NAME(@@PROCID), GETDATE()) AS [Source]([object_name],[last_execution])
+		ON [Target].[object_name] = [Source].[object_name]
+		WHEN MATCHED THEN
+			UPDATE SET [Target].[last_execution] = [Source].[last_execution]
+		WHEN NOT MATCHED BY TARGET THEN 
+			INSERT ([object_name],[last_execution]) VALUES ([Source].[object_name],[Source].[last_execution]);
 END
