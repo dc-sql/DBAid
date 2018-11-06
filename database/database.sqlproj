@@ -211,6 +211,13 @@
     <Build Include="datamart\tables\stage_errorlog_history.sql" />
     <Build Include="datamart\tables\load_file_log.sql" />
     <Build Include="datamart\tables\stage_capacity_db.sql" />
+    <Build Include="datamart\procedures\process_stage_data.sql" />
+    <Build Include="datamart\tables\dim_instance.sql" />
+    <Build Include="datamart\tables\dim_client.sql" />
+    <Build Include="datamart\tables\dim_database.sql" />
+    <Build Include="datamart\tables\dim_date.sql" />
+    <Build Include="datamart\tables\dim_time.sql" />
+    <Build Include="datamart\tables\fact_errorlog_history.sql" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -65,10 +65,13 @@ Foreach ($file in (Get-ChildItem -Path $LoadDirectory -File -Filter '*.xml')) {
         $bc.BulkCopyTimeout = 1000
         $bc.DestinationTableName = $tblName
         $bc.WriteToServer($dt)
+
+        Write-Host "Processed file: $fileName"
 		Rename-Item -Path $filePath -NewName "$fileName.processed"
 
 		$logInsert = "INSERT INTO [_dbaid].[datamart].[load_file_log] ([file_name]) VALUES (N'$filePath')"
 		(New-Object System.Data.SqlClient.SqlCommand($logInsert, $cn)).ExecuteNonQuery() | Out-Null
+        
     } catch {
         $_.Exception | Write-Output
     } finally {
