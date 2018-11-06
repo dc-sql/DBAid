@@ -210,6 +210,7 @@
     <Build Include="datamart\tables\stage_backup_history.sql" />
     <Build Include="datamart\tables\stage_errorlog_history.sql" />
     <Build Include="datamart\tables\load_file_log.sql" />
+    <Build Include="datamart\tables\stage_capacity_db.sql" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
