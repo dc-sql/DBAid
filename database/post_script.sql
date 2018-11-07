@@ -24,7 +24,6 @@ EXEC [system].[generate_secret] @length=20, @secret=@collector_secret OUT
 /* Insert static variables */
 MERGE INTO [system].[configuration] AS [Target] 
 USING (SELECT N'INSTANCE_GUID', CAST(NEWID() AS SQL_VARIANT)
-	UNION SELECT N'CAPACITY_CACHE_RETENTION_MONTH',3
 	UNION SELECT N'SANITISE_COLLECTOR_DATA',1
 	UNION SELECT N'COLLECTOR_SECRET', @collector_secret
 ) AS [Source] ([key],[value])  

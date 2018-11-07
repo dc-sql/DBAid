@@ -1,7 +1,7 @@
 ﻿CREATE TABLE [datamart].[dim_date]
 (
 	[date_id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-	[date] DATE NOT NULL,
+	[date] DATE NOT NULL UNIQUE,
 	[year] SMALLINT NOT NULL CONSTRAINT [ck_dim_date_year] CHECK ([year] BETWEEN 1900 AND 2050),
 	[month] TINYINT NOT NULL CONSTRAINT [ck_dim_date_month] CHECK ([month] BETWEEN 1 AND 12),
 	[day] TINYINT NOT NULL CONSTRAINT [ck_dim_date_day] CHECK ([day] BETWEEN 1 AND 31),

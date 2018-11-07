@@ -9,7 +9,7 @@ BEGIN
 	BEGIN TRANSACTION [process_stage_errorlog_history];
 	BEGIN TRY
 		/* populate instance dimension */
-		INSERT INTO [datamart].[dim_instance] 
+		INSERT INTO [datamart].[dim_instance] ([instance_guid])
 			SELECT DISTINCT 
 				[instance_guid] = [stage].[instance_guid]
 			FROM [datamart].[stage_errorlog_history] [stage]
