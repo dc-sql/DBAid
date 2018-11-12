@@ -169,7 +169,6 @@
     <Build Include="collector\tables\last_execution.sql" />
     <Build Include="checkmk\tables\config_database.sql" />
     <Build Include="checkmk\tables\config_agentjob.sql" />
-    <Build Include="checkmk\procedures\chart_capacity_db.sql" />
     <Build Include="checkmk\procedures\chart_capacity_fg.sql" />
     <Build Include="checkmk\procedures\check_agentjob.sql" />
     <None Include="checkmk\procedures\check_alwayson.sql" />
@@ -205,6 +204,7 @@
     <Build Include="system\function\get_hexadecimal.sql" />
     <Build Include="collector\procedures\get_instance_ci.sql" />
     <Build Include="collector\procedures\get_database_ci.sql" />
+    <Build Include="collector\procedures\get_capacity_db.sql" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -224,8 +224,8 @@
     </ArtifactReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="database.publish.xml" />
     <None Include="get-latest-submodules.ps1" />
+    <None Include="database.publish.xml" />
   </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>

@@ -1,4 +1,7 @@
 ﻿# Must execute script as Administrator
+$AppConfig = Get-ChildItem -Path . -Filter '*.exe.config'
+[xml]$AppConfigContent = $AppConfig | Get-Content
+
 [system.reflection.assembly]::LoadWithPartialName("Microsoft.SqlServer.Smo") | Out-Null
 [system.reflection.assembly]::LoadWithPartialName("Microsoft.SqlServer.SqlWmiManagement") | Out-Null
 [array]$SqlServers = @()
@@ -24,4 +27,35 @@ foreach ($i in (new-object Microsoft.SqlServer.Management.Smo.Wmi.ManagedCompute
     }
 }
  
-$SqlServers | Select host, instance, port
+foreach ($i in $SqlServers) {
+    $DataSource = (Join-Path $i.host $i.instance)
+    $Port = $i.port
+    $Name = $DataSource.Replace('\','@')
+    $Smo = new-object ('Microsoft.SqlServer.Management.Smo.Server') $DataSource
+    $Smo.ConnectionContext.ConnectTimeout = 1
+
+    try { 
+        $Smo.ConnectionContext.Connect()
+        if (-not $Smo.ConnectionContext.IsOpen) { continue }
+        if (-not $Smo.Databases.Contains('_dbaid')) { continue }
+    }
+    catch { continue }
+    finally { $Smo.ConnectionContext.Disconnect() }
+
+    if ($Port) {
+        $ConnectionString = "Server=$DataSource,$Port;Database=_dbaid;Trusted_Connection=True;"
+    } else {
+        $ConnectionString = "Server=$DataSource;Database=_dbaid;Trusted_Connection=True;"
+    }
+
+    if ($AppConfigContent.configuration.connectionStrings) {
+        if ($AppConfigContent.configuration.connectionStrings.add.Name -inotcontains $Name) {
+            $NewConnection = $AppConfigContent.CreateElement("add")
+            $NewConnection.SetAttribute("name",$Name);
+            $NewConnection.SetAttribute("connectionString",$ConnectionString);
+            $AppConfigContent.configuration.connectionStrings.AppendChild($NewConnection)
+        }
+    }
+}
+
+$AppConfigContent.Save($AppConfig.FullName)

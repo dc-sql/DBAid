@@ -101,8 +101,6 @@ BEGIN
 		DELETE FROM @databases WHERE db_name = @db_name;
 	END
 
-	SELECT 'DATABASE' AS [header], 'Transaction Log' AS [subheader], '' AS [comment];
-
 	SELECT [db_name]
 		,[file_name]
 		,[vlf_count]
