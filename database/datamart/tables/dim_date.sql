@@ -9,3 +9,7 @@
 	[quarter] TINYINT NOT NULL CONSTRAINT [ck_dim_date_quarter] CHECK ([quarter] BETWEEN 1 AND 4),
 	[end_of_month] DATE NOT NULL
 )
+
+GO
+
+CREATE INDEX [IX_dim_date_date] ON [datamart].[dim_date] ([date])
