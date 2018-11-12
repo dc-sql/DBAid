@@ -203,6 +203,8 @@
     <Build Include="health\get_dead_lock_history.sql" />
     <Build Include="system\procedure\generate_login_script.sql" />
     <Build Include="system\function\get_hexadecimal.sql" />
+    <Build Include="collector\procedures\get_instance_ci.sql" />
+    <Build Include="collector\procedures\get_database_ci.sql" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
