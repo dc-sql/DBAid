@@ -1,16 +1,15 @@
-﻿$DestDataSource = '.\SQL2012'
-$DestIntialCatalog = 'test'
+﻿$DestDataSource = '.\SQL2017'
 $LoadDirectory = 'C:\temp\'
 
 # Open connection to SQL Server destination
-$cn = new-object System.Data.SqlClient.SqlConnection("Data Source=$DestDataSource;Integrated Security=SSPI;Initial Catalog=$DestIntialCatalog");
+$cn = new-object System.Data.SqlClient.SqlConnection("Data Source=$DestDataSource;Integrated Security=SSPI;Initial Catalog=_dbaid");
 $cn.Open()
 
 # Loop each xml file to load into destination
 Foreach ($file in (Get-ChildItem -Path $LoadDirectory -File -Filter '*.xml')) {
     $filePath = $File.FullName
     $fileName = $File.Name
-    $tblName = 'staging.' + $fileName.Split('_')[1] + '_' + $fileName.Split('_')[2]
+    $tblName = 'datamart.stage_' + $fileName.Split('_')[1] + '_' + $fileName.Split('_')[2]
 
     # check if destination table exists 
     $tblExistsCmd = "SELECT [object_id] FROM sys.tables WHERE SCHEMA_NAME([schema_id]) + '.' + [name] = N'$tblName'"
@@ -53,7 +52,7 @@ Foreach ($file in (Get-ChildItem -Path $LoadDirectory -File -Filter '*.xml')) {
         $tblCreate += "END"
 
         try { # try to create the table, catch on error and continue loop with next file
-            (New-Object System.Data.SqlClient.SqlCommand($tblCreate, $cn)).ExecuteNonQuery()
+            (New-Object System.Data.SqlClient.SqlCommand($tblCreate, $cn)).ExecuteNonQuery() | Out-Null
         } catch {
             $_.Exception | Write-Output
             continue;
@@ -66,7 +65,13 @@ Foreach ($file in (Get-ChildItem -Path $LoadDirectory -File -Filter '*.xml')) {
         $bc.BulkCopyTimeout = 1000
         $bc.DestinationTableName = $tblName
         $bc.WriteToServer($dt)
-        Rename-Item -Path $filePath -NewName "$fileName.processed"
+
+        Write-Host "Processed file: $fileName"
+		Rename-Item -Path $filePath -NewName "$fileName.processed"
+
+		$logInsert = "INSERT INTO [_dbaid].[datamart].[load_file_log] ([file_name]) VALUES (N'$filePath')"
+		(New-Object System.Data.SqlClient.SqlCommand($logInsert, $cn)).ExecuteNonQuery() | Out-Null
+        
     } catch {
         $_.Exception | Write-Output
     } finally {

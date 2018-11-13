@@ -118,6 +118,9 @@
     <Folder Include="checkmk\procedures" />
     <Folder Include="ola-maintenance-solution" />
     <Folder Include="health" />
+    <Folder Include="datamart" />
+    <Folder Include="datamart\tables" />
+    <Folder Include="datamart\procedures" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="system\configuration.sql" />
@@ -205,6 +208,20 @@
     <Build Include="collector\procedures\get_instance_ci.sql" />
     <Build Include="collector\procedures\get_database_ci.sql" />
     <Build Include="collector\procedures\get_capacity_db.sql" />
+    <Build Include="datamart\tables\stage_agentjob_history.sql" />
+    <Build Include="datamart\tables\stage_backup_history.sql" />
+    <Build Include="datamart\tables\stage_errorlog_history.sql" />
+    <Build Include="datamart\tables\load_file_log.sql" />
+    <Build Include="datamart\procedures\process_stage_data.sql" />
+    <Build Include="datamart\tables\dim_database.sql" />
+    <Build Include="datamart\tables\dim_date.sql" />
+    <Build Include="datamart\tables\dim_instance.sql" />
+    <Build Include="datamart\tables\dim_time.sql" />
+    <Build Include="datamart\tables\fact_errorlog_history.sql" />
+    <Build Include="datamart\tables\stage_capacity_db.sql" />
+    <Build Include="datamart\tables\fact_agentjob_history.sql" />
+    <Build Include="datamart\tables\fact_backup_history.sql" />
+    <Build Include="datamart\tables\fact_capacity_db.sql" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -224,8 +241,9 @@
     </ArtifactReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="get-latest-submodules.ps1" />
     <None Include="database.publish.xml" />
+    <None Include="get-latest-submodules.ps1" />
+    <None Include="datamart\load-collector-xml-into-datamart.ps1" />
   </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>
