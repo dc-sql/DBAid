@@ -1,16 +1,11 @@
-﻿/*
-Copyright (C) 2015 Datacom
-GNU GENERAL PUBLIC LICENSE
-Version 3, 29 June 2007
-*/
-
-CREATE PROCEDURE [configg].[get_server_property]
+﻿CREATE PROCEDURE [collector].[get_instance_ci]
+(
+	@update_execution_timestamp BIT = 0
+)
 WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;
-
-	SELECT 'INSTANCE' AS [heading], 'Server Property' AS [subheading], 'Results are from SERVERPROPERTY() system function.' AS [comment]
 
 	DECLARE @flags TABLE([flag] INT, [enabled] BIT, [global] BIT, [session] INT);
 	DECLARE @server_properties TABLE ([property] sysname); 
@@ -61,10 +56,23 @@ BEGIN
 		('FilestreamConfiguredLevel'),
 		('FilestreamEffectiveLevel');
 
-	SELECT [property]
+	SELECT [i].[instance_guid]
+		,[property]
 		,CAST(SERVERPROPERTY([property]) AS NVARCHAR(128)) 
-	FROM @server_properties
+	FROM @server_properties [p]
+		CROSS APPLY [system].[get_instance_guid]() [i]
 	UNION 
-	SELECT [property] = 'GlobalTraceFlags'
+	SELECT [i].[instance_guid]
+		,[property] = 'GlobalTraceFlags'
 		,REPLACE(REPLACE(REPLACE((SELECT [flag] FROM @flags WHERE [enabled]=1 AND [global]=1 FOR XML PATH('')),'</flag><flag>',', '),'<flag>', ''),'</flag>','')
+	FROM [system].[get_instance_guid]() [i]
+
+	IF (@update_execution_timestamp = 1)
+		MERGE INTO [collector].[last_execution] AS [Target]
+		USING (SELECT OBJECT_NAME(@@PROCID), GETDATE()) AS [Source]([object_name],[last_execution])
+		ON [Target].[object_name] = [Source].[object_name]
+		WHEN MATCHED THEN
+			UPDATE SET [Target].[last_execution] = [Source].[last_execution]
+		WHEN NOT MATCHED BY TARGET THEN 
+			INSERT ([object_name],[last_execution]) VALUES ([Source].[object_name],[Source].[last_execution]);
 END
