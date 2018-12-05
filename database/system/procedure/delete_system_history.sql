@@ -8,7 +8,8 @@ CREATE PROCEDURE [system].[delete_system_history]
 	@job_olderthan_day INT = 92,
 	@backup_olderthan_day INT = 92,
 	@dbmail_olderthan_day INT = 92,
-	@maintplan_olderthan_day INT = 92
+	@maintplan_olderthan_day INT = 92,
+	@ola_cmdlog_olderthan_day INT = 92
 WITH ENCRYPTION
 AS
 BEGIN
@@ -21,6 +22,10 @@ BEGIN
 	IF @backup_olderthan_day > 0 SET @backup_olderthan_day = @backup_olderthan_day * -1;
 	IF @dbmail_olderthan_day > 0 SET @dbmail_olderthan_day = @dbmail_olderthan_day * -1;
 	IF @maintplan_olderthan_day > 0 SET @maintplan_olderthan_day = @maintplan_olderthan_day * -1;
+	IF @ola_cmdlog_olderthan_day > 0 SET @ola_cmdlog_olderthan_day = @ola_cmdlog_olderthan_day * -1;
+	
+	/* Clean-up ola commandlog */
+	DELETE FROM [dbo].[CommandLog] WHERE [EndTime] < DATEADD(DAY, @ola_cmdlog_olderthan_day, GETDATE());
 
 	/* Clean-up logshipping history */
 	DECLARE curse CURSOR FAST_FORWARD FOR
