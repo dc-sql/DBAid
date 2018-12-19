@@ -463,7 +463,7 @@ BEGIN
       	@description = N'Called from "_dbaid_set_ag_agent_job_state" alert. The alert is DISABLED by default and should remain disabled if manual failover is configured as if this server is restarted, the alert detects a failover event and enables/disables the jobs. However, failover doesn''t actually occur, and the alert doesn''t detect the primary coming back online to enable/disable the jobs.',
 				@job_id = @jobId OUTPUT;
 
-		SET @cmd = N'EXEC [_dbaid].[system].[set_ag_agent_job_state] @ag_name = N''<Availability Group Name>'';';
+		SET @cmd = N'EXEC [_dbaid].[system].[set_ag_agent_job_state] @ag_name = N''<Availability Group Name>'', @wait_seconds = 30;';
 
 		SET @out = @JobTokenLogDir + N'\_dbaid_integrity_check_system_' + @JobTokenDateTime + N'.log';
 

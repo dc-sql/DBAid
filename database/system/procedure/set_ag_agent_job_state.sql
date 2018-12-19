@@ -1,4 +1,10 @@
-﻿CREATE PROCEDURE [system].[set_ag_agent_job_state] @ag_name sysname
+﻿/*
+Copyright (C) 2015 Datacom
+GNU GENERAL PUBLIC LICENSE
+Version 3, 29 June 2007
+*/
+
+CREATE PROCEDURE [system].[set_ag_agent_job_state] @ag_name sysname, @wait_seconds int = 30
 WITH ENCRYPTION
 AS
 
@@ -10,6 +16,9 @@ If it is secondary, it enables jobs in the "_dbaid_AG_secondary_only" category. 
 */
     
   SET NOCOUNT ON;
+
+  /* allow time for roles to change, otherwise jobs won't get updated as intended */
+  WAITFOR DELAY @wait_seconds;
 
   DECLARE @_job_id uniqueidentifier
           ,@_is_primary_replica tinyint
