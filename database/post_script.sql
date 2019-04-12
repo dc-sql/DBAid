@@ -460,7 +460,7 @@ BEGIN
 		EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_set_ag_agent_job_state', @owner_login_name=@owner,
 				@enabled=0,
 				@category_name=N'_dbaid_ag_job_maintenance',
-      	@description = N'Called from "_dbaid_set_ag_agent_job_state" alert. The alert is DISABLED by default and should remain disabled if manual failover is configured as if this server is restarted, the alert detects a failover event and enables/disables the jobs. However, failover doesn''t actually occur, and the alert doesn''t detect the primary coming back online to enable/disable the jobs.',
+      	@description = N'Called from "_dbaid_set_ag_agent_job_state" alert. The alert and job are DISABLED by default and should remain disabled if manual failover is configured as if this server is restarted, the alert detects a failover event and enables/disables the jobs. However, failover doesn''t actually occur, and the alert doesn''t detect the primary coming back online to enable/disable the jobs. Both the alert and this job need to be enabled for jobs to be updated after failover.',
 				@job_id = @jobId OUTPUT;
 
 		SET @cmd = N'EXEC [_dbaid].[system].[set_ag_agent_job_state] @ag_name = N''<Availability Group Name>'', @wait_seconds = 30;';
