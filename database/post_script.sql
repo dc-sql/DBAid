@@ -60,6 +60,15 @@ GO
 EXEC [checkmk].[inventory_agentjob];
 GO
 
+/* Create job categories */
+IF NOT EXISTS (SELECT 1 FROM msdb.dbo.syscategories WHERE [name] = N'_dbaid_ag_primary_only')
+  EXEC msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'_dbaid_ag_primary_only';
+IF NOT EXISTS (SELECT 1 FROM msdb.dbo.syscategories WHERE [name] = N'_dbaid_ag_secondary_only')  
+  EXEC msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'_dbaid_ag_secondary_only';
+IF NOT EXISTS (SELECT 1 FROM msdb.dbo.syscategories WHERE [name] = N'_dbaid_ag_job_maintenance')
+  EXEC msdb.dbo.sp_add_category @class = N'JOB', @type = N'LOCAL', @name = N'_dbaid_ag_job_maintenance';
+GO
+
 /* Create Maintenance Jobs */
 USE [msdb]
 GO
@@ -438,5 +447,46 @@ BEGIN
 
 		EXEC msdb.dbo.sp_add_jobserver @job_id=@jobId, @server_name = N'(local)';
 	COMMIT TRANSACTION
+
+	SET @jobId = NULL;
+
+	IF EXISTS (SELECT [job_id] FROM [msdb].[dbo].[sysjobs_view] WHERE [name] = N'_dbaid_set_ag_agent_job_state')
+	BEGIN
+		SET @cmd = N'__DELETE_dbaid_set_ag_agent_job_state_' + @timestamp
+		EXEC msdb.dbo.sp_update_job @job_name=N'_dbaid_set_ag_agent_job_state', @new_name=@cmd, @enabled = 0;
+	END
+
+	BEGIN TRANSACTION
+		EXEC msdb.dbo.sp_add_job @job_name=N'_dbaid_set_ag_agent_job_state', @owner_login_name=@owner,
+				@enabled=0,
+				@category_name=N'_dbaid_ag_job_maintenance',
+      	@description = N'Called from "_dbaid_set_ag_agent_job_state" alert. The alert and job are DISABLED by default and should remain disabled if manual failover is configured as if this server is restarted, the alert detects a failover event and enables/disables the jobs. However, failover doesn''t actually occur, and the alert doesn''t detect the primary coming back online to enable/disable the jobs. Both the alert and this job need to be enabled for jobs to be updated after failover.',
+				@job_id = @jobId OUTPUT;
+
+		SET @cmd = N'EXEC [_dbaid].[system].[set_ag_agent_job_state] @ag_name = N''<Availability Group Name>'', @wait_seconds = 30;';
+
+		SET @out = @JobTokenLogDir + N'\_dbaid_integrity_check_system_' + @JobTokenDateTime + N'.log';
+
+		EXEC msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Enable or disable jobs as required',
+				@step_id=1, @cmdexec_success_code=0, @on_success_action=1, @on_fail_action=2, @subsystem=N'TSQL',
+				@command=@cmd,
+				@flags=2;
+
+		IF EXISTS (SELECT TOP(1) [schedule_id] FROM msdb.dbo.sysschedules WHERE [name] = N'_dbaid_set_ag_agent_job_state')
+		BEGIN
+			SET @schid = NULL;
+			SELECT TOP(1) @schid=[schedule_id] FROM msdb.dbo.sysschedules WHERE [name] = N'_dbaid_set_ag_agent_job_state';
+			EXEC msdb.dbo.sp_attach_schedule @job_id=@jobId, @schedule_id=@schid
+		END
+		ELSE
+			EXEC msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'_dbaid_set_ag_agent_job_state',
+				@enabled=1, @freq_type=64, @freq_interval=0, @freq_subday_type=0, @freq_recurrence_factor=0, @active_start_time=0;
+
+		EXEC msdb.dbo.sp_add_jobserver @job_id=@jobId, @server_name = N'(local)';
+	COMMIT TRANSACTION
 END
+GO
+
+/* Create SQL Agent alert */
+EXEC msdb.dbo.sp_add_alert @name = N'_dbaid_set_AG_agent_job_state', @message_id = 1480, @severity = 0, @enabled = 0, @delay_between_responses = 0, @include_event_description_in = 1, @job_name = N'_dbaid_set_AG_agent_job_state';
 GO

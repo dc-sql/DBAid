@@ -222,6 +222,7 @@
     <Build Include="datamart\tables\fact_agentjob_history.sql" />
     <Build Include="datamart\tables\fact_backup_history.sql" />
     <Build Include="datamart\tables\fact_capacity_db.sql" />
+    <Build Include="system\procedure\set_ag_agent_job_state.sql" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
