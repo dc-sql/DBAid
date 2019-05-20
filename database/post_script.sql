@@ -488,5 +488,6 @@ END
 GO
 
 /* Create SQL Agent alert */
-EXEC msdb.dbo.sp_add_alert @name = N'_dbaid_set_AG_agent_job_state', @message_id = 1480, @severity = 0, @enabled = 0, @delay_between_responses = 0, @include_event_description_in = 1, @job_name = N'_dbaid_set_AG_agent_job_state';
+IF NOT EXISTS (SELECT 1 FROM msdb.dbo.sysalerts WHERE [name] = N'_dbaid_set_AG_agent_job_state')
+  EXEC msdb.dbo.sp_add_alert @name = N'_dbaid_set_AG_agent_job_state', @message_id = 1480, @severity = 0, @enabled = 0, @delay_between_responses = 0, @include_event_description_in = 1, @job_name = N'_dbaid_set_AG_agent_job_state';
 GO
