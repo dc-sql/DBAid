@@ -231,7 +231,7 @@ BEGIN
 	INSERT INTO @results
 	SELECT '2.16','2.16 Ensure ''AUTO_CLOSE OFF'' is set on contained databases (Scored)' AS [Policy Name], [pass], [value] FROM #__contained;
 	INSERT INTO @results
-	SELECT '2.17','2.17 Ensure no login exists with the name ''sa'' (Scored)' AS [Policy Name], CASE WHEN EXISTS(SELECT [name] FROM [master].[sys].[server_principals] WHERE [name] = 'sa') THEN 0 ELSE 1 END AS [score], CASE WHEN EXISTS(SELECT [name] FROM [master].[sys].[server_principals] WHERE [name] = 'sa') THEN CAST('sa' AS NVARCHAR(128)) ELSE '0' END AS [value]
+	SELECT '2.17','2.17 Ensure no login exists with the name ''sa'' (Scored)' AS [Policy Name], CASE WHEN EXISTS(SELECT [name] FROM [master].[sys].[server_principals] WHERE [name] = 'sa') THEN '0' ELSE '1' END AS [score], CASE WHEN EXISTS(SELECT [name] FROM [master].[sys].[server_principals] WHERE [name] = 'sa') THEN CAST('sa' AS NVARCHAR(128)) ELSE '0' END AS [value]
 
 	--3. Authentication and Authorization
 	INSERT INTO @results
