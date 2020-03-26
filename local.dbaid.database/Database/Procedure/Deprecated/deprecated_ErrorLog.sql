@@ -13,7 +13,6 @@ SET NOCOUNT ON;
 EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
 
 DECLARE @mindate DATETIME;
-DECLARE @loop INT;
 Declare @client varchar(128)
 DECLARE @last_execute DATETIME;
 DECLARE @report_datetime DATETIME;
@@ -43,26 +42,31 @@ create table #errfound
 	)
 
 SET @report_datetime = GETDATE();
--- @lognum varaible for the number of errorlogs to review
+-- @lognum variable for the number of errorlogs to review
 INSERT INTO @enumerrorlogs EXEC [master].[dbo].[xp_enumerrorlogs];
-SELECT @lognum = MAX([archive]) FROM @enumerrorlogs;
 
 SET @mindate = GETDATE()
-SET @loop = 0;
 
 /* Insert error log messages */
-	WHILE (@loop <= @lognum)
+DECLARE curse CURSOR FAST_FORWARD FOR SELECT [archive] FROM @enumerrorlogs ORDER BY [date] DESC;
+OPEN curse;
+FETCH NEXT FROM curse INTO @lognum;
+
+	WHILE (@@FETCH_STATUS = 0)
 	BEGIN
 		INSERT INTO #errlog(date_time, ProcessInfo, err)
-			EXEC [master].[dbo].[xp_readerrorlog] @loop, 1, NULL, NULL, @last_execute, @report_datetime;
+			EXEC [master].[dbo].[xp_readerrorlog] @lognum, 1, NULL, NULL, @last_execute, @report_datetime;
 
 		IF (@@ROWCOUNT = 0)
 		BEGIN
 			BREAK;
 		END
 
-		SET @loop = @loop + 1;
+		FETCH NEXT FROM curse INTO @lognum;
 	END;
+
+CLOSE curse;
+DEALLOCATE curse;
 
 --display only the entries of the day in question.
 insert #errfound
