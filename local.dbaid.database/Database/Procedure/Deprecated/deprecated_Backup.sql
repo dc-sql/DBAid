@@ -44,7 +44,8 @@ SELECT @client AS [Servername]
 		WHEN [tbp].[setting] = 0 OR [LS].[secondary_database] IS NOT NULL OR DATABASEPROPERTYEX([db].[name],'Status') = N'RESTORING' THEN 'Backup not required' --Covering log shipped and readonly databases.
 		WHEN DATABASEPROPERTYEX([db].[name],'Updateability') = N'READ_ONLY' THEN 'Read only database' --Read only database.
 		WHEN DATABASEPROPERTYEX([db].[name],'IsInStandBy') = 1 THEN 'Standby database' --Standby database.
-		WHEN DATABASEPROPERTYEX([db].[name],'Status') = N'OFFLINE' THEN 'IsOffline database' --Off line database.
+		WHEN DATABASEPROPERTYEX([db].[name],'Status') = N'OFFLINE' AND ([tbpo].[status] <> 1 OR [tbpo].[status] IS NULL) THEN 'IsOffline database' --Off line database.
+		WHEN DATABASEPROPERTYEX([db].[name],'Status') = N'OFFLINE' AND [tbpo].[status] = 1 THEN 'OK' --Ignore offline database if "excluded_from_Monitoring_DBName" is set in [deprecated].[tbparameters].
 		WHEN ([mbd].[DB_Name] IS NULL AND [db].[crdate] < DATEADD(DAY, -1, GETDATE())) THEN 'Never backed up' --Database has not backup date and is over a day old
 		WHEN ([db].[name] IS NULL) THEN 'Deleted' -- The database does not exsist in the sysdatabase table
 		WHEN ([Start_Date] >= GETDATE() - ISNULL(CONVERT(INT, [tbp].[setting]), 1)) THEN 'OK' -- The backup is not older than the retention period set in the tbparameter table
@@ -65,6 +66,9 @@ FROM [master].[dbo].[sysdatabases] [db]
 	LEFT JOIN [deprecated].[tbparameters] [tbpr] 
 		ON [db].[name] = [tbpr].[parametername] COLLATE database_default
 			AND [tbpr].[comments] like 'Exclude from restored database report'
+	LEFT JOIN [deprecated].[tbparameters] [tbpo] 
+		ON [db].[name] = [tbpo].[setting] COLLATE database_default
+			AND [tbpo].[parametername] LIKE 'excluded_from_Monitoring_DBName'
 WHERE NOT([db].[name] IS NULL AND [Start_Date] < GETDATE() - (ISNULL(CONVERT(INT, [tbp].[setting]), 1) + 1)) -- Remove all that were deleted over a day ago.
 	OR [db].[name] LIKE 'tempdb'
 ORDER BY [Status]
