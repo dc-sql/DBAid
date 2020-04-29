@@ -122,6 +122,13 @@ INSERT INTO [dbo].[procedure] ([procedure_id],[schema_name],[procedure_name],[de
 		AND [P].[procedure_id] IS NULL
 	ORDER BY OBJECT_SCHEMA_NAME(object_id), OBJECT_NAME(object_id);
 
+-- remove reference to procedure that only works on SQL 2012 or higher.
+-- shouldn't be deploying to SQL 2008 any more, but this is the only thing so far that is incompatible
+IF (SELECT SERVERPROPERTY('ProductMajorVersion')) < 11
+  DELETE FROM [dbo].[procedure]
+  WHERE [schema_name] = 'chart'
+    AND [procedure_name] = 'capacity_combined';
+    
 UPDATE [dbo].[procedure] SET [procedure_id] = [O].[object_id]
 FROM [sys].[objects] [O]
 WHERE [schema_name] = OBJECT_SCHEMA_NAME([O].[object_id])
