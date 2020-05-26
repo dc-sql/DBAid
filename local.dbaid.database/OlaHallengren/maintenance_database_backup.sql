@@ -4,13 +4,15 @@
   --// GitHub:  https://github.com/olahallengren/sql-server-maintenance-solution                  //--
   --// Version: 2020-01-26 14:06:53                                                               //--
   ----------------------------------------------------------------------------------------------------
-
+/*
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[DatabaseBackup]') AND type in (N'P', N'PC'))
 BEGIN
   EXEC dbo.sp_executesql @statement = N'CREATE PROCEDURE [dbo].[DatabaseBackup] AS'
 END
 GO
 ALTER PROCEDURE [dbo].[DatabaseBackup]
+--*/
+CREATE PROCEDURE [maintenance].[database_backup]
 (
   @Databases nvarchar(max) = NULL,
   @Directory nvarchar(max) = NULL,

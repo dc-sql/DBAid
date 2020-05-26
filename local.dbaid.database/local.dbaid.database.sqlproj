@@ -35,7 +35,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectVersion>4.1</ProjectVersion>
     <ProjectGuid>{30bbb9ff-8cb9-44cb-b27e-d722fa8552e4}</ProjectGuid>
-    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql90DatabaseSchemaProvider</DSP>
+    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql110DatabaseSchemaProvider</DSP>
     <OutputType>Database</OutputType>
     <RootPath>
     </RootPath>
@@ -83,6 +83,7 @@
     <WarningLevel>4</WarningLevel>
     <FileAlignment>8192</FileAlignment>
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
+    <SuppressTSqlWarnings>71502,70001,71562</SuppressTSqlWarnings>
   </PropertyGroup>
   <!-- VS10 without SP1 will not have VisualStudioVersion set, so do that here -->
   <PropertyGroup />
@@ -190,16 +191,20 @@
     <Build Include="Database\Procedure\Control\control_log.sql" />
     <Build Include="Database\Function\dbo_string_date_with_offset.sql" />
     <Build Include="OlaHallengren\dbo_command_execute.sql">
-      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
+      <SuppressTSqlWarnings>
+      </SuppressTSqlWarnings>
     </Build>
     <Build Include="OlaHallengren\maintenance_index_optimize.sql">
-      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
+      <SuppressTSqlWarnings>
+      </SuppressTSqlWarnings>
     </Build>
     <Build Include="OlaHallengren\maintenance_integrity_check.sql">
-      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
+      <SuppressTSqlWarnings>
+      </SuppressTSqlWarnings>
     </Build>
     <Build Include="OlaHallengren\maintenance_database_backup.sql">
-      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
+      <SuppressTSqlWarnings>
+      </SuppressTSqlWarnings>
     </Build>
     <Build Include="OlaHallengren\dbo_command_log.sql">
       <SuppressTSqlWarnings>
@@ -270,7 +275,7 @@
       <Value>$(SqlCmdVar__16)</Value>
     </SqlCmdVariable>
     <SqlCmdVariable Include="Version">
-      <DefaultValue>0</DefaultValue>
+      <DefaultValue>6.3.1</DefaultValue>
       <Value>$(SqlCmdVar__17)</Value>
     </SqlCmdVariable>
   </ItemGroup>
@@ -281,13 +286,13 @@
     <PreDeploy Include="Database\Script.PreDeployment.sql" />
   </ItemGroup>
   <ItemGroup>
-    <ArtifactReference Include="$(DacPacRootPath)\Extensions\Microsoft\SQLDB\Extensions\SqlServer\90\SqlSchemas\master.dacpac">
-      <HintPath>$(DacPacRootPath)\Extensions\Microsoft\SQLDB\Extensions\SqlServer\90\SqlSchemas\master.dacpac</HintPath>
+    <ArtifactReference Include="$(DacPacRootPath)\Extensions\Microsoft\SQLDB\Extensions\SqlServer\110\SqlSchemas\master.dacpac">
+      <HintPath>$(DacPacRootPath)\Extensions\Microsoft\SQLDB\Extensions\SqlServer\110\SqlSchemas\master.dacpac</HintPath>
       <SuppressMissingDependenciesErrors>True</SuppressMissingDependenciesErrors>
       <DatabaseVariableLiteralValue>master</DatabaseVariableLiteralValue>
     </ArtifactReference>
-    <ArtifactReference Include="$(DacPacRootPath)\Extensions\Microsoft\SQLDB\Extensions\SqlServer\90\SqlSchemas\msdb.dacpac">
-      <HintPath>$(DacPacRootPath)\Extensions\Microsoft\SQLDB\Extensions\SqlServer\90\SqlSchemas\msdb.dacpac</HintPath>
+    <ArtifactReference Include="$(DacPacRootPath)\Extensions\Microsoft\SQLDB\Extensions\SqlServer\110\SqlSchemas\msdb.dacpac">
+      <HintPath>$(DacPacRootPath)\Extensions\Microsoft\SQLDB\Extensions\SqlServer\110\SqlSchemas\msdb.dacpac</HintPath>
       <SuppressMissingDependenciesErrors>True</SuppressMissingDependenciesErrors>
       <DatabaseVariableLiteralValue>msdb</DatabaseVariableLiteralValue>
     </ArtifactReference>
