@@ -231,6 +231,8 @@
     <Build Include="Database\Procedure\fact\fact_cis_benchmark.sql" />
     <Build Include="who_is_active\who_is_active.sql" />
     <None Include="Database\Procedure\check\chart_capacity_combined.sql" />
+    <Build Include="OlaHallengren\dbo_queue.sql" />
+    <Build Include="OlaHallengren\dbo_queue_database.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Database\Script.PostDeployment.sql" />
