@@ -14,7 +14,7 @@ EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
 DECLARE @client varchar(128)
 select @client = replace(replace(replace(CAST(serverproperty('servername') as varchar(128))+[setting],'@','_'),'.','_'),'\','#')  from [deprecated].[tbparameters] where [parametername] = 'Client_domain'
 
-select @client as 'Client', Getdate() as 'Checkdate',db.[name], CAST(ROUND(SUM([size])/128.00, 2) AS NUMERIC(20,2)) as size, 
+select @client as 'Client', Getdate() as 'Checkdate',db.[name], CAST(ROUND(SUM(CAST([size] AS bigint))/128.00, 2) AS NUMERIC(20,2)) as size, 
  isnull(suser_sname(db.owner_sid),'~~UNKNOWN~~') as owner,
   db.database_id as dbid ,
   db.create_date as Created ,
