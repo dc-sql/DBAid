@@ -79,7 +79,6 @@ BEGIN
   DECLARE @DatabaseMessage nvarchar(max)
   DECLARE @ErrorMessage nvarchar(max)
   DECLARE @Severity int
-
   DECLARE @StartTime datetime2 = SYSDATETIME()
   DECLARE @SchemaName nvarchar(max) = OBJECT_SCHEMA_NAME(@@PROCID)
   DECLARE @ObjectName nvarchar(max) = OBJECT_NAME(@@PROCID)
