@@ -4,13 +4,14 @@
   --// GitHub:  https://github.com/olahallengren/sql-server-maintenance-solution                  //--
   --// Version: 2020-01-26 14:06:53                                                               //--
   ----------------------------------------------------------------------------------------------------
-
+/*
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[QueueDatabase]') AND type in (N'U'))
-BEGIN
+--*/
+--BEGIN
 CREATE TABLE [dbo].[QueueDatabase](
   [QueueID] [int] NOT NULL,
   [DatabaseName] [sysname] NOT NULL,
@@ -26,12 +27,12 @@ CREATE TABLE [dbo].[QueueDatabase](
   [DatabaseName] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
 )
-END
+--END
 GO
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE object_id = OBJECT_ID(N'[dbo].[FK_QueueDatabase_Queue]') AND parent_object_id = OBJECT_ID(N'[dbo].[QueueDatabase]'))
-	ALTER TABLE [dbo].[QueueDatabase]  WITH CHECK ADD  CONSTRAINT [FK_QueueDatabase_Queue] FOREIGN KEY([QueueID])
+--IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE object_id = OBJECT_ID(N'[dbo].[FK_QueueDatabase_Queue]') AND parent_object_id = OBJECT_ID(N'[dbo].[QueueDatabase]'))
+	ALTER TABLE [dbo].[QueueDatabase] ADD CONSTRAINT [FK_QueueDatabase_Queue] FOREIGN KEY([QueueID])
 	REFERENCES [dbo].[Queue] ([QueueID])
 GO
-IF  EXISTS (SELECT * FROM sys.foreign_keys WHERE object_id = OBJECT_ID(N'[dbo].[FK_QueueDatabase_Queue]') AND parent_object_id = OBJECT_ID(N'[dbo].[QueueDatabase]'))
+--IF  EXISTS (SELECT * FROM sys.foreign_keys WHERE object_id = OBJECT_ID(N'[dbo].[FK_QueueDatabase_Queue]') AND parent_object_id = OBJECT_ID(N'[dbo].[QueueDatabase]'))
 	ALTER TABLE [dbo].[QueueDatabase] CHECK CONSTRAINT [FK_QueueDatabase_Queue]
 GO

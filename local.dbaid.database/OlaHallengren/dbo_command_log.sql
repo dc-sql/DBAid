@@ -4,13 +4,14 @@
   --// GitHub:  https://github.com/olahallengren/sql-server-maintenance-solution                  //--
   --// Version: 2020-01-26 14:06:53                                                               //--
   ----------------------------------------------------------------------------------------------------
-
+/*
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[CommandLog]') AND type in (N'U'))
 BEGIN
+--*/
 CREATE TABLE [dbo].[CommandLog](
   [ID] [int] IDENTITY(1,1) NOT NULL,
   [DatabaseName] [sysname] NULL,
@@ -33,5 +34,5 @@ CREATE TABLE [dbo].[CommandLog](
   [ID] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
 )
-END
+--END
 GO

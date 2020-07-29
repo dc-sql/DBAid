@@ -4,7 +4,7 @@
   --// GitHub:  https://github.com/olahallengren/sql-server-maintenance-solution                  //--
   --// Version: 2020-01-26 14:06:53                                                               //--
   ----------------------------------------------------------------------------------------------------
-
+/*
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -15,6 +15,8 @@ BEGIN
 END
 GO
 ALTER PROCEDURE [dbo].[IndexOptimize]
+--*/
+CREATE PROCEDURE [maintenance].[index_optimize]
 (
   @Databases nvarchar(max) = NULL,
   @FragmentationLow nvarchar(max) = NULL,
@@ -77,7 +79,6 @@ BEGIN
   DECLARE @DatabaseMessage nvarchar(max)
   DECLARE @ErrorMessage nvarchar(max)
   DECLARE @Severity int
-
   DECLARE @StartTime datetime2 = SYSDATETIME()
   DECLARE @SchemaName nvarchar(max) = OBJECT_SCHEMA_NAME(@@PROCID)
   DECLARE @ObjectName nvarchar(max) = OBJECT_NAME(@@PROCID)
