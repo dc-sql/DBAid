@@ -18,20 +18,23 @@ try {
     <##### When $Instance is expanded, it will include -EncryptConnection (if specified) which will be interpreted as a switch to Invoke-Sqlcmd #####>
     $ConnectionString = "Invoke-SqlCmd -ServerInstance $($Instance) -Database $($Database) -Query "
 
-    <##### Check if this is a clustered SQL instance. #####>
-    $SQLQuery = $ConnectionString + "`"SELECT CAST(SERVERPROPERTY('IsClustered') AS bit) AS [IsClustered]`""
-    $IsClustered = Invoke-Expression $SQLQuery
+    <##### If running PowerShell 6 or higher, could use $IsWindows. Lowest requirement for this script to work, however, is PowerShell 5.  #####>
+    if ($Env:PSModulePath -like "*\WindowsPowerShell\Modules*") {
+        <##### Check if this is a clustered SQL instance. #####>
+        $SQLQuery = $ConnectionString + "`"SELECT CAST(SERVERPROPERTY('IsClustered') AS bit) AS [IsClustered]`""
+        $IsClustered = Invoke-Expression $SQLQuery
+        
+        <##### Get NetBIOS name according to SQL Server. I.e. computer name that SQL instance is running on #####>
+        $SQLQuery = $ConnectionString + "`"SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS [NetBIOSName]`""
+        $NetBIOSName = Invoke-Expression $SQLQuery
 
-    <##### Get NetBIOS name according to SQL Server. I.e. computer name that SQL instance is running on #####>
-    $SQLQuery = $ConnectionString + "`"SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS [NetBIOSName]`""
-    $NetBIOSName = Invoke-Expression $SQLQuery
+        <##### Get computer name according to PowerShell. This may be different than what SQL Server thinks if SQL Server is clustered #####>
+        $ComputerName = $env:computername
 
-    <##### Get computer name according to PowerShell. This may be different than what SQL Server thinks if SQL Server is clustered #####>
-    $ComputerName = $env:computername
-
-    <##### if computer name & NetBIOS name don't match and SQL instance is clustered, this script is running on the passive node for this SQL instance; so don't run the SQL checks, they'll be run on the active node #####>
-    if ($ComputerName.ToUpper() -ne $NetBIOSName.NetBIOSName.ToUpper() -and $IsClustered.IsClustered -eq 1) {
-        continue
+        <##### if computer name & NetBIOS name don't match and SQL instance is clustered, this script is running on the passive node for this SQL instance; so don't run the SQL checks, they'll be run on the active node #####>
+        if ($ComputerName.ToUpper() -ne $NetBIOSName.NetBIOSName.ToUpper() -and $IsClustered.IsClustered -eq 1) {
+            continue
+        }
     }
 
     <##### Get list of procedures to run for checks. All should be in the [check] or [checkmk] schema (depending if DBAid or DBAid2)  #####>
@@ -68,7 +71,7 @@ try {
     <##### Refresh check configuration (e.g. to pick up any new jobs or databases added since last check) #####>
     # DBAid2
     #foreach ($iproc in $InventoryProcedureList) {
-    #    $SQLQuery = $sqlcmd + "`"EXEC $iproc`""
+    #    $SQLQuery = $ConnectionString + "`"EXEC $iproc`""
     #    Invoke-Expression $SQLQuery
     #}
     # DBAid
