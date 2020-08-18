@@ -291,7 +291,10 @@ try {
         }
 
         <##### write output for CheckMK agent to consume #####>
-        Write-Host "$Status mssql_$($ServiceName)_$($InstanceName) $StatusDetails $State"
+        # Output from [checkmk].[chart_capacity_fg] (i.e. message column) is not in a format that Nagios can understand.
+        if ($DBAidVersion -lt 10) {
+            Write-Host "$Status mssql_$($ServiceName)_$($InstanceName) $StatusDetails $State"
+        }
     }
 }
 catch {
