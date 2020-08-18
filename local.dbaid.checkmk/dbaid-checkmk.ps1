@@ -13,10 +13,10 @@ try {
     [string]$Database = '_dbaid'
     
     <##### Reset variable to null otherwise catch block returns incorrect value #####>
-    $InstanceName = $null
+    [string]$InstanceName = $null
 
     <##### When $Instance is expanded, it will include -EncryptConnection (if specified) which will be interpreted as a switch to Invoke-Sqlcmd #####>
-    $ConnectionString = "Invoke-SqlCmd -ServerInstance $($Instance) -Database $($Database) -Query "
+    [string]$ConnectionString = "Invoke-SqlCmd -ServerInstance $($Instance) -Database $($Database) -Query "
 
     <##### If running PowerShell 6 or higher, could use $IsWindows. Lowest requirement for this script to work, however, is PowerShell 5.  #####>
     if ($Env:PSModulePath -like "*\WindowsPowerShell\Modules*") {
@@ -39,7 +39,7 @@ try {
 
     <##### Get list of procedures to run for checks. All should be in the [check] or [checkmk] schema (depending if DBAid or DBAid2)  #####>
     $SQLQuery = $ConnectionString + "`"IF EXISTS (SELECT 1 FROM [sys].[objects] WHERE [object_id] = OBJECT_ID('version') AND [schema_id] = SCHEMA_ID('dbo')) BEGIN SELECT MAX(LEFT([version], 3)) AS [ver] FROM [dbo].[version] END ELSE SELECT 10 AS [ver];`""
-    $DBAidVersion = (Invoke-Expression $SQLQuery).ver
+    [decimal]$DBAidVersion = (Invoke-Expression $SQLQuery).ver
 
     <##### Highest version of legacy DBAid is 6.3.0 #####>
     if ($DBAidVersion -lt 10) {
@@ -52,7 +52,7 @@ try {
 
         <##### Get SQL Server version information. Pass through function to remove invalid characters and have on one line for CheckMK to handle it. Function name different between DBAid and DBAid2. #####>
         $SQLQuery = $ConnectionString + "`"SELECT [string] AS [InstanceVersion] FROM [dbo].[cleanstring](@@VERSION)`""
-        $InstanceVersion = (Invoke-Expression $SQLQuery)
+        $InstanceVersion = (Invoke-Expression $SQLQuery).InstanceVersion
 
         <##### Refresh check configuration (e.g. to pick up any new jobs or databases added since last check) #####>
         $SQLQuery = $ConnectionString + "`"EXEC [maintenance].[check_config]`""
@@ -69,7 +69,7 @@ try {
 
         <##### Get SQL Server version information. Pass through function to remove invalid characters and have on one line for CheckMK to handle it. Function name different between DBAid and DBAid2. #####>
         $SQLQuery = $ConnectionString + "`"SELECT [clean_string] AS [InstanceVersion] FROM [system].[get_clean_string](@@VERSION)`""
-        $InstanceVersion = (Invoke-Expression $SQLQuery)
+        $InstanceVersion = (Invoke-Expression $SQLQuery).InstanceVersion
 
         <##### Refresh check configuration (e.g. to pick up any new jobs or databases added since last check) #####>
         foreach ($iproc in $InventoryProcedureList) {
@@ -80,10 +80,10 @@ try {
 
     <##### Get SQL instance name. Used in output as part of CheckMK service name #####>
     $SQLQuery = $ConnectionString + "`"SELECT ISNULL(SERVERPROPERTY('InstanceName'), 'MSSQLSERVER') AS [InstanceName]`""
-    $InstanceName = (Invoke-Expression $SQLQuery)  
+    $InstanceName = (Invoke-Expression $SQLQuery).InstanceName
     
     <##### Output SQL Server instance information in CheckMK format #####>
-    Write-Host "0 mssql_$($InstanceName.InstanceName) - $($InstanceVersion.InstanceVersion)"
+    Write-Host "0 mssql_$($InstanceName) - $($InstanceVersion)"
     
     <##### Process each check procedure in the [check] or [checkmk] schema (depending on whether DBAid or DBAid2) #####>
     foreach ($ckproc in $CheckProcedureList) {
@@ -116,7 +116,7 @@ try {
         }
 
         <##### write output for CheckMK agent to consume #####>
-        Write-Host "$Status mssql_$($ServiceName)_$($InstanceName.InstanceName) count=$Count $State - $StatusDetails"
+        Write-Host "$Status mssql_$($ServiceName)_$($InstanceName) count=$Count $State - $StatusDetails"
     }
 
     <##### Process each chart procedure in the [check] or [checkmk] schema (depending on whether DBAid or DBAid2) #####>
@@ -219,15 +219,79 @@ try {
                 }
             }
             else {
-                # chart code for DBAid2 goes here
+                # there is only [checkmk].[chart_capacity_fg] at time of writing. The code below may not be suitable if other chart procedures are created and don't/can't conform to same output.
+                if (([DBNull]::Value).Equals($ctrow.used)) { 
+                    $val = -1.0
+                }
+                else {
+                    $val = $ctrow.used
+                }
+                if (([DBNull]::Value).Equals($ctrow.warning)) { 
+                    $WarnExist = 0
+                    $warn = 0.0
+                }
+                else {
+                    $WarnExist = 1
+                    $warn = $ctrow.warning
+                }
+                if (([DBNull]::Value).Equals($ctrow.critical)) { 
+                    $CritExist = 0
+                    $crit = 0.0
+                }
+                else {
+                    $CritExist = 1
+                    $crit = $ctrow.critical
+                }
+                if (([DBNull]::Value).Equals($ctrow.message)) { 
+                    $pnpData = ""
+                }
+                else {
+                    $pnpData = $ctrow.message
+                }
+
+                <##### if there is no chart data, skip the rest and move to next row in the data set #####>
+                if ($pnpData -eq "" -and $val -eq -1.0) {
+                    continue
+                }
+
+                <##### check to see if warning and critical thresholds are defined, then check current value $val against threshold values for warning $warn and critical $crit #####>
+                if ($CritExist -and $WarnExist) {
+                    if ($crit -ge $warn) {
+                        if ($val -ge $crit) {
+                            <##### split the pnp data at the '=' character to form a new array, take the first element of the new array [0] which amounts to the object exceeding a threshold (e.g. dbname_ROWS_used) and remove the single quote characters #####>
+                            $State += "CRITICAL - " + ($ctrow.message).Split('=')[0].Replace("'", "") + "; "
+                            $Status = 2
+                        }
+                        elseif ($val -ge $warn -and $Status -lt 2) {
+                            $State += "WARNING - " + ($ctrow.message).Split('=')[0].Replace("'", "") + "; "
+                            $Status = 1
+                        }
+                    }
+                }
+                elseif ($crit -lt $warn) {
+                    if ($val -le $crit) {
+                        $State += "CRITICAL - " + ($ctrow.message).Split('=')[0].Replace("'", "") + "; "
+                        $Status = 2
+                    }
+                    elseif ($val -le $warn -and $Status -lt 2) {
+                        $State += "WARNING - " + ($ctrow.message).Split('=')[0].Replace("'", "") + "; "
+                        $Status = 1
+                    }
+                }
+
+                <##### concatenate all the pnp data into one text string for CheckMK to consume. Use pipe separator for subsequent rows being concatenated #####>
+                if ($row -eq 0) {
+                    $StatusDetails += $ctrow.message
+                }
+                else {
+                    $StatusDetails += "|" + $ctrow.message
+                }
             }
             $row++
         }
 
         <##### write output for CheckMK agent to consume #####>
-        if ($DBAidVersion -lt 10) {
-            Write-Host "$Status mssql_$($ServiceName)_$($InstanceName.InstanceName) $StatusDetails $State"
-        }
+        Write-Host "$Status mssql_$($ServiceName)_$($InstanceName) $StatusDetails $State"
     }
 }
 catch {
