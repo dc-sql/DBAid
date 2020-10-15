@@ -39,8 +39,9 @@ END
 GO
 
 /* Instance Security */
-GRANT IMPERSONATE ON LOGIN::[$(DatabaseName)_sa]	TO [$(CollectorServiceAccount)];
-GRANT IMPERSONATE ON LOGIN::[$(DatabaseName)_sa]	TO [$(CheckServiceAccount)];
+GRANT IMPERSONATE ON LOGIN::[$(DatabaseName)_sa] TO [$(CollectorServiceAccount)];
+GRANT IMPERSONATE ON LOGIN::[$(DatabaseName)_sa] TO [$(CheckServiceAccount)];
+GRANT VIEW ANY DEFINITION TO [$(DatabaseName)_sa];
 GO
 
 /* #######################################################################################################################################

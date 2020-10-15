@@ -1,0 +1,15 @@
+﻿/*
+
+
+
+*/
+
+CREATE FUNCTION [system].[get_datetimeoffset] 
+(
+	@datetime DATETIME2
+)
+RETURNS TABLE
+WITH ENCRYPTION
+RETURN(
+	SELECT TODATETIMEOFFSET(ISNULL(@datetime,SYSDATETIME()), DATEPART(TZOFFSET, SYSDATETIMEOFFSET())) AS [datetimeoffset]
+)

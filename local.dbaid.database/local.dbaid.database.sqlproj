@@ -91,153 +91,110 @@
   <ItemGroup>
     <Folder Include="Properties" />
     <Folder Include="Database" />
-    <Folder Include="Database\Security" />
-    <Folder Include="Database\Function" />
-    <Folder Include="Database\Procedure" />
-    <Folder Include="Database\Procedure\Deprecated" />
-    <Folder Include="Database\Procedure\log" />
-    <Folder Include="Database\Procedure\Maintenance" />
-    <Folder Include="Database\Procedure\Control" />
-    <Folder Include="Database\Procedure\dbo" />
-    <Folder Include="Database\Procedure\check" />
-    <Folder Include="Database\View" />
-    <Folder Include="Database\Table" />
-    <Folder Include="Database\Procedure\fact" />
-    <Folder Include="OlaHallengren" />
     <Folder Include="express_scheduled_task_templates" />
-    <Folder Include="Database\Procedure\Health" />
-    <Folder Include="who_is_active" />
+    <Folder Include="Database\audit" />
+    <Folder Include="Database\audit\procedures" />
+    <Folder Include="Database\audit\tables" />
+    <Folder Include="Database\checkmk" />
+    <Folder Include="Database\checkmk\procedures" />
+    <Folder Include="Database\checkmk\tables" />
+    <Folder Include="Database\collector" />
+    <Folder Include="Database\collector\tables" />
+    <Folder Include="Database\collector\procedures" />
+    <Folder Include="Database\datamart" />
+    <Folder Include="Database\datamart\tables" />
+    <Folder Include="Database\datamart\procedures" />
+    <Folder Include="Database\health" />
+    <Folder Include="Database\health\procedures" />
+    <Folder Include="Database\system" />
+    <Folder Include="Database\system\security" />
+    <Folder Include="Database\system\procedures" />
+    <Folder Include="Database\system\functions" />
+    <Folder Include="Database\system\procedures\configuration" />
+    <Folder Include="Database\system\tables" />
+    <Folder Include="Database\dbo" />
+    <Folder Include="Database\dbo\views" />
+    <Folder Include="Database\OlaHallengren" />
+    <Folder Include="Database\who_is_active" />
   </ItemGroup>
   <ItemGroup>
-    <Build Include="Database\Security\roles.sql" />
-    <Build Include="Database\Security\schemas.sql" />
-    <Build Include="Database\Procedure\log\log_job.sql" />
-    <Build Include="Database\Procedure\log\log_backup.sql" />
-    <Build Include="Database\Procedure\log\log_error.sql" />
-    <Build Include="Database\Procedure\log\log_maintenance.sql" />
-    <Build Include="Database\Procedure\Deprecated\deprecated_Backup.sql" />
-    <Build Include="Database\Procedure\Deprecated\deprecated_ErrorLog.sql" />
-    <Build Include="Database\Procedure\Deprecated\deprecated_Job.sql" />
-    <Build Include="Database\Procedure\Deprecated\deprecated_Databases.sql" />
-    <Build Include="Database\Procedure\Deprecated\deprecated_Version.sql" />
-    <Build Include="Database\Procedure\Control\control_ProcedureList.sql" />
-    <Build Include="Database\Procedure\dbo\dbo_foreachdb.sql">
-      <SuppressTSqlWarnings>
-      </SuppressTSqlWarnings>
-      <QuotedIdentifier>ProjectDefault</QuotedIdentifier>
-    </Build>
-    <Build Include="Database\Procedure\check\check_database.sql" />
-    <Build Include="Database\Procedure\check\check_job.sql" />
-    <Build Include="Database\Procedure\check\check_mirroring.sql">
-      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
-    </Build>
-    <Build Include="Database\Procedure\check\check_logshipping.sql" />
-    <Build Include="Database\Procedure\check\check_longrunningjob.sql" />
-    <Build Include="Database\Procedure\check\chart_capacity.sql">
-      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
-    </Build>
-    <Build Include="Database\Table\deprecated_tbparameters.sql" />
-    <Build Include="Database\Table\dbo_procedure.sql" />
-    <Build Include="Database\Table\dbo_static_parameter.sql" />
-    <Build Include="Database\View\info_agentjob.sql" />
-    <Build Include="Database\View\info_databasefile.sql" />
-    <Build Include="Database\View\info_maintenanceplan.sql" />
-    <Build Include="Database\View\info_service.sql" />
-    <Build Include="Database\View\info_instance.sql" />
-    <Build Include="Database\View\info_serverobject.sql" />
-    <Build Include="Database\Procedure\check\chart_perfcounter.sql" />
-    <Build Include="Database\Table\dbo_config_perfcounter.sql" />
-    <Build Include="Database\Table\dbo_config_database.sql" />
-    <Build Include="Database\Table\dbo_config_job.sql" />
-    <Build Include="Database\Function\dbo_cleanstring.sql" />
-    <Build Include="Database\Function\dbo_instanceguid.sql" />
-    <Build Include="Database\Function\dbo_getobjectconfig.sql" />
-    <Build Include="Database\Function\dbo_getserviceinfo.sql" />
-    <Build Include="Database\Procedure\Maintenance\maintenance_check_config.sql">
-      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
-    </Build>
-    <Build Include="Database\Procedure\Control\control_check.sql" />
-    <Build Include="Database\Procedure\Control\control_chart.sql" />
-    <Build Include="Database\Table\dbo_service.sql" />
-    <Build Include="Database\Table\dbo_version.sql" />
-    <Build Include="Database\Procedure\Control\control_fact.sql" />
-    <Build Include="Database\Procedure\fact\fact_instance.sql" />
-    <Build Include="Database\Procedure\fact\fact_database.sql" />
-    <Build Include="Database\Procedure\dbo\dbo_insert_service.sql" />
-    <Build Include="Database\Procedure\check\check_alwayson.sql">
-      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
-    </Build>
-    <Build Include="Database\Table\dbo_config_alwayson.sql" />
-    <Build Include="Database\Procedure\fact\fact_service.sql" />
-    <Build Include="Database\Procedure\fact\fact_databasefile.sql" />
-    <Build Include="Database\Procedure\fact\fact_serverobject.sql" />
-    <Build Include="Database\Procedure\fact\fact_security.sql" />
-    <Build Include="Database\Procedure\fact\fact_alwayson.sql" />
-    <Build Include="Database\Function\dbo_db_writeable.sql" />
-    <Build Include="Database\Procedure\fact\fact_maintenanceplan.sql" />
-    <Build Include="Database\Procedure\fact\fact_databasemail.sql" />
-    <Build Include="Database\Procedure\fact\fact_replication_publisher.sql">
-      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
-    </Build>
-    <Build Include="Database\Procedure\fact\fact_replication_subscriber.sql">
-      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
-    </Build>
-    <Build Include="Database\Procedure\fact\fact_mirroring.sql">
-      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
-    </Build>
-    <Build Include="Database\Procedure\fact\fact_dbaid_config.sql" />
-    <Build Include="Database\Procedure\fact\fact_agentjob.sql" />
-    <Build Include="Database\Procedure\fact\fact_resource_governor.sql" />
-    <Build Include="Database\Procedure\Control\control_log.sql" />
-    <Build Include="Database\Function\dbo_string_date_with_offset.sql" />
-    <Build Include="OlaHallengren\dbo_command_execute.sql">
-      <SuppressTSqlWarnings>
-      </SuppressTSqlWarnings>
-    </Build>
-    <Build Include="OlaHallengren\maintenance_index_optimize.sql">
-      <SuppressTSqlWarnings>
-      </SuppressTSqlWarnings>
-    </Build>
-    <Build Include="OlaHallengren\maintenance_integrity_check.sql">
-      <SuppressTSqlWarnings>
-      </SuppressTSqlWarnings>
-    </Build>
-    <Build Include="OlaHallengren\maintenance_database_backup.sql">
-      <SuppressTSqlWarnings>
-      </SuppressTSqlWarnings>
-    </Build>
-    <Build Include="OlaHallengren\dbo_command_log.sql">
-      <SuppressTSqlWarnings>
-      </SuppressTSqlWarnings>
-    </Build>
-    <Build Include="Database\Procedure\check\check_backup.sql">
-      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
-    </Build>
-    <Build Include="Database\Procedure\check\check_checkdb.sql">
-      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
-    </Build>
-    <Build Include="Database\Procedure\Maintenance\maintenance_cleanup_history.sql" />
     <None Include="PreUpgrade.sql">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <Build Include="Database\Procedure\dbo\dbo_instance_tag.sql">
-      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
-    </Build>
-    <Build Include="Database\Procedure\log\log_capacity.sql">
-      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
-    </Build>
-    <Build Include="Database\Table\dbo_stage_capacity.sql" />
-    <Build Include="Database\Procedure\dbo\dbo_log_stage_capacity.sql">
-      <SuppressTSqlWarnings>71502</SuppressTSqlWarnings>
-    </Build>
-    <Build Include="Database\Procedure\fact\fact_logshipping_primary.sql" />
-    <Build Include="Database\Procedure\fact\fact_logshipping_secondary.sql" />
-    <Build Include="Database\Procedure\Health\running_queries.sql" />
-    <Build Include="Database\Procedure\fact\fact_cis_benchmark.sql" />
-    <Build Include="who_is_active\who_is_active.sql" />
-    <None Include="Database\Procedure\check\chart_capacity_combined.sql" />
-    <Build Include="OlaHallengren\dbo_queue.sql" />
-    <Build Include="OlaHallengren\dbo_queue_database.sql" />
+    <Build Include="Database\audit\procedures\get_database_last_access.sql" />
+    <Build Include="Database\audit\tables\database_last_access.sql" />
+    <Build Include="Database\checkmk\tables\config_agentjob.sql" />
+    <Build Include="Database\checkmk\tables\config_alwayson.sql" />
+    <Build Include="Database\checkmk\tables\config_database.sql" />
+    <Build Include="Database\checkmk\procedures\chart_capacity_fg.sql" />
+    <Build Include="Database\checkmk\procedures\check_agentjob.sql" />
+    <Build Include="Database\checkmk\procedures\check_alwayson.sql" />
+    <Build Include="Database\checkmk\procedures\check_backup.sql" />
+    <Build Include="Database\checkmk\procedures\check_database.sql" />
+    <Build Include="Database\checkmk\procedures\check_integrity.sql" />
+    <Build Include="Database\checkmk\procedures\check_logshipping.sql" />
+    <Build Include="Database\checkmk\procedures\check_mirroring.sql" />
+    <Build Include="Database\checkmk\procedures\inventory_agentjob.sql" />
+    <Build Include="Database\checkmk\procedures\inventory_alwayson.sql" />
+    <Build Include="Database\checkmk\procedures\inventory_database.sql" />
+    <Build Include="Database\collector\procedures\get_agentjob_history.sql" />
+    <Build Include="Database\collector\procedures\get_backup_history.sql" />
+    <Build Include="Database\collector\procedures\get_capacity_db.sql" />
+    <Build Include="Database\collector\procedures\get_database_ci.sql" />
+    <Build Include="Database\collector\procedures\get_errorlog_history.sql" />
+    <Build Include="Database\collector\procedures\get_instance_ci.sql" />
+    <Build Include="Database\collector\tables\last_execution.sql" />
+    <Build Include="Database\datamart\procedures\process_get_data.sql" />
+    <Build Include="Database\datamart\tables\dim_database.sql" />
+    <Build Include="Database\datamart\tables\dim_date.sql" />
+    <Build Include="Database\datamart\tables\dim_instance.sql" />
+    <Build Include="Database\datamart\tables\dim_time.sql" />
+    <Build Include="Database\datamart\tables\fact_agentjob_history.sql" />
+    <Build Include="Database\datamart\tables\fact_backup_history.sql" />
+    <Build Include="Database\datamart\tables\fact_capacity_db.sql" />
+    <Build Include="Database\datamart\tables\fact_database_ci.sql" />
+    <Build Include="Database\datamart\tables\fact_errorlog_history.sql" />
+    <Build Include="Database\datamart\tables\fact_instance_ci.sql" />
+    <Build Include="Database\datamart\tables\get_agentjob_history.sql" />
+    <Build Include="Database\datamart\tables\get_backup_history.sql" />
+    <Build Include="Database\datamart\tables\get_capacity_db.sql" />
+    <Build Include="Database\datamart\tables\get_database_ci.sql" />
+    <Build Include="Database\datamart\tables\get_errorlog_history.sql" />
+    <Build Include="Database\datamart\tables\get_instance_ci.sql" />
+    <Build Include="Database\datamart\tables\load_log.sql" />
+    <Build Include="Database\health\procedures\get_block_process_history.sql" />
+    <Build Include="Database\health\procedures\get_dead_lock_history.sql" />
+    <Build Include="Database\health\procedures\get_file_io_performance.sql" />
+    <Build Include="Database\health\procedures\get_index_fragmentation.sql" />
+    <Build Include="Database\health\procedures\get_statistic_state.sql" />
+    <Build Include="Database\health\procedures\get_transaction_log.sql" />
+    <Build Include="Database\system\functions\get_clean_string.sql" />
+    <Build Include="Database\system\functions\get_datetimeoffset.sql" />
+    <Build Include="Database\system\functions\get_hexadecimal.sql" />
+    <Build Include="Database\system\functions\get_instance_guid.sql" />
+    <Build Include="Database\system\functions\get_product_version.sql" />
+    <Build Include="Database\system\functions\get_split_string.sql" />
+    <Build Include="Database\system\procedures\delete_system_history.sql" />
+    <Build Include="Database\system\procedures\execute_foreach_db.sql" />
+    <Build Include="Database\system\procedures\generate_database_permission_script.sql" />
+    <Build Include="Database\system\procedures\generate_login_script.sql" />
+    <Build Include="Database\system\procedures\generate_secret.sql" />
+    <Build Include="Database\system\procedures\get_instance_tag.sql" />
+    <Build Include="Database\system\procedures\get_procedure_list.sql" />
+    <Build Include="Database\system\procedures\set_ag_agent_job_state.sql" />
+    <Build Include="Database\system\procedures\configuration\set_default_agentjob_configuration.sql" />
+    <Build Include="Database\system\procedures\configuration\set_default_db_performance_configuration.sql" />
+    <Build Include="Database\system\security\schemas.sql" />
+    <Build Include="Database\system\tables\configuration.sql" />
+    <Build Include="Database\dbo\views\active_backup_restore.sql" />
+    <Build Include="Database\OlaHallengren\dbo_command_execute.sql" />
+    <Build Include="Database\OlaHallengren\dbo_command_log.sql" />
+    <Build Include="Database\OlaHallengren\dbo_queue.sql" />
+    <Build Include="Database\OlaHallengren\dbo_queue_database.sql" />
+    <Build Include="Database\OlaHallengren\dbo_database_backup.sql" />
+    <Build Include="Database\OlaHallengren\dbo_index_optimize.sql" />
+    <Build Include="Database\OlaHallengren\dbo_integrity_check.sql" />
+    <Build Include="Database\who_is_active\who_is_active.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Database\Script.PostDeployment.sql" />
@@ -252,6 +209,7 @@
     <None Include="PostBuild.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="Database\datamart\load-collector-xml-into-datamart.ps1" />
   </ItemGroup>
   <ItemGroup>
     <SqlCmdVariable Include="ClientDomain">
