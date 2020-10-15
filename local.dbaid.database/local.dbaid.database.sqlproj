@@ -258,6 +258,8 @@
   </ItemGroup>
   <ItemGroup>
     <Build Include="Database\dbo\procedures\cleanup_history.sql" />
+    <Build Include="Database\system\security\roles.sql" />
+    <Build Include="Database\checkmk\tables\config_perfcounter.sql" />
   </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>Powershell -ExecutionPolicy UnRestricted -File "$(ProjectDir)$(OutputPath)PostBuild.ps1"</PostBuildEvent>

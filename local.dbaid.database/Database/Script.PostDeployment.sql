@@ -27,12 +27,12 @@ GO
 ALTER DATABASE [$(DatabaseName)] SET MULTI_USER WITH NO_WAIT;
 GO
 
-IF NOT EXISTS (SELECT 1 FROM [sys].[server_principals] WHERE LOWER([type]) IN ('u','s') AND LOWER(name) = LOWER('$(CollectorServiceAccount)')) 
+IF NOT EXISTS (SELECT 1 FROM [sys].[server_principals] WHERE [type] IN ('U','S') AND LOWER(name) = LOWER('$(CollectorServiceAccount)')) 
 BEGIN
 	CREATE LOGIN [$(CollectorServiceAccount)] FROM WINDOWS WITH DEFAULT_DATABASE=[master];
 END
 
-IF NOT EXISTS (SELECT 1 FROM [sys].[server_principals] WHERE LOWER([type]) IN ('u','s') AND LOWER(name) = LOWER('$(CheckServiceAccount)')) 
+IF NOT EXISTS (SELECT 1 FROM [sys].[server_principals] WHERE [type] IN ('U','S') AND LOWER(name) = LOWER('$(CheckServiceAccount)')) 
 BEGIN
 	CREATE LOGIN [$(CheckServiceAccount)] FROM WINDOWS WITH DEFAULT_DATABASE=[master];
 END
@@ -41,7 +41,7 @@ GO
 /* Instance Security */
 GRANT IMPERSONATE ON LOGIN::[$(DatabaseName)_sa] TO [$(CollectorServiceAccount)];
 GRANT IMPERSONATE ON LOGIN::[$(DatabaseName)_sa] TO [$(CheckServiceAccount)];
-GRANT VIEW ANY DEFINITION TO [$(DatabaseName)_sa];
+GRANT VIEW ANY DEFINITION TO [$(CollectorServiceAccount)];
 GO
 
 /* #######################################################################################################################################
@@ -52,16 +52,21 @@ GO
 USE [$(DatabaseName)];
 GO
 
-IF NOT EXISTS (SELECT 1 FROM [sys].[database_principals] WHERE LOWER([type]) IN ('u','s') AND LOWER(name) = LOWER('$(CollectorServiceAccount)'))
+IF NOT EXISTS (SELECT 1 FROM [sys].[database_principals] WHERE [type] IN ('U','S') AND LOWER(name) = LOWER('$(CollectorServiceAccount)'))
 	CREATE USER [$(CollectorServiceAccount)] FOR LOGIN [$(CollectorServiceAccount)];
 GO
-IF NOT EXISTS (SELECT 1 FROM [sys].[database_principals] WHERE LOWER([type]) IN ('u','s') AND LOWER(name) = LOWER('$(CheckServiceAccount)'))
+IF NOT EXISTS (SELECT 1 FROM [sys].[database_principals] WHERE [type] IN ('U','S') AND LOWER(name) = LOWER('$(CheckServiceAccount)'))
 	CREATE USER [$(CheckServiceAccount)] FOR LOGIN [$(CheckServiceAccount)];
 GO
 
+GRANT SELECT ON [system].[configuration] TO [admin];
+GRANT EXECUTE ON [checkmk].[inventory_agentjob] TO [monitor];
+GRANT EXECUTE ON [checkmk].[inventory_alwayson] TO [monitor];
+GRANT EXECUTE ON [checkmk].[inventory_database] TO [monitor];
+
 /* legacy stuff, may need to enable later
-GRANT SELECT ON [dbo].[static_parameters] TO [admin];
-GRANT EXECUTE ON [maintenance].[check_config] TO [monitor];
+--GRANT SELECT ON [dbo].[static_parameters] TO [admin];
+--GRANT EXECUTE ON [maintenance].[check_config] TO [monitor];
 GRANT EXECUTE ON [dbo].[insert_service] TO [admin];
 GRANT EXECUTE ON [dbo].[instance_tag] TO [admin];
 GRANT EXECUTE ON [dbo].[insert_service] TO [monitor];
@@ -142,6 +147,26 @@ GO
 --*/
 
 /* Insert static variables */
+-- Unique SQL Instance ID, generated during install. This GUID is used to link instance data together, please do not change.
+IF NOT EXISTS(SELECT 1 FROM [system].[configuration] WHERE [key] = N'INSTANCE_GUID')
+	INSERT INTO [system].[configuration]([key],[value]) 
+		VALUES(N'INSTANCE_GUID', NEWID());
+
+--This is the program name the central collector will use. Procedure last execute dates will only be updated when an application connects using this program name.
+IF NOT EXISTS(SELECT 1 FROM [system].[configuration] WHERE [key] = N'PROGRAM_NAME')
+	INSERT INTO [system].[configuration]([key],[value]) 
+		VALUES(N'PROGRAM_NAME', 'SQL Team DBAid Collector Agent');
+
+-- This specifies if log data should be sanitized before being written out. This will hide sensitive data, such as account and Network info
+IF NOT EXISTS(SELECT 1 FROM [system].[configuration] WHERE [key] = N'SANITIZE_DATASET')
+	INSERT INTO [system].[configuration]([key],[value]) 
+		VALUES(N'SANITIZE_DATASET', 1);
+
+-- Public key generated in collection server.
+IF NOT EXISTS(SELECT 1 FROM [system].[configuration] WHERE [key] = N'PUBLIC_ENCRYPTION_KEY')
+	INSERT INTO [system].[configuration]([key],[value]) 
+		VALUES(N'PUBLIC_ENCRYPTION_KEY', N'$(PublicKey)');
+
 /* most of this implemented as table constraints. others should probably go in system.configuration
 IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'GUID')
 	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
@@ -220,78 +245,78 @@ GO
 --*/
 
 /* General perf counters */
-/* need to visit - required for Apollo
-IF NOT EXISTS(SELECT 1 FROM [dbo].[config_perfcounter] WHERE [object_name] = N'%:Buffer Manager' AND [counter_name] = N'Page life expectancy' AND [instance_name] IS NULL)
-	INSERT INTO [dbo].[config_perfcounter]([object_name],[counter_name],[instance_name])
+
+IF NOT EXISTS(SELECT 1 FROM [checkmk].[config_perfcounter] WHERE [object_name] = N'%:Buffer Manager' AND [counter_name] = N'Page life expectancy' AND [instance_name] IS NULL)
+	INSERT INTO [checkmk].[config_perfcounter]([object_name],[counter_name],[instance_name])
 		VALUES(N'%:Buffer Manager',N'Page life expectancy',NULL);
 
-IF NOT EXISTS(SELECT 1 FROM [dbo].[config_perfcounter] WHERE [object_name] = N'%:General Statistics' AND [counter_name] = N'Active Temp Tables' AND [instance_name] IS NULL)
-	INSERT INTO [dbo].[config_perfcounter]([object_name],[counter_name],[instance_name])
+IF NOT EXISTS(SELECT 1 FROM [checkmk].[config_perfcounter] WHERE [object_name] = N'%:General Statistics' AND [counter_name] = N'Active Temp Tables' AND [instance_name] IS NULL)
+	INSERT INTO [checkmk].[config_perfcounter]([object_name],[counter_name],[instance_name])
 		VALUES(N'%:General Statistics',N'Active Temp Tables',NULL);
 
-IF NOT EXISTS(SELECT 1 FROM [dbo].[config_perfcounter] WHERE [object_name] = N'%:General Statistics' AND [counter_name] = N'Logical Connections' AND [instance_name] IS NULL)
-	INSERT INTO [dbo].[config_perfcounter]([object_name],[counter_name],[instance_name])
+IF NOT EXISTS(SELECT 1 FROM [checkmk].[config_perfcounter] WHERE [object_name] = N'%:General Statistics' AND [counter_name] = N'Logical Connections' AND [instance_name] IS NULL)
+	INSERT INTO [checkmk].[config_perfcounter]([object_name],[counter_name],[instance_name])
 		VALUES(N'%:General Statistics',N'Logical Connections',NULL);
 
-IF NOT EXISTS(SELECT 1 FROM [dbo].[config_perfcounter] WHERE [object_name] = N'%:General Statistics' AND [counter_name] = N'Logins/sec' AND [instance_name] IS NULL)
-	INSERT INTO [dbo].[config_perfcounter]([object_name],[counter_name],[instance_name])
+IF NOT EXISTS(SELECT 1 FROM [checkmk].[config_perfcounter] WHERE [object_name] = N'%:General Statistics' AND [counter_name] = N'Logins/sec' AND [instance_name] IS NULL)
+	INSERT INTO [checkmk].[config_perfcounter]([object_name],[counter_name],[instance_name])
 		VALUES(N'%:General Statistics',N'Logins/sec',NULL);
 
-IF NOT EXISTS(SELECT 1 FROM [dbo].[config_perfcounter] WHERE [object_name] = N'%:General Statistics' AND [counter_name] = N'Logouts/sec' AND [instance_name] IS NULL)
-	INSERT INTO [dbo].[config_perfcounter]([object_name],[counter_name],[instance_name])
+IF NOT EXISTS(SELECT 1 FROM [checkmk].[config_perfcounter] WHERE [object_name] = N'%:General Statistics' AND [counter_name] = N'Logouts/sec' AND [instance_name] IS NULL)
+	INSERT INTO [checkmk].[config_perfcounter]([object_name],[counter_name],[instance_name])
 		VALUES(N'%:General Statistics',N'Logouts/sec',NULL);
 
-IF NOT EXISTS(SELECT 1 FROM [dbo].[config_perfcounter] WHERE [object_name] = N'%:General Statistics' AND [counter_name] = N'Processes blocked' AND [instance_name] IS NULL)
-	INSERT INTO [dbo].[config_perfcounter]([object_name],[counter_name],[instance_name])
+IF NOT EXISTS(SELECT 1 FROM [checkmk].[config_perfcounter] WHERE [object_name] = N'%:General Statistics' AND [counter_name] = N'Processes blocked' AND [instance_name] IS NULL)
+	INSERT INTO [checkmk].[config_perfcounter]([object_name],[counter_name],[instance_name])
 		VALUES(N'%:General Statistics',N'Processes blocked',NULL);
 
-IF NOT EXISTS(SELECT 1 FROM [dbo].[config_perfcounter] WHERE [object_name] = N'%:General Statistics' AND [counter_name] = N'Transactions' AND [instance_name] IS NULL)
-	INSERT INTO [dbo].[config_perfcounter]([object_name],[counter_name],[instance_name])
+IF NOT EXISTS(SELECT 1 FROM [checkmk].[config_perfcounter] WHERE [object_name] = N'%:General Statistics' AND [counter_name] = N'Transactions' AND [instance_name] IS NULL)
+	INSERT INTO [checkmk].[config_perfcounter]([object_name],[counter_name],[instance_name])
 		VALUES(N'%:General Statistics',N'Transactions',NULL);
 
-IF NOT EXISTS(SELECT 1 FROM [dbo].[config_perfcounter] WHERE [object_name] = N'%:Locks' AND [counter_name] = N'Number of Deadlocks/sec' AND [instance_name]=N'_Total')
-	INSERT INTO [dbo].[config_perfcounter]([object_name],[counter_name],[instance_name])
+IF NOT EXISTS(SELECT 1 FROM [checkmk].[config_perfcounter] WHERE [object_name] = N'%:Locks' AND [counter_name] = N'Number of Deadlocks/sec' AND [instance_name]=N'_Total')
+	INSERT INTO [checkmk].[config_perfcounter]([object_name],[counter_name],[instance_name])
 		VALUES(N'%:Locks',N'Number of Deadlocks/sec',N'_Total');
 
-IF NOT EXISTS(SELECT 1 FROM [dbo].[config_perfcounter] WHERE [object_name] = N'%:SQL Errors' AND [counter_name] = N'Errors/sec' AND [instance_name]=N'_Total')
-	INSERT INTO [dbo].[config_perfcounter]([object_name],[counter_name],[instance_name])
+IF NOT EXISTS(SELECT 1 FROM [checkmk].[config_perfcounter] WHERE [object_name] = N'%:SQL Errors' AND [counter_name] = N'Errors/sec' AND [instance_name]=N'_Total')
+	INSERT INTO [checkmk].[config_perfcounter]([object_name],[counter_name],[instance_name])
 		VALUES(N'%:SQL Errors',N'Errors/sec',N'_Total');
 
-  IF NOT EXISTS(SELECT 1 FROM [dbo].[config_perfcounter] WHERE [object_name] = N'%:SQL Statistics' AND [counter_name] = N'Batch Requests/Sec')
-	INSERT INTO [dbo].[config_perfcounter]([object_name],[counter_name],[instance_name]) 
+  IF NOT EXISTS(SELECT 1 FROM [checkmk].[config_perfcounter] WHERE [object_name] = N'%:SQL Statistics' AND [counter_name] = N'Batch Requests/Sec')
+	INSERT INTO [checkmk].[config_perfcounter]([object_name],[counter_name],[instance_name]) 
 		VALUES(N'%:SQL Statistics', N'Batch Requests/sec', NULL);
 
-IF NOT EXISTS(SELECT 1 FROM [dbo].[config_perfcounter] WHERE [object_name] = N'%:SQL Statistics' AND [counter_name] = N'SQL Compilations/sec')
-	INSERT INTO [dbo].[config_perfcounter]([object_name],[counter_name],[instance_name]) 
+IF NOT EXISTS(SELECT 1 FROM [checkmk].[config_perfcounter] WHERE [object_name] = N'%:SQL Statistics' AND [counter_name] = N'SQL Compilations/sec')
+	INSERT INTO [checkmk].[config_perfcounter]([object_name],[counter_name],[instance_name]) 
 		VALUES(N'%:SQL Statistics', N'SQL Compilations/sec', NULL);
 
-IF NOT EXISTS(SELECT 1 FROM [dbo].[config_perfcounter] WHERE [object_name] = N'%:Locks' AND [counter_name] = N'Average Wait Time (ms)' AND [instance_name]=N'_Total')
-	INSERT INTO [dbo].[config_perfcounter]([object_name],[counter_name],[instance_name]) 
+IF NOT EXISTS(SELECT 1 FROM [checkmk].[config_perfcounter] WHERE [object_name] = N'%:Locks' AND [counter_name] = N'Average Wait Time (ms)' AND [instance_name]=N'_Total')
+	INSERT INTO [checkmk].[config_perfcounter]([object_name],[counter_name],[instance_name]) 
 		VALUES(N'%:Locks', N'Average Wait Time (ms)', N'_Total');
 
-IF NOT EXISTS(SELECT 1 FROM [dbo].[config_perfcounter] WHERE [object_name] = N'%:Locks' AND [counter_name] = N'Average Wait Time Base' AND [instance_name]=N'_Total')
-	INSERT INTO [dbo].[config_perfcounter]([object_name],[counter_name],[instance_name]) 
+IF NOT EXISTS(SELECT 1 FROM [checkmk].[config_perfcounter] WHERE [object_name] = N'%:Locks' AND [counter_name] = N'Average Wait Time Base' AND [instance_name]=N'_Total')
+	INSERT INTO [checkmk].[config_perfcounter]([object_name],[counter_name],[instance_name]) 
 		VALUES(N'%:Locks', N'Average Wait Time Base', N'_Total');
 
-IF NOT EXISTS(SELECT 1 FROM [dbo].[config_perfcounter] WHERE [object_name] = N'%:Memory Manager' AND [counter_name] = N'Memory Grants Pending')
-	INSERT INTO [dbo].[config_perfcounter]([object_name],[counter_name],[instance_name]) 
+IF NOT EXISTS(SELECT 1 FROM [checkmk].[config_perfcounter] WHERE [object_name] = N'%:Memory Manager' AND [counter_name] = N'Memory Grants Pending')
+	INSERT INTO [checkmk].[config_perfcounter]([object_name],[counter_name],[instance_name]) 
 		VALUES(N'%:Memory Manager', N'Memory Grants Pending', NULL);
 
 /* Add alwayson performance counters */
-IF NOT EXISTS(SELECT 1 FROM [dbo].[config_perfcounter] WHERE [object_name] = N'%:Availability Replica' AND [counter_name] = N'Bytes Sent to Replica/sec' AND [instance_name]=N'_Total')
-	INSERT INTO [dbo].[config_perfcounter]([object_name],[counter_name],[instance_name])
+IF NOT EXISTS(SELECT 1 FROM [checkmk].[config_perfcounter] WHERE [object_name] = N'%:Availability Replica' AND [counter_name] = N'Bytes Sent to Replica/sec' AND [instance_name]=N'_Total')
+	INSERT INTO [checkmk].[config_perfcounter]([object_name],[counter_name],[instance_name])
 		 VALUES(N'%:Availability Replica',N'Bytes Sent to Replica/sec',N'_Total')
 
-IF NOT EXISTS(SELECT 1 FROM [dbo].[config_perfcounter] WHERE [object_name] = N'%:Availability Replica' AND [counter_name] = N'Bytes Received from Replica/sec' AND [instance_name]=N'_Total')
-	INSERT INTO [dbo].[config_perfcounter]([object_name],[counter_name],[instance_name])
+IF NOT EXISTS(SELECT 1 FROM [checkmk].[config_perfcounter] WHERE [object_name] = N'%:Availability Replica' AND [counter_name] = N'Bytes Received from Replica/sec' AND [instance_name]=N'_Total')
+	INSERT INTO [checkmk].[config_perfcounter]([object_name],[counter_name],[instance_name])
 		 VALUES(N'%:Availability Replica',N'Bytes Received from Replica/sec',N'_Total')
 
-IF NOT EXISTS(SELECT 1 FROM [dbo].[config_perfcounter] WHERE [object_name] = N'%:Database Replica' AND [counter_name] = N'Log Send Queue' AND [instance_name]=N'_Total')
-	INSERT INTO [dbo].[config_perfcounter]([object_name],[counter_name],[instance_name])
+IF NOT EXISTS(SELECT 1 FROM [checkmk].[config_perfcounter] WHERE [object_name] = N'%:Database Replica' AND [counter_name] = N'Log Send Queue' AND [instance_name]=N'_Total')
+	INSERT INTO [checkmk].[config_perfcounter]([object_name],[counter_name],[instance_name])
 		 VALUES(N'%:Database Replica',N'Log Send Queue',N'_Total')
 
-IF NOT EXISTS(SELECT 1 FROM [dbo].[config_perfcounter] WHERE [object_name] = N'%:Database Replica' AND [counter_name] = N'Recovery Queue' AND [instance_name]=N'_Total')
-	INSERT INTO [dbo].[config_perfcounter]([object_name],[counter_name],[instance_name])
+IF NOT EXISTS(SELECT 1 FROM [checkmk].[config_perfcounter] WHERE [object_name] = N'%:Database Replica' AND [counter_name] = N'Recovery Queue' AND [instance_name]=N'_Total')
+	INSERT INTO [checkmk].[config_perfcounter]([object_name],[counter_name],[instance_name])
 		 VALUES(N'%:Database Replica',N'Recovery Queue',N'_Total')
 GO
 --*/
@@ -345,6 +370,8 @@ BEGIN
 		WHERE [D].[database_id] NOT IN (SELECT [database_id] FROM [dbo].[config_database]);
 END
 --*/
+EXEC [checkmk].[inventory_alwayson];
+
 
 /* pretty sure this is covered by checkmk.inventory_agentjob
 IF ((SELECT COUNT(*) FROM [dbo].[config_job]) = 0)
@@ -358,7 +385,7 @@ BEGIN
 		FROM [msdb].[dbo].[sysjobs];
 END
 --*/
-
+EXEC [checkmk].[inventory_agentjob];
 
 /* Deprecated data insert start */
 /* legacy daily checks
@@ -446,9 +473,12 @@ BEGIN
 	SET @jobId = NULL;
 
 	--upgrade code, remove job from older version, uses different parameters
-	IF ((SELECT TOP (1) CAST(SUBSTRING([version], 0, CHARINDEX('.', [version], 0)) AS INT) FROM [_dbaid].[dbo].[version] ORDER BY [installdate] DESC) <= 4)
+	If EXISTS (SELECT 1 FROM [_dbaid].[sys].[tables] WHERE [name] = N'version' AND [schema_id] = SCHEMA_ID('dbo'))
 	BEGIN
-		   EXEC msdb.dbo.sp_delete_job @job_name=N'$(DatabaseName)_maintenance_history', @delete_unused_schedule=1
+		IF ((SELECT TOP (1) CAST(SUBSTRING([version], 0, CHARINDEX('.', [version], 0)) AS INT) FROM [_dbaid].[dbo].[version] ORDER BY [installdate] DESC) <= 4)
+		BEGIN
+			   EXEC msdb.dbo.sp_delete_job @job_name=N'$(DatabaseName)_maintenance_history', @delete_unused_schedule=1
+		END
 	END
 
 
@@ -715,7 +745,7 @@ BEGIN TRANSACTION
 	--*/
 
 	/* Restore [dbo].[config_alwayson] data */
-	/* need to sort out column names, for backup as well
+	/* need to sort out column names
 	SET @backupsql = N'UPDATE [$(DatabaseName)].[dbo].[config_alwayson]
 						SET [ag_role] = [C].[ag_role]
 							,[ag_state_alert] = [C].[ag_state_alert]
@@ -761,20 +791,20 @@ BEGIN TRANSACTION
 
 	IF (@rc <> 0) GOTO PROBLEM;
 
-	/* Restore [dbo].[config_perfcounter] data */
-	SET @backupsql = N'INSERT INTO [$(DatabaseName)].[dbo].[config_perfcounter]
+	/* Restore [checkmk].[config_perfcounter] data */
+	SET @backupsql = N'INSERT INTO [$(DatabaseName)].[checkmk].[config_perfcounter]
 						SELECT [object_name],[counter_name],[instance_name],[warning_threshold],[critical_threshold]
 						FROM [tempdb].[dbo].[$(DatabaseName)_backup_config_perfcounter] 
-						WHERE [object_name]+[counter_name]+[instance_name] COLLATE Database_Default NOT IN (SELECT [object_name]+[counter_name]+[instance_name] FROM [$(DatabaseName)].[dbo].[config_perfcounter]);';
+						WHERE [object_name]+[counter_name]+[instance_name] COLLATE Database_Default NOT IN (SELECT [object_name]+[counter_name]+[instance_name] FROM [$(DatabaseName)].[checkmk].[config_perfcounter]);';
 	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_perfcounter') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
 
 	IF (@rc <> 0) GOTO PROBLEM;
 
-	SET @backupsql = N'UPDATE [$(DatabaseName)].[dbo].[config_perfcounter]
+	SET @backupsql = N'UPDATE [$(DatabaseName)].[checkmk].[config_perfcounter]
 						SET [warning_threshold] = [C].[warning_threshold]
 							,[critical_threshold] = [C].[critical_threshold]
-						FROM [$(DatabaseName)].[dbo].[config_perfcounter] [O]
+						FROM [$(DatabaseName)].[checkmk].[config_perfcounter] [O]
 							INNER JOIN [tempdb].[dbo].[$(DatabaseName)_backup_config_perfcounter] [C]
 								ON [O].[object_name]+[O].[counter_name]+ISNULL([O].[instance_name],'''') = [C].[object_name]+[C].[counter_name]+ISNULL([C].[instance_name],'''') COLLATE Database_Default;';
 	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_perfcounter') IS NOT NULL
@@ -829,30 +859,34 @@ END
 ELSE
 BEGIN
 	/* Cleanup tempdb tables once data has been successfully inserted / updated */
+	/*
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[$(DatabaseName)_deprecated_tbparameters];';
 	IF OBJECT_ID('[tempdb].[dbo].[$(DatabaseName)_deprecated_tbparameters]') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
+	--*/
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[$(DatabaseName)_backup_config_alwayson];';
 	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_alwayson') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[$(DatabaseName)_backup_config_database];';
 	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_database') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
-	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[$(DatabaseName)_backup_config_job];';
-	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_job') IS NOT NULL
+	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[$(DatabaseName)_backup_config_agentjob];';
+	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_agentjob') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[$(DatabaseName)_backup_config_perfcounter];';
 	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_perfcounter') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
-	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[$(DatabaseName)_backup_static_parameters];';
-	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_static_parameters') IS NOT NULL
+	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[$(DatabaseName)_backup_configuration];';
+	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_configuration') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
+	/*
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[$(DatabaseName)_backup_version];';
 	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_version') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[$(DatabaseName)_backup_procedure];';
 	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_procedure') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
+	--*/
 	COMMIT TRANSACTION;
 
 	PRINT 'Transaction committed.'

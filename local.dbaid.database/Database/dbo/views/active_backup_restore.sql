@@ -1,4 +1,10 @@
-﻿CREATE VIEW [dbo].[active_backup_restore]
+﻿/*
+Copyright (C) 2015 Datacom
+GNU GENERAL PUBLIC LICENSE
+Version 3, 29 June 2007
+*/
+
+CREATE VIEW [dbo].[active_backup_restore]
 AS
 	SELECT [start_time]
 		,[command]

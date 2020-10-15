@@ -1,7 +1,7 @@
 ﻿/*
-
-
-
+Copyright (C) 2015 Datacom
+GNU GENERAL PUBLIC LICENSE
+Version 3, 29 June 2007
 */
 
 CREATE PROCEDURE [system].[get_instance_tag]

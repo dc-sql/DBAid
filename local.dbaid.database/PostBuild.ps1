@@ -1,4 +1,9 @@
-﻿$Root = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+﻿<#
+Copyright (C) 2015 Datacom
+GNU GENERAL PUBLIC LICENSE
+Version 3, 29 June 2007
+#>
+$Root = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
 
 $Release = Get-ChildItem -Path $Root -Filter "*dbaid*.sql"
 $PreUpgrade = $Root + "\PreUpgrade.sql"

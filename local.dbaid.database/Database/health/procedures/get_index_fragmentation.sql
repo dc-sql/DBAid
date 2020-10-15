@@ -1,4 +1,10 @@
 ﻿/*
+Copyright (C) 2015 Datacom
+GNU GENERAL PUBLIC LICENSE
+Version 3, 29 June 2007
+*/
+
+/*
 Returns LIMITED index fragmention stats
 and historical index operation information from the Ola [dbo].[CommandLog]
 */
