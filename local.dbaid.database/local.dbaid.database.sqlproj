@@ -116,6 +116,7 @@
     <Folder Include="Database\dbo\views" />
     <Folder Include="Database\OlaHallengren" />
     <Folder Include="Database\who_is_active" />
+    <Folder Include="Database\dbo\procedures" />
   </ItemGroup>
   <ItemGroup>
     <None Include="PreUpgrade.sql">
@@ -233,7 +234,7 @@
       <Value>$(SqlCmdVar__16)</Value>
     </SqlCmdVariable>
     <SqlCmdVariable Include="Version">
-      <DefaultValue>6.3.1</DefaultValue>
+      <DefaultValue>10.0.0</DefaultValue>
       <Value>$(SqlCmdVar__17)</Value>
     </SqlCmdVariable>
   </ItemGroup>
@@ -254,6 +255,9 @@
       <SuppressMissingDependenciesErrors>True</SuppressMissingDependenciesErrors>
       <DatabaseVariableLiteralValue>msdb</DatabaseVariableLiteralValue>
     </ArtifactReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Build Include="Database\dbo\procedures\cleanup_history.sql" />
   </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>Powershell -ExecutionPolicy UnRestricted -File "$(ProjectDir)$(OutputPath)PostBuild.ps1"</PostBuildEvent>

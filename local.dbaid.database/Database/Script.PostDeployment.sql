@@ -59,13 +59,14 @@ IF NOT EXISTS (SELECT 1 FROM [sys].[database_principals] WHERE LOWER([type]) IN 
 	CREATE USER [$(CheckServiceAccount)] FOR LOGIN [$(CheckServiceAccount)];
 GO
 
-
+/* legacy stuff, may need to enable later
 GRANT SELECT ON [dbo].[static_parameters] TO [admin];
 GRANT EXECUTE ON [maintenance].[check_config] TO [monitor];
 GRANT EXECUTE ON [dbo].[insert_service] TO [admin];
 GRANT EXECUTE ON [dbo].[instance_tag] TO [admin];
 GRANT EXECUTE ON [dbo].[insert_service] TO [monitor];
 GO
+--*/
 
 EXEC sp_addrolemember 'admin', '$(CollectorServiceAccount)';
 EXEC sp_addrolemember 'monitor', '$(CheckServiceAccount)';
@@ -77,6 +78,7 @@ GO
 #	Init [monitoring] database, data insert.
 #
 ####################################################################################################################################### */
+/* no version table - deployed as DACPAC
 DECLARE @installer NVARCHAR(128);
 DECLARE @date NVARCHAR(25);
 
@@ -99,8 +101,10 @@ GO
 
 INSERT INTO [dbo].[version]([version]) VALUES('$(Version)');
 GO
+--*/
 
 /* Insert procedure list in db */
+/* none of this either 
 INSERT INTO [dbo].[procedure] ([procedure_id],[schema_name],[procedure_name],[description],[is_enabled],[last_execution_datetime])
 	SELECT [O].[object_id] AS [procedure_id]
 		,OBJECT_SCHEMA_NAME([O].[object_id]) AS [schema_name]
@@ -135,10 +139,10 @@ FROM [sys].[objects] [O]
 WHERE [schema_name] = OBJECT_SCHEMA_NAME([O].[object_id])
 	AND [procedure_name] = OBJECT_NAME([O].[object_id]);
 GO
-
+--*/
 
 /* Insert static variables */
-
+/* most of this implemented as table constraints. others should probably go in system.configuration
 IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'GUID')
 	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
 		VALUES(N'GUID',NEWID(),N'Unique SQL Instance ID, generated during install. This GUID is used to link instance data together, please do not change.');
@@ -175,11 +179,11 @@ IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'DEFAULT_D
 	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
 		VALUES(N'DEFAULT_DB_STATE','CRITICAL',N'Default monitoring database state change alert');
 
-		IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'DEFAULT_ALWAYSON_STATE')
+IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'DEFAULT_ALWAYSON_STATE')
 	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
 		VALUES(N'DEFAULT_ALWAYSON_STATE','CRITICAL',N'Default alwayson availablility group state change alert');
 
-		IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'DEFAULT_ALWAYSON_ROLE')
+IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'DEFAULT_ALWAYSON_ROLE')
 	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
 		VALUES(N'DEFAULT_ALWAYSON_ROLE','CRITICAL',N'Default alwayson availablility group role change alert');
 
@@ -213,8 +217,10 @@ IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'CAPACITY_
 	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
 		VALUES(N'CAPACITY_CACHE_RETENTION_MONTH',3,N'Number of months to retain capacity cache data in log.capacity');
 GO
+--*/
 
 /* General perf counters */
+/* need to visit - required for Apollo
 IF NOT EXISTS(SELECT 1 FROM [dbo].[config_perfcounter] WHERE [object_name] = N'%:Buffer Manager' AND [counter_name] = N'Page life expectancy' AND [instance_name] IS NULL)
 	INSERT INTO [dbo].[config_perfcounter]([object_name],[counter_name],[instance_name])
 		VALUES(N'%:Buffer Manager',N'Page life expectancy',NULL);
@@ -288,8 +294,10 @@ IF NOT EXISTS(SELECT 1 FROM [dbo].[config_perfcounter] WHERE [object_name] = N'%
 	INSERT INTO [dbo].[config_perfcounter]([object_name],[counter_name],[instance_name])
 		 VALUES(N'%:Database Replica',N'Recovery Queue',N'_Total')
 GO
+--*/
 
 /* Load SQL alwayson config */
+/* pretty sure this is covered by checkmk.inventory_alwayson
 IF SERVERPROPERTY('IsHadrEnabled') IS NOT NULL
 BEGIN
 	INSERT INTO [dbo].[config_alwayson]([ag_id],[ag_name],[ag_state_alert],[ag_role],[ag_role_alert])
@@ -308,7 +316,9 @@ BEGIN
 														AND [AG].[ag_id] NOT IN (SELECT [ag_id] FROM [dbo].[config_alwayson])';
 
 END
+--*/
 
+/* pretty sure this is covered by checkmk.inventory_database
 IF ((SELECT COUNT(*) FROM [dbo].[config_database]) = 0)
 BEGIN
 	INSERT INTO [dbo].[config_database]
@@ -334,7 +344,9 @@ BEGIN
 				ON [D].[database_id] = [M].[database_id]
 		WHERE [D].[database_id] NOT IN (SELECT [database_id] FROM [dbo].[config_database]);
 END
+--*/
 
+/* pretty sure this is covered by checkmk.inventory_agentjob
 IF ((SELECT COUNT(*) FROM [dbo].[config_job]) = 0)
 BEGIN
 	INSERT INTO [dbo].[config_job]
@@ -345,8 +357,11 @@ BEGIN
 			,1 AS [is_enabled]
 		FROM [msdb].[dbo].[sysjobs];
 END
+--*/
+
 
 /* Deprecated data insert start */
+/* legacy daily checks
 IF (SELECT COUNT([parametername]) FROM [deprecated].[tbparameters] WHERE [parametername] = 'Client_name') = 0
 	INSERT INTO [deprecated].[tbparameters] ([parametername],[setting],[status],[comments])
 		VALUES('Client_name','Datacom',NULL,'');
@@ -355,10 +370,12 @@ IF (SELECT COUNT([parametername]) FROM [deprecated].[tbparameters] WHERE [parame
 		VALUES('Client_domain','$(ClientDomain)',NULL,'Client domain for email addresses');
 
 GO
+--*/
+
 
 /* #######################################################################################################################################
 #	
-#	Create agent job to process login audits in staging in [msdb].
+#	Create agent jobs.
 #
 ####################################################################################################################################### */
 USE [msdb]
@@ -439,14 +456,14 @@ BEGIN
 	BEGIN
 		BEGIN TRANSACTION
 			EXEC msdb.dbo.sp_add_job @job_name=N'$(DatabaseName)_maintenance_history', 
-					@enabled=0, @category_name=N'_dbaid maintenance', @description=N'Executes [maintenance].[cleanup_history] to cleanup job, backup, cmdlog history in [$(DatabaseName)] and msdb database.', 
+					@enabled=0, @category_name=N'_dbaid maintenance', @description=N'Executes [dbo].[cleanup_history] to cleanup job, backup, cmdlog history in [$(DatabaseName)] and msdb database.', 
 					@owner_login_name=N'$(DatabaseName)_sa', @job_id = @jobId OUTPUT;
 
 			SET @out = @JobTokenLogDir + N'\$(DatabaseName)_maintenance_history_' + @JobTokenDateTime + N'.log';
 
 			EXEC msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Cleanup msdb', 
 					@step_id=1, @cmdexec_success_code=0, @on_success_action=3, @on_fail_action=2, 
-					@subsystem=N'TSQL', @command=N'exec [$(DatabaseName)].[maintenance].[cleanup_history] @job_olderthan_day=92, @backup_olderthan_day=92, @cmdlog_olderthan_day=92, @dbmail_olderthan_day=92, @maintplan_olderthan_day=92;', 
+					@subsystem=N'TSQL', @command=N'exec [$(DatabaseName)].[dbo].[cleanup_history] @job_olderthan_day=92, @backup_olderthan_day=92, @cmdlog_olderthan_day=92, @dbmail_olderthan_day=92, @maintplan_olderthan_day=92;', 
 					@database_name=N'$(DatabaseName)',
 					@output_file_name=@out,
 					@flags=2;
@@ -479,7 +496,7 @@ BEGIN
 					@owner_login_name=N'$(DatabaseName)_sa', @job_id = @jobId OUTPUT;
 
 			SET @cmd = N'sqlcmd -E -S "' + @JobTokenServer 
-						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [maintenance].[database_backup] @Databases = ''USER_DATABASES'', @BackupType = ''FULL'', @CheckSum = ''Y'', @CleanupTime = 72" -b';
+						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [$(DatabaseName)].[dbo].[database_backup] @Databases = ''USER_DATABASES'', @BackupType = ''FULL'', @CheckSum = ''Y'', @CleanupTime = 72" -b';
 		
 			SET @out = @JobTokenLogDir + N'\$(DatabaseName)_backup_user_full_' + @JobTokenDateTime + N'.log';
 
@@ -507,7 +524,7 @@ BEGIN
 					@owner_login_name=N'$(DatabaseName)_sa', @job_id = @jobId OUTPUT;
 				
 			SET @cmd = N'sqlcmd -E -S "' + @JobTokenServer
-						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [maintenance].[database_backup] @Databases = ''USER_DATABASES'', @BackupType = ''LOG'', @CheckSum = ''Y'', @CleanupTime = 72" -b';
+						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [$(DatabaseName)].[dbo].[database_backup] @Databases = ''USER_DATABASES'', @BackupType = ''LOG'', @CheckSum = ''Y'', @CleanupTime = 72" -b';
 
 			SET @out = @JobTokenLogDir + N'\$(DatabaseName)_backup_user_tran_' + @JobTokenDateTime + N'.log';
 
@@ -535,7 +552,7 @@ BEGIN
 					@owner_login_name=N'$(DatabaseName)_sa', @job_id = @jobId OUTPUT;
 
 			SET @cmd = N'sqlcmd -E -S "' + @JobTokenServer
-						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [maintenance].[database_backup] @Databases = ''SYSTEM_DATABASES'', @BackupType = ''FULL'', @CheckSum = ''Y'', @CleanupTime = 72" -b';
+						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [$(DatabaseName)].[dbo].[database_backup] @Databases = ''SYSTEM_DATABASES'', @BackupType = ''FULL'', @CheckSum = ''Y'', @CleanupTime = 72" -b';
 
 			SET @out = @JobTokenLogDir + N'\$(DatabaseName)_backup_system_full_' + @JobTokenDateTime + N'.log';
 
@@ -563,7 +580,7 @@ BEGIN
 					@owner_login_name=N'$(DatabaseName)_sa', @job_id = @jobId OUTPUT;
 
 			SET @cmd = N'sqlcmd -E -S "' + @JobTokenServer 
-						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [maintenance].[index_optimize] @Databases = ''USER_DATABASES'', @FragmentationLow = NULL, @FragmentationMedium = ''INDEX_REORGANIZE,INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE'', @FragmentationHigh = ''INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE'', @UpdateStatistics = ''ALL''" -b';
+						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [$(DatabaseName)].[dbo].[index_optimize] @Databases = ''USER_DATABASES'', @FragmentationLow = NULL, @FragmentationMedium = ''INDEX_REORGANIZE,INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE'', @FragmentationHigh = ''INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE'', @UpdateStatistics = ''ALL''" -b';
 
 			SET @out = @JobTokenLogDir + N'\$(DatabaseName)_index_optimise_user_' + @JobTokenDateTime + N'.log';
 
@@ -591,7 +608,7 @@ BEGIN
 					@owner_login_name=N'$(DatabaseName)_sa', @job_id = @jobId OUTPUT;
 
 			SET @cmd = N'sqlcmd -E -S "' + @JobTokenServer
-						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [maintenance].[index_optimize] @Databases = ''SYSTEM_DATABASES'', @FragmentationLow = NULL, @FragmentationMedium = ''INDEX_REORGANIZE,INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE'', @FragmentationHigh = ''INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE'', @UpdateStatistics = ''ALL''" -b';
+						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [$(DatabaseName)].[dbo].[index_optimize] @Databases = ''SYSTEM_DATABASES'', @FragmentationLow = NULL, @FragmentationMedium = ''INDEX_REORGANIZE,INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE'', @FragmentationHigh = ''INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE'', @UpdateStatistics = ''ALL''" -b';
 
 			SET @out = @JobTokenLogDir + N'\$(DatabaseName)_index_optimise_system_' + @JobTokenDateTime + N'.log';
 
@@ -619,7 +636,7 @@ BEGIN
 					@owner_login_name=N'$(DatabaseName)_sa', @job_id = @jobId OUTPUT;
 
 			SET @cmd = N'sqlcmd -E -S "' + @JobTokenServer 
-						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [maintenance].[integrity_check] @Databases = ''USER_DATABASES'', @CheckCommands = ''CHECKDB''" -b'
+						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [$(DatabaseName)].[dbo].[integrity_check] @Databases = ''USER_DATABASES'', @CheckCommands = ''CHECKDB''" -b'
 
 			SET @out = @JobTokenLogDir + N'\$(DatabaseName)_integrity_check_user_' + @JobTokenDateTime + N'.log';
 
@@ -647,7 +664,7 @@ BEGIN
 					@owner_login_name=N'$(DatabaseName)_sa', @job_id = @jobId OUTPUT;
 
 			SET @cmd = N'sqlcmd -E -S "' + @JobTokenServer 
-						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [maintenance].[integrity_check] @Databases = ''SYSTEM_DATABASES'', @CheckCommands = ''CHECKDB''" -b'
+						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [$(DatabaseName)].[dbo].[integrity_check] @Databases = ''SYSTEM_DATABASES'', @CheckCommands = ''CHECKDB''" -b'
 
 			SET @out = @JobTokenLogDir + N'\$(DatabaseName)_integrity_check_system_' + @JobTokenDateTime + N'.log';
 
@@ -666,26 +683,6 @@ BEGIN
 
 	SET @jobId = NULL;
 
-	IF NOT EXISTS (SELECT [job_id] FROM [msdb].[dbo].[sysjobs_view] WHERE [name] = N'$(DatabaseName)_log_capacity')
-	BEGIN
-		BEGIN TRANSACTION
-			EXEC msdb.dbo.sp_add_job @job_name=N'$(DatabaseName)_log_capacity', 
-					@enabled=0, 
-					@category_name=N'_dbaid maintenance', 
-					@owner_login_name=N'$(DatabaseName)_sa', @job_id = @jobId OUTPUT;
-
-			EXEC msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Log Capacity', 
-					@step_id=1, @cmdexec_success_code=0, @on_success_action=1, @on_fail_action=2, @subsystem=N'TSQL', 
-					@command='EXEC [dbo].[log_stage_capacity];', 
-					@database_name=N'$(DatabaseName)', 
-					@flags=0;
-
-			EXEC msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'$(DatabaseName)_log_capacity',  
-					@enabled=1, @freq_type=4, @freq_interval=1, @freq_subday_type=1, @active_start_time=73000
-
-			EXEC msdb.dbo.sp_add_jobserver @job_id=@jobId, @server_name = N'(local)';
-		COMMIT TRANSACTION
-	END
 END
 GO
 
@@ -708,14 +705,17 @@ BEGIN TRANSACTION
 	DECLARE @rc INT;
 
 	/* Restore [deprecated].[tbparameters] data */
+	/* nope
 	SET @backupsql = N'INSERT INTO [$(DatabaseName)].[deprecated].[tbparameters]
 						SELECT [parametername],[setting],[status],[comments]
 						FROM [tempdb].[dbo].[$(DatabaseName)_deprecated_tbparameters]
 						WHERE [parametername] COLLATE Database_Default NOT IN (SELECT [parametername] FROM [$(DatabaseName)].[deprecated].[tbparameters])';
 	IF OBJECT_ID('[tempdb].[dbo].[$(DatabaseName)_deprecated_tbparameters]') IS NOT NULL
 	EXEC @rc = sp_executesql @stmt=@backupsql;
+	--*/
 
 	/* Restore [dbo].[config_alwayson] data */
+	/* need to sort out column names, for backup as well
 	SET @backupsql = N'UPDATE [$(DatabaseName)].[dbo].[config_alwayson]
 						SET [ag_role] = [C].[ag_role]
 							,[ag_state_alert] = [C].[ag_state_alert]
@@ -818,6 +818,7 @@ BEGIN TRANSACTION
 		EXEC @rc = sp_executesql @stmt=@backupsql;
 
 	IF (@rc <> 0) GOTO PROBLEM;
+--*/
 
 PROBLEM:
 IF (@@ERROR > 0 OR @rc <> 0)
