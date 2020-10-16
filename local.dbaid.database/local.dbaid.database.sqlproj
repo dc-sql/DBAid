@@ -26,6 +26,7 @@
     <EnableFullTextSearch>False</EnableFullTextSearch>
     <AllowSnapshotIsolation>False</AllowSnapshotIsolation>
     <ReadCommittedSnapshot>False</ReadCommittedSnapshot>
+    <DacVersion>10.0.0</DacVersion>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -196,6 +197,7 @@
     <Build Include="Database\OlaHallengren\dbo_index_optimize.sql" />
     <Build Include="Database\OlaHallengren\dbo_integrity_check.sql" />
     <Build Include="Database\who_is_active\who_is_active.sql" />
+    <None Include="local.dbaid.database.publish.xml" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Database\Script.PostDeployment.sql" />
