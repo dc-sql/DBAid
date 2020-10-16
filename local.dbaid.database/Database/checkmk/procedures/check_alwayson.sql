@@ -15,7 +15,7 @@ BEGIN
 
 	DECLARE @check_output TABLE([state] VARCHAR(8), [message] NVARCHAR(4000));
 
-	IF SERVERPROPERTY('IsHadrEnabled') IS NOT NULL
+	IF SERVERPROPERTY('IsHadrEnabled') = 1
 	BEGIN
 		INSERT INTO @check_output
 			EXEC [dbo].[sp_executesql] @stmt = N'SELECT CASE 
