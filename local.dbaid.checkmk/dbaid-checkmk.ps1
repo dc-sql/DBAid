@@ -73,7 +73,7 @@ try {
 
         <##### Refresh check configuration (e.g. to pick up any new jobs or databases added since last check) #####>
         foreach ($iproc in $InventoryProcedureList) {
-            $SQLQuery = $ConnectionString + "`"EXEC $iproc`""
+            $SQLQuery = $ConnectionString + "`"EXEC $iproc`" -OutputAs DataSet"
             Invoke-Expression $SQLQuery
         }
     }
@@ -96,7 +96,7 @@ try {
         }
 
         <##### Execute procedure, store results in dataset variable (i.e. PowerShell table equivalent) #####>
-        $SQLQuery = $ConnectionString + "`"EXEC $ckproc`" -As DataSet"
+        $SQLQuery = $ConnectionString + "`"EXEC $ckproc`" -OutputAs DataSet"
         $ckDataSet = Invoke-Expression $SQLQuery
         
         <##### Get rowcount of dataset variable. If the top row returned has [state] value of 'NA', then set count=0 (basically, nothing wrong detected). If there's more than one row returned, there's probably a fault. #####>
@@ -150,7 +150,8 @@ try {
 
             <##### Check for current value, warning threshold, critical threshold, pnp chart data #####>
             <##### DBAid2 has different column names. And more columns. #####>
-            if ($DBAidVersion -lt 10) {
+            <##### chart_capacity_fg has different columns returned compared to anything else, so anything else can use the older code #####>
+            if ($ctproc -ne "[checkmk].[chart_capacity_fg]") {#($DBAidVersion -lt 10) {
                 if (([DBNull]::Value).Equals($ctrow.val)) { 
                     $val = -1.0
                 }
@@ -292,9 +293,9 @@ try {
 
         <##### write output for CheckMK agent to consume #####>
         # Output from [checkmk].[chart_capacity_fg] (i.e. message column) is not in a format that Nagios can understand.
-        if ($DBAidVersion -lt 10) {
+        #if ($DBAidVersion -lt 10) {
             Write-Host "$Status mssql_$($ServiceName)_$($InstanceName) $StatusDetails $State"
-        }
+        #}
     }
 }
 catch {
