@@ -10,7 +10,7 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-	/* this stuff doesn't work on Linux so skip creating the procedure */
+	/* this stuff doesn't work on Linux so skip it */
 	/* sys.dm_os_host_info is relatively new (SQL 2017+ despite what BOL says; not from 2008). If it's there, query it (result being 'Linux' or 'Windows'). If not there, it's Windows. */
     DECLARE @DetectedOS nvarchar(7);
     IF EXISTS (SELECT 1 FROM sys.system_objects WHERE [name] = N'dm_os_host_info' AND [schema_id] = SCHEMA_ID(N'sys'))
@@ -26,7 +26,7 @@ BEGIN
         
     IF @DetectedOS = N'Windows'
 	BEGIN
-		EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+		EXECUTE AS LOGIN = N'_dbaid_sa';
 
 		DECLARE @sample1 TABLE ([rownum] BIGINT
 								,[object_name] NVARCHAR(128)

@@ -10,6 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	EXECUTE AS LOGIN = '_dbaid_sa';
+
 	/* Inventory check_database state_desc */
 	MERGE INTO [checkmk].[config_database] [target]
 	USING sys.databases [source]
@@ -20,5 +22,7 @@ BEGIN
 		UPDATE SET [target].[inventory_date] = GETDATE()
 	WHEN NOT MATCHED BY SOURCE AND [target].[inventory_date] < DATEADD(DAY, -7, GETDATE()) THEN
 		DELETE;
+
+	REVERT;
 END
 

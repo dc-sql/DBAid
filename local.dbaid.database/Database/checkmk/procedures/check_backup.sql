@@ -13,6 +13,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	EXECUTE AS LOGIN = '_dbaid_sa';
+
 	DECLARE @backup_enabled INT, @backup_disabled INT, @major_version INT;
 	DECLARE @preferred_backup TABLE ([name] sysname, [preferred_backup] BIT);
 	DECLARE @last_backup TABLE ([name] sysname, [full_backup_date] DATETIME, [diff_backup_date] DATETIME, [tran_backup_date] DATETIME);
@@ -126,11 +128,12 @@ BEGIN
 
 		WHILE (@@FETCH_STATUS=0)
 		BEGIN
-			EXEC xp_logevent 54321, @ErrorMsg, 'WARNING';  
+			EXEC xp_logevent 60003, @ErrorMsg, 'WARNING';  
 			FETCH NEXT FROM ErrorCurse INTO @ErrorMsg;
 		END
 
 		CLOSE ErrorCurse;
 		DEALLOCATE ErrorCurse;
 	END
+	REVERT;
 END

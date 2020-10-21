@@ -19,5 +19,5 @@ BEGIN
  
 	SELECT [xml_deadlock_report] = [n].[data].[query]('.')
 	FROM @xml.nodes('//RingBufferTarget/event') AS [n]([data])
-	WHERE [n].[data].[value]('@name','VARCHAR(4000)') = 'xml_deadlock_report'
+	WHERE [n].[data].[value]('@name','VARCHAR(4000)') = 'xml_deadlock_report';
 END

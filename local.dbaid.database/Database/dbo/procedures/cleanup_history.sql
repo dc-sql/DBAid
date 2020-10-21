@@ -14,7 +14,7 @@ WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;
-	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+	EXECUTE AS LOGIN = N'_dbaid_sa';
 
 	DECLARE @olderthan_date DATETIME, @return_code INT, @error_count INT;
 	SET @error_count = 0;

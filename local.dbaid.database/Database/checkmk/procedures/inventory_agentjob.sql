@@ -10,6 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	EXECUTE AS LOGIN = '_dbaid_sa';
+
 	/* Inventory check_job */
 	MERGE INTO [checkmk].[config_agentjob] AS [target]
 	USING(SELECT [J].[name] FROM [msdb].[dbo].[sysjobs] [J]) AS [source]
@@ -20,4 +22,6 @@ BEGIN
 		UPDATE SET [target].[inventory_date] = GETDATE()
 	WHEN NOT MATCHED BY SOURCE THEN
 		DELETE;
+	
+	REVERT;
 END

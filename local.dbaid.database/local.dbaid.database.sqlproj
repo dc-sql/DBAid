@@ -85,6 +85,7 @@
     <FileAlignment>8192</FileAlignment>
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
     <SuppressTSqlWarnings>71502,70001,71562</SuppressTSqlWarnings>
+    <SqlTargetName>_dbaid</SqlTargetName>
   </PropertyGroup>
   <!-- VS10 without SP1 will not have VisualStudioVersion set, so do that here -->
   <PropertyGroup />
@@ -230,10 +231,6 @@
     <SqlCmdVariable Include="CheckServiceAccount">
       <DefaultValue>NT AUTHORITY\SYSTEM</DefaultValue>
       <Value>$(SqlCmdVar__11)</Value>
-    </SqlCmdVariable>
-    <SqlCmdVariable Include="ServiceLoadExe">
-      <DefaultValue>C:\Datacom\dbaid.configg.exe</DefaultValue>
-      <Value>$(SqlCmdVar__16)</Value>
     </SqlCmdVariable>
     <SqlCmdVariable Include="Version">
       <DefaultValue>10.0.0</DefaultValue>

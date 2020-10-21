@@ -13,6 +13,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	EXECUTE AS LOGIN = '_dbaid_sa';
+
 	DECLARE @drive_info AS TABLE(
 		[database_id] INT,
 		[data_type] VARCHAR(4),
@@ -89,4 +91,7 @@ BEGIN
 			UPDATE SET [Target].[last_execution] = [Source].[last_execution]
 		WHEN NOT MATCHED BY TARGET THEN 
 			INSERT ([object_name],[last_execution]) VALUES ([Source].[object_name],[Source].[last_execution]);
+	
+	REVERT;
+
 END

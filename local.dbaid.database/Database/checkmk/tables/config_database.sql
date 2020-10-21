@@ -11,7 +11,7 @@ CREATE TABLE [checkmk].[config_database]
 	[database_check_alert] VARCHAR(10) NOT NULL CONSTRAINT DF_config_database_database_check_alert DEFAULT 'CRITICAL',
 	[database_check_enabled] BIT NOT NULL CONSTRAINT DF_config_database_database_check_enabled DEFAULT 1,
 
-	[backup_check_alert] VARCHAR(10) NOT NULL CONSTRAINT DF_config_database_backup_check_alert DEFAULT 'CRITICAL',
+	[backup_check_alert] VARCHAR(10) NOT NULL CONSTRAINT DF_config_database_backup_check_alert DEFAULT 'WARNING',
 	[backup_check_enabled] BIT NOT NULL CONSTRAINT DF_config_database_backup_check_enabled DEFAULT 1,
 	[backup_check_full_hour] INT NULL CONSTRAINT DF_config_database_backup_check_full_hour DEFAULT 30,
 	[backup_check_diff_hour] INT NULL CONSTRAINT DF_config_database_backup_check_diff_hour DEFAULT 30,

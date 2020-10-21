@@ -13,6 +13,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	EXECUTE AS LOGIN = '_dbaid_sa';
+
 	DECLARE @check_output TABLE([state] VARCHAR(8), [message] NVARCHAR(4000));
 	DECLARE @onlinecount INT, @restorecount INT, @recovercount INT;
 
@@ -55,11 +57,12 @@ BEGIN
 
 		WHILE (@@FETCH_STATUS=0)
 		BEGIN
-			EXEC xp_logevent 54321, @ErrorMsg, 'WARNING';  
+			EXEC xp_logevent 60004, @ErrorMsg, 'WARNING';  
 			FETCH NEXT FROM ErrorCurse INTO @ErrorMsg;
 		END
 
 		CLOSE ErrorCurse;
 		DEALLOCATE ErrorCurse;
 	END
+	REVERT;
 END

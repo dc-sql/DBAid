@@ -13,6 +13,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	EXECUTE AS LOGIN = '_dbaid_sa';
+
 	DECLARE @check_output TABLE([state] VARCHAR(8), [message] NVARCHAR(4000));
 
 	IF SERVERPROPERTY('IsHadrEnabled') = 1
@@ -68,7 +70,7 @@ BEGIN
 
 					WHILE (@@FETCH_STATUS=0)
 					BEGIN
-						EXEC xp_logevent 54321, @ErrorMsg, 'WARNING';  
+						EXEC xp_logevent 60002, @ErrorMsg, 'WARNING';  
 						FETCH NEXT FROM ErrorCurse INTO @ErrorMsg;
 					END
 
@@ -84,5 +86,6 @@ BEGIN
 	BEGIN
 		SELECT 'NA' AS [state], 'Always-On is not available.' AS [message];
 	END
+	REVERT;
 END;
 

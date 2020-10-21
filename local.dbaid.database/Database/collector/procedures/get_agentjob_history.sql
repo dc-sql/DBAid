@@ -16,6 +16,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	EXECUTE AS LOGIN = '_dbaid_sa';
+
 	DECLARE @jobhistory TABLE ([instance_id] INT
 		,[job_id] UNIQUEIDENTIFIER
 		,[job_name] NVARCHAR(128)
@@ -97,4 +99,6 @@ BEGIN
 			UPDATE SET [Target].[last_execution] = [Source].[last_execution]
 		WHEN NOT MATCHED BY TARGET THEN 
 			INSERT ([object_name],[last_execution]) VALUES ([Source].[object_name],[Source].[last_execution]);
+
+	REVERT;
 END;

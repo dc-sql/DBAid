@@ -33,6 +33,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	EXECUTE AS LOGIN = '_dbaid_sa';
+
 	IF OBJECT_ID('tempdb..#__Errorlog') IS NOT NULL
 		DROP TABLE #__Errorlog;
 
@@ -158,4 +160,6 @@ BEGIN
 		WHEN NOT MATCHED BY TARGET THEN 
 			INSERT ([object_name],[last_execution]) VALUES ([Source].[object_name],[Source].[last_execution]);
 	END
+
+	REVERT;
 END;

@@ -35,5 +35,5 @@ BEGIN
 		,[blocking_inputbuf] = [n].[data].[value]('(//blocking-process/process/inputbuf/text())[1]','NVARCHAR(MAX)')
 		,[xml_blocked_report] = [n].[data].[query]('.')
 	FROM @xml.nodes('//RingBufferTarget/event') AS [n]([data])
-	WHERE [n].[data].[value]('@name','VARCHAR(4000)') = 'blocked_process_report'
+	WHERE [n].[data].[value]('@name','VARCHAR(4000)') = 'blocked_process_report';
 END

@@ -14,7 +14,7 @@ BEGIN
        The intention is to map overall data size/growth against reserved size/growth against total disk size.
        This gives an overview of data growth and facilitates estimating future capacity requirements. */
 
-	/* this stuff doesn't work on Linux so skip creating the procedure */
+	/* this stuff doesn't work on Linux so skip it */
 	/* sys.dm_os_host_info is relatively new (SQL 2017+ despite what BOL says; not from 2008). If it's there, query it (result being 'Linux' or 'Windows'). If not there, it's Windows. */
     DECLARE @DetectedOS nvarchar(7);
     IF EXISTS (SELECT 1 FROM sys.system_objects WHERE [name] = N'dm_os_host_info' AND [schema_id] = SCHEMA_ID(N'sys'))
@@ -30,7 +30,7 @@ BEGIN
         
     IF @DetectedOS = N'Windows'
 	BEGIN
-        EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+        EXECUTE AS LOGIN = N'_dbaid_sa';
 
         SET NOCOUNT ON;
 
