@@ -137,5 +137,8 @@ BEGIN
 
 		REVERT;
 	END
+	ELSE
+		SELECT 0 as "val", 1 AS "warn", 2 AS "crit", '- Monitor unsupported by Linux SQL instance' AS "pnp";
+
 END
 GO

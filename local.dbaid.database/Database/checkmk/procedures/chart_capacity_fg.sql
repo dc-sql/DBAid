@@ -283,5 +283,8 @@ BEGIN
 			DEALLOCATE ErrorCurse;
 		END
 	END
+	ELSE
+		SELECT NULL as "name", 0 AS "used", 1 AS "reserved", 10 AS "max", 2 AS "warning", 3 AS "critical", 'MB' AS "uom", 'OK' AS "state", '- Monitor unsupported by Linux SQL instance' AS "message";
+
 END
 GO

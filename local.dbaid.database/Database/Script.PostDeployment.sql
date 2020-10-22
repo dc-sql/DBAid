@@ -742,9 +742,11 @@ END
 IF ((SELECT LOWER(CAST(SERVERPROPERTY('Edition') AS NVARCHAR(128)))) LIKE '%express%')
 	PRINT 'Express Edition Detected. No SQL Agent.';
 ELSE IF (NOT EXISTS (SELECT [login_time] FROM [sys].[dm_exec_sessions] WHERE LOWER([program_name]) LIKE 'sqlagent - generic refresher'))
-	PRINT 'No SQL Agent detected. It may be stopped or disabled.';
-ELSE
-	EXEC [msdb].[dbo].[sp_set_sqlagent_properties] @jobhistory_max_rows=10000, @jobhistory_max_rows_per_job=1000;
+		PRINT 'No SQL Agent detected. It may be stopped or disabled.';
+	 ELSE IF @DetectedOS <> 'Windows'
+			PRINT 'Cannot use [msdb].[dbo].[sp_set_sqlagent_properties] to set SQL Agent properties on Linux.';
+		  ELSE
+				EXEC [msdb].[dbo].[sp_set_sqlagent_properties] @jobhistory_max_rows=10000, @jobhistory_max_rows_per_job=1000;
 GO
 
 
