@@ -16,6 +16,10 @@ try {
     [string]$InstanceName = $null
 
     <##### When $Instance is expanded, it will include -EncryptConnection (if specified) which will be interpreted as a switch to Invoke-Sqlcmd #####>
+    <##### When using Linux, must have Kerberos configured or pass in Username and Password parameters. Also need to use -Hostname rather than -ServerInstance 
+           e.g. [string]$ConnectionString = "Invoke-SqlCmd -Hostname $($Instance) -Database $($Database) -Username user -Password password -Query "      
+           2020-10-22: Tested with PowerShell 7.0.3 
+    #####>
     [string]$ConnectionString = "Invoke-SqlCmd -ServerInstance $($Instance) -Database $($Database) -Query "
 
     <##### If running PowerShell 6 or higher, could use $IsWindows. Lowest requirement for this script to work, however, is PowerShell 5.  #####>
