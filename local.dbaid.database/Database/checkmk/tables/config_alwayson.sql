@@ -13,7 +13,7 @@ CREATE TABLE [checkmk].[config_alwayson] (
     [ag_role_is_enabled]      BIT              NOT NULL	CONSTRAINT DF_config_alwayson_ag_role_is_enabled DEFAULT 1,
     [ag_role_change_datetime] DATETIME         NOT NULL	CONSTRAINT DF_config_alwayson_ag_role_change_datetime DEFAULT GETDATE()
 	CONSTRAINT [CK_config_alwayson_ag_state_alert] CHECK ([ag_state_alert] = N'NA' OR [ag_state_alert] = N'OK' OR [ag_state_alert] = N'WARNING' OR [ag_state_alert] = N'CRITICAL'),
-	[inventory_date] DATETIME NOT NULL DEFAULT GETDATE(), 
+	[inventory_date] DATETIME NOT NULL CONSTRAINT DF_config_alwayson_inventory_date DEFAULT GETDATE(), 
     CONSTRAINT [CK_config_alwayson_ag_role_alert] CHECK ([ag_role_alert] = N'NA' OR [ag_role_alert] = N'OK' OR [ag_role_alert] = N'WARNING' OR [ag_role_alert] = N'CRITICAL')
 );
 
