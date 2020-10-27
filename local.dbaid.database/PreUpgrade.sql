@@ -35,9 +35,9 @@ BEGIN
 			EXEC sp_executesql @stmt=@backupsql;
 		END
 
-		IF (OBJECT_ID(N'tempdb.dbo._dbaid_backup_config_job') IS NULL AND OBJECT_ID(N'[_dbaid].[dbo].[config_job]') IS NOT NULL)
+		IF (OBJECT_ID(N'tempdb.dbo._dbaid_backup_config_agentjob') IS NULL AND OBJECT_ID(N'[_dbaid].[dbo].[config_job]') IS NOT NULL)
 		BEGIN
-			SET @backupsql = N'SELECT * INTO [tempdb].[dbo].[_dbaid_backup_config_job] FROM [_dbaid].[dbo].[config_job]';
+			SET @backupsql = N'SELECT * INTO [tempdb].[dbo].[_dbaid_backup_config_agentjob] FROM [_dbaid].[dbo].[config_job]';
 			EXEC sp_executesql @stmt=@backupsql;
 		END
 

@@ -750,6 +750,17 @@ ELSE IF (NOT EXISTS (SELECT [login_time] FROM [sys].[dm_exec_sessions] WHERE LOW
 GO
 
 
+/* execute inventory to populate monitoring tables */
+USE [_dbaid]
+GO
+EXEC [checkmk].[inventory_database];
+GO
+EXEC [checkmk].[inventory_agentjob];
+GO
+EXEC [checkmk].[inventory_alwayson];
+GO
+
+
 /* Restore Backup data from Tempdb to DBAid */
 USE [_dbaid]
 GO
@@ -803,9 +814,9 @@ BEGIN TRANSACTION
 								,[state_check_alert] = [C].[change_state_alert]
 								,[state_fail_check_enabled] = [C].[is_enabled]
 							FROM [_dbaid].[checkmk].[config_agentjob] [O]
-								INNER JOIN [tempdb].[dbo].[_dbaid_backup_config_job] [C]
+								INNER JOIN [tempdb].[dbo].[_dbaid_backup_config_agentjob] [C]
 									ON [O].[name] = [C].[job_name];';
-		IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_job') IS NOT NULL
+		IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_agentjob') IS NOT NULL
 			EXEC @rc = sp_executesql @stmt=@backupsql;
 
 		IF (@rc <> 0) GOTO PROBLEM;
@@ -815,7 +826,7 @@ BEGIN TRANSACTION
 		SET @backupsql = N'INSERT INTO [_dbaid].[checkmk].[config_perfcounter]
 							SELECT [object_name],[counter_name],[instance_name],[warning_threshold],[critical_threshold]
 							FROM [tempdb].[dbo].[_dbaid_backup_config_perfcounter] 
-							WHERE [object_name] + [counter_name] + [instance_name] COLLATE Database_Default NOT IN (SELECT [object_name] + [counter_name] + [instance_name] FROM [_dbaid].[checkmk].[config_perfcounter]);';
+							WHERE [object_name] + [counter_name] + ISNULL([instance_name], '''') COLLATE Database_Default NOT IN (SELECT [object_name] + [counter_name] + ISNULL([instance_name], '''') FROM [_dbaid].[checkmk].[config_perfcounter]);';
 		IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_perfcounter') IS NOT NULL
 			EXEC @rc = sp_executesql @stmt=@backupsql;
 
@@ -951,8 +962,8 @@ BEGIN
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[_dbaid_backup_config_database];';
 	IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_database') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
-	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[_dbaid_backup_config_job];';
-	IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_job') IS NOT NULL
+	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[_dbaid_backup_config_agentjob];';
+	IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_agentjob') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[_dbaid_backup_config_perfcounter];';
 	IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_perfcounter') IS NOT NULL
@@ -967,10 +978,3 @@ BEGIN
 END
 
 
-/* execute inventory to populate monitoring tables */
-EXEC [checkmk].[inventory_database];
-GO
-EXEC [checkmk].[inventory_agentjob];
-GO
-EXEC [checkmk].[inventory_alwayson];
-GO
