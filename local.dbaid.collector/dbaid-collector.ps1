@@ -1,6 +1,6 @@
 ﻿Param(
     [parameter(Mandatory)]
-    [string[]]$CollectSqlServer = 'scottdu-lt001',
+    [string[]]$CollectSqlServer = 'servername',
 
     [parameter()]
     [string]$CollectDatabase = '_dbaid',
@@ -9,17 +9,19 @@
     [Switch]$UpdateExecTimestamp,
 
     [parameter()]
-    [System.String]$OutputXmlFilePath,
+    [System.String]$OutputXmlFilePath = '.\',
 
     [parameter()]
     [Switch]$ZipXml,
 
     [parameter()]
-    [string[]]$DatamartSqlServer = 'scottdu-lt001',
+    [string[]]$DatamartSqlServer = 'servername',
 
     [parameter()]
     [string]$DatamartDatabase = '_dbaid'
 )
+
+Set-Location $PSScriptRoot
 
 $Timestamp = Get-Date -Format 'yyyyMMddHHmm'
 
@@ -30,9 +32,10 @@ foreach ($CollectServer in $CollectSqlServer) {
 
     # EXPORT DATA #
     foreach ($Procedure in $ProcedureList) {
-        $ProcSchema = $Procedure.Schema 
-        $ProcName = $Procedure.Name
-        $ProcQuery = "EXEC [$ProcSchema].[$ProcName] "
+        $ProcQuery = 'EXEC ' + ($Procedure).procedure
+
+        $ProcSchema = (((($Procedure).procedure).Split('.')).Replace(']', '')).Replace('[', '')[0]
+        $ProcName = (((($Procedure).procedure).Split('.')).Replace(']', '')).Replace('[', '')[1]
 
         if ($UpdateExecTimestamp) {
             $ProcQuery = $ProcQuery + "@update_execution_timestamp=1"
@@ -49,14 +52,18 @@ foreach ($CollectServer in $CollectSqlServer) {
 
         if ($OutputXmlFilePath) {
             Write-Verbose -Message "Outputting XML to: $OutputXmlFilePath"
-            $FileName = $InstanceTag + '_' + $Procedure.Name + '_' + $Timestamp + '.xml'
-            $OutputFile = Join-Path $OutputXmlFilePath $FileName
-            $dt.WriteXml($OutputFile, "System.Data.XmlWriteMode"::WriteShema)
+            If (Test-Path $OutputXmlFilePath) {
+                $FileName = $InstanceTag + '_' + $ProcName + '_' + $Timestamp + '.xml'
+                $OutputFile = Join-Path $OutputXmlFilePath $FileName
+                $dt.WriteXml($OutputFile, "System.Data.XmlWriteMode"::WriteSchema)
+            } else {
+                Write-Error "Cannot output XML to: ""$OutputXmlFilePath"" No such path!" -Category ObjectNotFound
+            }
         }
 
         foreach ($DatamartServer in $DatamartSqlServer) {
             $DestTable = '[datamart].[' + $ProcName + ']'
-            $LoadType = $InstanceTag + '_' + $Procedure.Name
+            $LoadType = $InstanceTag + '_' + $ProcName
 
             try { # try bulk copy data into destination table
                 $cn = new-object System.Data.SqlClient.SqlConnection("Data Source=$DatamartServer;Integrated Security=SSPI;Initial Catalog=$DatamartDatabase");
@@ -98,7 +105,6 @@ foreach ($CollectServer in $CollectSqlServer) {
 #>
 
     if ($ZipXml) {
-        Set-Location $PSScriptRoot
-        & comcryptor.ps1 $CollectServer $EmailDisable
+        & .\comcryptor.ps1 -SqlServer $CollectServer
     }
 }
