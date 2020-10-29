@@ -1,6 +1,6 @@
 ﻿Param(
     [parameter(Mandatory)]
-    [string[]]$CollectSqlServer = 'servername',
+    [string[]]$CollectSqlServer,
 
     [parameter()]
     [string]$CollectDatabase = '_dbaid',
@@ -9,16 +9,16 @@
     [Switch]$UpdateExecTimestamp,
 
     [parameter()]
-    [System.String]$OutputXmlFilePath = '.\',
+    [System.String]$OutputXmlFilePath,
 
     [parameter()]
     [Switch]$ZipXml,
 
     [parameter()]
-    [string[]]$DatamartSqlServer = 'servername',
+    [string[]]$DatamartSqlServer,
 
     [parameter()]
-    [string]$DatamartDatabase = '_dbaid'
+    [string]$DatamartDatabase
 )
 
 Set-Location $PSScriptRoot
@@ -50,6 +50,7 @@ foreach ($CollectServer in $CollectSqlServer) {
             $dt = New-Object System.Data.Datatable($ProcName)
         }
 
+        <####### NB - [owner_sid] value will get garbled due to conversion from varbinary to sql_variant in [collector].[get_database_ci]  #######>
         if ($OutputXmlFilePath) {
             Write-Verbose -Message "Outputting XML to: $OutputXmlFilePath"
             If (Test-Path $OutputXmlFilePath) {
