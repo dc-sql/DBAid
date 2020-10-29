@@ -15,6 +15,18 @@
     [Switch]$ZipXml,
 
     [parameter()]
+    [Switch]$EmailEnable,
+
+    [parameter()]
+    [string]$EmailTo = 'someone@domain.co.nz',
+
+    [parameter()]
+    [string]$EmailFrom = 'server@domain.net.nz',
+
+    [parameter()]
+    [string]$EmailSMTP = 'smtp.domain.net.nz',
+
+    [parameter()]
     [string[]]$DatamartSqlServer,
 
     [parameter()]
@@ -22,6 +34,8 @@
 )
 
 Set-Location $PSScriptRoot
+<##### Requires Send-MailKitMessage PowerShell module: https://www.powershellgallery.com/packages/Send-MailKitMessage/2.0.1 #####>
+Import-Module Send-MailKitMessage
 
 $Timestamp = Get-Date -Format 'yyyyMMddHHmm'
 
@@ -58,7 +72,7 @@ foreach ($CollectServer in $CollectSqlServer) {
                 $OutputFile = Join-Path $OutputXmlFilePath $FileName
                 $dt.WriteXml($OutputFile, "System.Data.XmlWriteMode"::WriteSchema)
             } else {
-                Write-Error "Cannot output XML to: ""$OutputXmlFilePath"" No such path!" -Category ObjectNotFound
+                Write-Error "Cannot output XML to: ""$OutputXmlFilePath"" No such path!" -Category ObjectNotFound  #-ForegroundColor Red
             }
         }
 
@@ -106,6 +120,36 @@ foreach ($CollectServer in $CollectSqlServer) {
 #>
 
     if ($ZipXml) {
-        & .\comcryptor.ps1 -SqlServer $CollectServer
+        $SQLServer = (Invoke-Sqlcmd -ServerInstance $CollectServer -Query "SELECT @@SERVERNAME")[0]
+        [string]$secret = (Invoke-Sqlcmd -ServerInstance $SQLServer -Query "SELECT [value] FROM [_dbaid].[system].[configuration] WHERE [key] = N'COLLECTOR_SECRET'")[0]
+        [string]$instanceTag = (Invoke-Sqlcmd -ServerInstance $SQLServer -Query "EXEC [_dbaid].[system].[get_instance_tag];")[0]
+        [string]$7zip = "$PSScriptRoot\7za.exe"
+        [string]$7zipArgs = "a -mx=9 -tzip -sdel -p'$secret'"
+        [string]$7zipSource = "$PSScriptRoot\$instanceTag*.xml" 
+        [string]$7zipTarget = $instanceTag + '_' + (Get-Date -Format 'yyyyMMddHHmmss') + '.zip'
+
+        $7zipCmd = "'$7zip' $7zipArgs '$7zipTarget' '$7zipSource'"
+
+        if ((Get-ChildItem -Path $7zipSource).Length -gt 0) {
+            Invoke-Expression "&$7zipCmd"
+        } else {
+            Write-Host 'No xml files in current directory. '
+        }
+
+        if ($EmailEnable) {
+            [string[]]$EmailAttachments = (Get-ChildItem -Path "$PSScriptRoot\*.zip").FullName
+            [string]$EmailBody = "DBAid collector results for: $SQLServer.$env:USERDNSDOMAIN"
+
+            if ($EmailAttachments.Length -gt 0) {
+            <######## Send-MailMessage is deprecated, shouldn't be using it. See https://aka.ms/SendMailMessage. MailKit is recommended replacement: https://github.com/jstedfast/MailKit ########>
+            Send-MailMessage -To $EmailTo -From $EmailFrom -Subject "DBAid SQL Collector XML" -Body $EmailBody -Attachments $EmailAttachments -SmtpServer $EmailSMTP
+    
+            foreach ($item in $EmailAttachments) {
+                Remove-Item -Path $item -Force
+            }
+            } else {
+             Write-Host 'No zip files in current directory. '
+            }
+        }
     }
 }
