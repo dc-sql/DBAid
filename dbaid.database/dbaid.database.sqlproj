@@ -21,7 +21,7 @@
     <AnsiNulls>True</AnsiNulls>
     <ServiceBrokerOption>EnableBroker</ServiceBrokerOption>
     <GenerateSqlClrDdl>False</GenerateSqlClrDdl>
-    <TargetDatabase>local.dbaid.database</TargetDatabase>
+    <TargetDatabase>_dbaid</TargetDatabase>
     <DacApplicationName>_dbaid</DacApplicationName>
     <EnableFullTextSearch>False</EnableFullTextSearch>
     <AllowSnapshotIsolation>False</AllowSnapshotIsolation>
@@ -32,7 +32,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <Name>local.dbaid.database</Name>
+    <Name>dbaid.database</Name>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectVersion>4.1</ProjectVersion>
     <ProjectGuid>{30bbb9ff-8cb9-44cb-b27e-d722fa8552e4}</ProjectGuid>
@@ -198,13 +198,12 @@
     <Build Include="Database\OlaHallengren\dbo_index_optimize.sql" />
     <Build Include="Database\OlaHallengren\dbo_integrity_check.sql" />
     <Build Include="Database\who_is_active\who_is_active.sql" />
-    <None Include="local.dbaid.database.publish.xml" />
+    <None Include="dbaid.database.publish.xml" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Database\Script.PostDeployment.sql" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="test.sql" />
     <None Include="express_scheduled_task_templates\mssql_dbaid_backup_full.xml" />
     <None Include="express_scheduled_task_templates\mssql_dbaid_backup_tran.xml" />
     <None Include="express_scheduled_task_templates\mssql_dbaid_config_genie.xml" />

@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30621.155
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "local.dbaid.database", "Local.DBAid.Database\local.dbaid.database.sqlproj", "{30BBB9FF-8CB9-44CB-B27E-D722FA8552E4}"
+Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "dbaid.database", "DBAid.Database\dbaid.database.sqlproj", "{30BBB9FF-8CB9-44CB-B27E-D722FA8552E4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "local.dbaid.collector", "Local.DBAid.Collector\local.dbaid.collector.csproj", "{A55B67DB-74C8-4DB1-AAB3-003E8B53531B}"
 EndProject
@@ -18,9 +18,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "local.dbaid.configg", "local.dbaid.configg\local.dbaid.configg.csproj", "{65C90572-6278-464C-A1E2-B4087388D85F}"
 EndProject
 Global
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|x86 = Debug|x86
@@ -92,6 +89,9 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {DF14DDEB-0C90-4DF4-95FC-5BDEAE3955D5}
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 	GlobalSection(Performance) = preSolution
 		HasPerformanceSessions = true

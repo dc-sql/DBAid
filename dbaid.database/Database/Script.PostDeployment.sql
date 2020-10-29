@@ -285,7 +285,7 @@ BEGIN
 
 		EXEC msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'DeleteSystemHistory', 
 			@step_id=1, @cmdexec_success_code=0, @on_success_action=3, @on_fail_action=2, 
-			@subsystem=N'TSQL', @command=N'EXEC [system].[delete_system_history] @job_olderthan_day=92,@backup_olderthan_day=92,@dbmail_olderthan_day=92,@maintplan_olderthan_day=92;', 
+			@subsystem=N'TSQL', @command=N'EXEC [_dbaid].[system].[delete_system_history] @job_olderthan_day=92, @backup_olderthan_day=92, @dbmail_olderthan_day=92, @maintplan_olderthan_day=92;', 
 			@database_name=N'_dbaid',
 			@output_file_name=@out,
 			@flags=2;
@@ -333,8 +333,8 @@ BEGIN
 			@job_id = @jobId OUTPUT;
 
 		/* No support for @CleanupTime parameter on Linux. */
-		SELECT @cmd = N'EXEC [_dbaid].[dbo].[DatabaseBackup] @Databases=''USER_DATABASES'',@BackupType=''DIFF'',@CheckSum=''Y''' 
-			+ CASE @DetectedOS WHEN N'Windows' THEN N',@CleanupTime=72' ELSE N';' END;
+		SELECT @cmd = N'EXEC [_dbaid].[dbo].[database_backup] @Databases=''USER_DATABASES'', @BackupType=''DIFF'', @CheckSum=''Y''' 
+			+ CASE @DetectedOS WHEN N'Windows' THEN N', @CleanupTime=72' ELSE N';' END;
 
 		SELECT @out = @JobTokenLogDir + N'_dbaid_backup_user_diff_' + @JobTokenDateTime + N'.log';
 
@@ -369,8 +369,8 @@ BEGIN
 			@category_name=N'_dbaid_maintenance', 
 			@job_id = @jobId OUTPUT;
 
-		SELECT @cmd = N'EXEC [_dbaid].[dbo].[DatabaseBackup] @Databases=''USER_DATABASES'',@BackupType=''FULL'',@CheckSum=''Y''' 
-			+ CASE @DetectedOS WHEN N'Windows' THEN N',@CleanupTime=72' ELSE N';' END;
+		SELECT @cmd = N'EXEC [_dbaid].[dbo].[database_backup] @Databases=''USER_DATABASES'', @BackupType=''FULL'', @CheckSum=''Y''' 
+			+ CASE @DetectedOS WHEN N'Windows' THEN N', @CleanupTime=72' ELSE N';' END;
 
 		SELECT @out = @JobTokenLogDir + N'_dbaid_backup_user_full_' + @JobTokenDateTime + N'.log';
 
@@ -405,8 +405,8 @@ BEGIN
 			@category_name=N'_dbaid_maintenance', 
 			@job_id = @jobId OUTPUT;
 
-		SELECT @cmd = N'EXEC [_dbaid].[dbo].[DatabaseBackup] @Databases=''USER_DATABASES'',@BackupType=''LOG'',@CheckSum=''Y''' 
-			+ CASE @DetectedOS WHEN N'Windows' THEN N',@CleanupTime=72' ELSE N';' END;
+		SELECT @cmd = N'EXEC [_dbaid].[dbo].[database_backup] @Databases=''USER_DATABASES'', @BackupType=''LOG'', @CheckSum=''Y''' 
+			+ CASE @DetectedOS WHEN N'Windows' THEN N', @CleanupTime=72' ELSE N';' END;
 
 		SELECT @out = @JobTokenLogDir + N'_dbaid_backup_user_tran_' + @JobTokenDateTime + N'.log';
 
@@ -441,7 +441,7 @@ BEGIN
 			@category_name=N'_dbaid_maintenance', 
 			@job_id = @jobId OUTPUT;
 
-		SELECT @cmd = N'EXEC [_dbaid].[dbo].[DatabaseBackup] @Databases=''SYSTEM_DATABASES'', @BackupType=''FULL'', @CheckSum=''Y''' 
+		SELECT @cmd = N'EXEC [_dbaid].[dbo].[database_backup] @Databases=''SYSTEM_DATABASES'', @BackupType=''FULL'', @CheckSum=''Y''' 
 			+ CASE @DetectedOS WHEN N'Windows' THEN N', @CleanupTime=72' ELSE N';' END;
 
 		SELECT @out = @JobTokenLogDir + N'_dbaid_backup_system_full_' + @JobTokenDateTime + N'.log';
@@ -510,7 +510,7 @@ BEGIN
 			@category_name=N'_dbaid_maintenance', 
 			@job_id = @jobId OUTPUT;
 
-		SET @cmd = N'EXEC [_dbaid].[dbo].[IndexOptimize] @Databases=''USER_DATABASES'',@UpdateStatistics=''ALL'',@OnlyModifiedStatistics=''Y'',@StatisticsResample=''Y'',@MSShippedObjects=''Y'',@LockTimeout=600,@LogToTable=''Y''';
+		SET @cmd = N'EXEC [_dbaid].[dbo].[index_optimize] @Databases=''USER_DATABASES'', @UpdateStatistics=''ALL'', @OnlyModifiedStatistics=''Y'', @StatisticsResample=''Y'', @MSShippedObjects=''Y'', @LockTimeout=600, @LogToTable=''Y''';
 		SET @out = @JobTokenLogDir + N'_dbaid_index_optimise_user_' + @JobTokenDateTime + N'.log';
 
 		EXEC msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'_dbaid_index_optimise_user', 
@@ -544,7 +544,7 @@ BEGIN
 			@category_name=N'_dbaid_maintenance', 
 			@job_id = @jobId OUTPUT;
 
-		SET @cmd = N'EXEC [_dbaid].[dbo].[IndexOptimize] @Databases=''SYSTEM_DATABASES'',@UpdateStatistics=''ALL'',@OnlyModifiedStatistics=''Y'',@StatisticsResample=''Y'',@MSShippedObjects=''Y'',@LockTimeout=600,@LogToTable=''Y''';
+		SET @cmd = N'EXEC [_dbaid].[dbo].[index_optimize] @Databases=''SYSTEM_DATABASES'', @UpdateStatistics=''ALL'', @OnlyModifiedStatistics=''Y'', @StatisticsResample=''Y'', @MSShippedObjects=''Y'', @LockTimeout=600, @LogToTable=''Y''';
 		SET @out = @JobTokenLogDir + N'_dbaid_index_optimise_system_' + @JobTokenDateTime + N'.log';
 
 		EXEC msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'_dbaid_index_optimise_system', 
@@ -578,7 +578,7 @@ BEGIN
 			@category_name=N'_dbaid_maintenance', 
 			@job_id = @jobId OUTPUT;
 
-		SET @cmd = N'EXEC [_dbaid].[dbo].[DatabaseIntegrityCheck] @Databases=''USER_DATABASES'',@CheckCommands=''CHECKDB'',@LockTimeout=600,@LogToTable=''Y''';
+		SET @cmd = N'EXEC [_dbaid].[dbo].[integrity_check] @Databases=''USER_DATABASES'', @CheckCommands=''CHECKDB'', @LockTimeout=600, @LogToTable=''Y''';
 		SET @out = @JobTokenLogDir + N'_dbaid_integrity_check_user_' + @JobTokenDateTime + N'.log';
 
 		EXEC msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'_dbaid_integrity_check_user', 
@@ -612,7 +612,7 @@ BEGIN
 			@category_name=N'_dbaid_maintenance',
 			@job_id = @jobId OUTPUT;
 
-		SET @cmd = N'EXEC [_dbaid].[dbo].[DatabaseIntegrityCheck] @Databases=''SYSTEM_DATABASES'',@CheckCommands=''CHECKDB'',@LockTimeout=600,@LogToTable=''Y''';
+		SET @cmd = N'EXEC [_dbaid].[dbo].[integrity_check] @Databases=''SYSTEM_DATABASES'', @CheckCommands=''CHECKDB'', @LockTimeout=600, @LogToTable=''Y''';
 		SET @out = @JobTokenLogDir + N'_dbaid_integrity_check_system_' + @JobTokenDateTime + N'.log';
 
 		EXEC msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'_dbaid_integrity_check_system',
@@ -684,19 +684,19 @@ BEGIN
 			@description=N'Writes CheckMK output into the SQL Server ERRORLOG. NB - will only write to ERRORLOG if there are any issues found, won''t write out anything with status of "OK".',
 			@job_id = @jobId OUTPUT;
 
-		SET @cmd = N'EXEC [checkmk].[inventory_agentjob]
-EXEC [checkmk].[inventory_alwayson]
-EXEC [checkmk].[inventory_database]
+		SET @cmd = N'EXEC [_dbaid].[checkmk].[inventory_agentjob]
+EXEC [_dbaid].[checkmk].[inventory_alwayson]
+EXEC [_dbaid].[checkmk].[inventory_database]
 GO
 
-EXEC [checkmk].[chart_capacity_fg] @writelog = 1
-EXEC [checkmk].[check_agentjob] @writelog = 1
-EXEC [checkmk].[check_alwayson] @writelog = 1
-EXEC [checkmk].[check_backup] @writelog = 1
-EXEC [checkmk].[check_database] @writelog = 1
-EXEC [checkmk].[check_integrity] @writelog = 1
-EXEC [checkmk].[check_logshipping] @writelog = 1
-EXEC [checkmk].[check_mirroring] @writelog = 1
+EXEC [_dbaid].[checkmk].[chart_capacity_fg] @writelog = 1
+EXEC [_dbaid].[checkmk].[check_agentjob] @writelog = 1
+EXEC [_dbaid].[checkmk].[check_alwayson] @writelog = 1
+EXEC [_dbaid].[checkmk].[check_backup] @writelog = 1
+EXEC [_dbaid].[checkmk].[check_database] @writelog = 1
+EXEC [_dbaid].[checkmk].[check_integrity] @writelog = 1
+EXEC [_dbaid].[checkmk].[check_logshipping] @writelog = 1
+EXEC [_dbaid].[checkmk].[check_mirroring] @writelog = 1
 GO';
 
 		EXEC msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'_dbaid_checkmk_writelog',
