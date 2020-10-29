@@ -2,7 +2,7 @@
 <##### If an instance is using TLS, add -EncryptConnection. E.g. @("server1 -EncryptConnection", "server1\instance1 -EncryptConnection", "server1\instance2") #####>
 Param(
     [parameter(Mandatory=$false)]
-    [string[]]$SqlServer = @("ServerName1")
+    [string[]]$SqlServer = @("servername")
 )
 Set-Location $PSScriptRoot
 
@@ -20,6 +20,7 @@ try {
            e.g. [string]$ConnectionString = "Invoke-SqlCmd -Hostname $($Instance) -Database $($Database) -Username user -Password password -Query "      
            2020-10-22: Tested with PowerShell 7.0.3 
     #####>
+
     [string]$ConnectionString = "Invoke-SqlCmd -ServerInstance $($Instance) -Database $($Database) -Query "
 
     <##### If running PowerShell 6 or higher, could use $IsWindows. Lowest requirement for this script to work, however, is PowerShell 5.  #####>
@@ -316,7 +317,7 @@ catch {
     <##### write output for CheckMK agent to consume #####>
     Write-Host "2 mssql_$($InstanceName) - CRITICAL - Unable to run SQL Server checks. Check the following: Name is correct in dbaid-checkmk.ps1, SQL Server is running, permissions are granted to CheckMK service account in SQL Server."
 
-    <# extra debug information used when writing/troubleshooting script.
+    #<# extra debug information used when writing/troubleshooting script.
     Write-Host $_
     Write-Host $_.ScriptStackTrace
     #>
