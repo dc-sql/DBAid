@@ -141,9 +141,9 @@ BEGIN
 		,[D1].[datetimeoffset] AS [log_date]
 		,[E].[source]
 		,[E].[message_header]
-		,CASE WHEN @sanitise = 0 THEN [E].[message] ELSE [M].[text] END AS [message]
+		,CASE WHEN @sanitise = 0 THEN [E].[message] ELSE ISNULL([M].[text], 'SANITIZED: Error message not found in sys.messages so this was a custom message. You''ll have to look this one up manually.') END AS [message]
 	FROM #__SeverityError [E]
-		INNER JOIN [master].[sys].[messages] [M]
+		LEFT OUTER JOIN [master].[sys].[messages] [M]
 			ON [M].[language_id] = CAST(SERVERPROPERTY('LCID') AS INT)
 				AND [E].[message_id] = [M].[message_id]
 		CROSS APPLY [system].[get_instance_guid]() [I]
