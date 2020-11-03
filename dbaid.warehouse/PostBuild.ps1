@@ -4,4 +4,4 @@ $Release = Get-ChildItem -Path $Root -Filter "*dbaid*.sql"
 
 [array]$RelContent = $(Get-Content $Release) -replace "dbaid.warehouse", "_dbaid_warehouse" -replace "COLLATE Latin1_General_CI_AS", "";
 
-$Output | Set-Content $ReContent
+$RelContent | Set-Content $Release
