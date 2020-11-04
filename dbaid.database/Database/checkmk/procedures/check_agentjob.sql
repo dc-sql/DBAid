@@ -19,54 +19,54 @@ BEGIN
 	DECLARE @check_output TABLE([state] VARCHAR(8), [message] NVARCHAR(4000));
 
 	DECLARE @jobactivity TABLE (
-			[session_id] int NULL,
-			[job_id] uniqueidentifier NULL,
-			[job_name] sysname NULL,
-			[run_requested_date] datetime NULL,
-			[run_requested_source] sysname NULL,
-			[queued_date] datetime NULL,
-			[start_execution_date] datetime NULL,
-			[last_executed_step_id] int NULL,
-			[last_executed_step_date] datetime NULL,
-			[stop_execution_date] datetime NULL,
-			[next_scheduled_run_date] datetime NULL,
-			[job_history_id] int NULL,
-			[message] nvarchar(1024) NULL,
-			[run_status] int NULL,
-			[operator_id_emailed] int NULL,
-			[operator_id_netsent] int NULL,
-			[operator_id_paged] int NULL
+			[session_id] INT NULL,
+			[job_id] UNIQUEIDENTIFIER NULL,
+			[job_name] SYSNAME NULL,
+			[run_requested_date] DATETIME NULL,
+			[run_requested_source] SYSNAME NULL,
+			[queued_date] DATETIME NULL,
+			[start_execution_date] DATETIME NULL,
+			[last_executed_step_id] INT NULL,
+			[last_executed_step_date] DATETIME NULL,
+			[stop_execution_date] DATETIME NULL,
+			[next_scheduled_run_date] DATETIME NULL,
+			[job_history_id] INT NULL,
+			[message] NVARCHAR(1024) NULL,
+			[run_status] INT NULL,
+			[operator_id_emailed] INT NULL,
+			[operator_id_netsent] INT NULL,
+			[operator_id_paged] INT NULL
 	);
 
-	SELECT @countjob=COUNT(*)
+	SELECT @countjob = COUNT(*)
 	FROM [msdb].[dbo].[sysjobs]
-	WHERE [enabled] = 1
+	WHERE [enabled] = 1;
 
-	SELECT @runtimejob=COUNT(*)
+	SELECT @runtimejob = COUNT(*)
 	FROM [checkmk].[config_agentjob] [c]
 		INNER JOIN [msdb].[dbo].[sysjobs] [j]
 			ON [c].[name] = [j].[name] COLLATE DATABASE_DEFAULT
 	WHERE [j].[enabled] = 1
-		AND [c].[runtime_check_enabled] = 1
+		AND [c].[runtime_check_enabled] = 1;
 
-	SELECT @failstatusjob=COUNT(*)
+	SELECT @failstatusjob = COUNT(*)
 	FROM [checkmk].[config_agentjob] [c]
 		INNER JOIN [msdb].[dbo].[sysjobs] [j]
 			ON [c].[name] = [j].[name] COLLATE DATABASE_DEFAULT
 	WHERE [j].[enabled] = 1
-		AND [c].[state_fail_check_enabled] = 1
+		AND [c].[state_fail_check_enabled] = 1;
 
-	SELECT @cancelstatusjob=COUNT(*)
+	SELECT @cancelstatusjob = COUNT(*)
 	FROM [checkmk].[config_agentjob] [c]
 		INNER JOIN [msdb].[dbo].[sysjobs] [j]
 			ON [c].[name] = [j].[name] COLLATE DATABASE_DEFAULT
 	WHERE [j].[enabled] = 1
-		AND [c].[state_cancel_check_enabled] = 1
+		AND [c].[state_cancel_check_enabled] = 1;
 
 	IF NOT ((SELECT LOWER(CAST(SERVERPROPERTY('Edition') AS VARCHAR(128)))) LIKE '%express%')
 	BEGIN
 		INSERT INTO @jobactivity 
-			EXEC msdb.dbo.sp_help_jobactivity
+			EXEC msdb.dbo.sp_help_jobactivity;
 	END
 	ELSE
 	BEGIN
@@ -86,7 +86,7 @@ BEGIN
 					WHEN 2 THEN 'RETRY'
 					WHEN 3 THEN 'CANCEL'
 					ELSE 'UNKNOWN' END AS [run_status]
-			,[run_datetime] = CAST(CAST([H].[run_date] AS CHAR(8)) + ' ' + STUFF(STUFF(REPLACE(STR([H].[run_time],6,0),' ','0'),3,0,':'),6,0,':') AS DATETIME)
+			,[run_datetime] = CAST(CAST([H].[run_date] AS CHAR(8)) + ' ' + STUFF(STUFF(REPLACE(STR([H].[run_time], 6, 0), ' ', '0'), 3, 0, ':'), 6, 0, ':') AS DATETIME)
 			,[H].[run_duration]
 		FROM [msdb].[dbo].[sysjobs] [J]
 			LEFT JOIN [msdb].[dbo].[sysjobhistory] [H]

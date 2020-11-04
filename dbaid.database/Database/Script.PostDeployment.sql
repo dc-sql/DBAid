@@ -205,19 +205,19 @@ IF NOT EXISTS(SELECT 1 FROM [checkmk].[config_perfcounter] WHERE [object_name] =
 /* Add alwayson performance counters */
 IF NOT EXISTS(SELECT 1 FROM [checkmk].[config_perfcounter] WHERE [object_name] = N'%:Availability Replica' AND [counter_name] = N'Bytes Sent to Replica/sec' AND [instance_name]=N'_Total')
 	INSERT INTO [checkmk].[config_perfcounter]([object_name],[counter_name],[instance_name])
-		 VALUES(N'%:Availability Replica',N'Bytes Sent to Replica/sec',N'_Total')
+		 VALUES(N'%:Availability Replica', N'Bytes Sent to Replica/sec', N'_Total');
 
 IF NOT EXISTS(SELECT 1 FROM [checkmk].[config_perfcounter] WHERE [object_name] = N'%:Availability Replica' AND [counter_name] = N'Bytes Received from Replica/sec' AND [instance_name]=N'_Total')
 	INSERT INTO [checkmk].[config_perfcounter]([object_name],[counter_name],[instance_name])
-		 VALUES(N'%:Availability Replica',N'Bytes Received from Replica/sec',N'_Total')
+		 VALUES(N'%:Availability Replica', N'Bytes Received from Replica/sec', N'_Total');
 
 IF NOT EXISTS(SELECT 1 FROM [checkmk].[config_perfcounter] WHERE [object_name] = N'%:Database Replica' AND [counter_name] = N'Log Send Queue' AND [instance_name]=N'_Total')
 	INSERT INTO [checkmk].[config_perfcounter]([object_name],[counter_name],[instance_name])
-		 VALUES(N'%:Database Replica',N'Log Send Queue',N'_Total')
+		 VALUES(N'%:Database Replica', N'Log Send Queue', N'_Total');
 
 IF NOT EXISTS(SELECT 1 FROM [checkmk].[config_perfcounter] WHERE [object_name] = N'%:Database Replica' AND [counter_name] = N'Recovery Queue' AND [instance_name]=N'_Total')
 	INSERT INTO [checkmk].[config_perfcounter]([object_name],[counter_name],[instance_name])
-		 VALUES(N'%:Database Replica',N'Recovery Queue',N'_Total')
+		 VALUES(N'%:Database Replica', N'Recovery Queue', N'_Total');
 GO
 
 
@@ -230,18 +230,19 @@ USE [msdb]
 GO
 
 DECLARE @DetectedOS NVARCHAR(7), @Slash NCHAR(1);
-SET @Slash = '\'
+SET @Slash = '\';
 
 /* sys.dm_os_host_info is relatively new (SQL 2017+ despite what BOL says; not from 2008). If it's there, query it (result being 'Linux' or 'Windows'). If not there, it's Windows. */
 IF EXISTS (SELECT 1 FROM sys.system_objects WHERE [name] = N'dm_os_host_info' AND [schema_id] = SCHEMA_ID(N'sys'))
 	IF ((SELECT [host_platform] FROM sys.dm_os_host_info) LIKE N'%Linux%')
 	BEGIN
-		SET @DetectedOS = 'Linux'
-		SET @Slash = '/' /* Linux filesystems use forward slash for navigating folders, not backslash. */
+		SET @DetectedOS = 'Linux';
+		SET @Slash = '/'; /* Linux filesystems use forward slash for navigating folders, not backslash. */
 	END
 	ELSE IF ((SELECT SERVERPROPERTY('EngineEdition')) = 8) 
-		SET @DetectedOS = 'AzureManagedInstance'
-	ELSE SET @DetectedOS = 'Windows' /* If it's not Linux or Azure Managed Instance, then we assume Windows. */
+			SET @DetectedOS = 'AzureManagedInstance';
+		ELSE 
+			SET @DetectedOS = 'Windows'; /* If it's not Linux or Azure Managed Instance, then we assume Windows. */
 ELSE 
 	SELECT @DetectedOS = N'Windows'; /* if dm_os_host_info object doesn't exist, then we assume Windows. */
 
@@ -751,7 +752,7 @@ GO
 
 
 /* execute inventory to populate monitoring tables */
-USE [_dbaid]
+USE [_dbaid];
 GO
 EXEC [checkmk].[inventory_database];
 GO
@@ -786,7 +787,7 @@ BEGIN TRANSACTION
 								INNER JOIN [tempdb].[dbo].[_dbaid_backup_config_alwayson] [C]
 									ON [O].[ag_name] = [C].[ag_name];';
 		IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_alwayson') IS NOT NULL
-			EXEC @rc = sp_executesql @stmt=@backupsql;
+			EXEC @rc = sp_executesql @stmt = @backupsql;
 
 		IF (@rc <> 0) GOTO PROBLEM;
 
@@ -804,7 +805,7 @@ BEGIN TRANSACTION
 									ON [O].[name] = [C].[db_name];';
 
 		IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_database') IS NOT NULL
-			EXEC @rc = sp_executesql @stmt=@backupsql;
+			EXEC @rc = sp_executesql @stmt = @backupsql;
 
 		IF (@rc <> 0) GOTO PROBLEM;
 
@@ -817,7 +818,7 @@ BEGIN TRANSACTION
 								INNER JOIN [tempdb].[dbo].[_dbaid_backup_config_agentjob] [C]
 									ON [O].[name] = [C].[job_name];';
 		IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_agentjob') IS NOT NULL
-			EXEC @rc = sp_executesql @stmt=@backupsql;
+			EXEC @rc = sp_executesql @stmt = @backupsql;
 
 		IF (@rc <> 0) GOTO PROBLEM;
 
@@ -828,7 +829,7 @@ BEGIN TRANSACTION
 							FROM [tempdb].[dbo].[_dbaid_backup_config_perfcounter] 
 							WHERE [object_name] + [counter_name] + ISNULL([instance_name], '''') COLLATE Database_Default NOT IN (SELECT [object_name] + [counter_name] + ISNULL([instance_name], '''') FROM [_dbaid].[checkmk].[config_perfcounter]);';
 		IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_perfcounter') IS NOT NULL
-			EXEC @rc = sp_executesql @stmt=@backupsql;
+			EXEC @rc = sp_executesql @stmt = @backupsql;
 
 		IF (@rc <> 0) GOTO PROBLEM;
 
@@ -839,7 +840,7 @@ BEGIN TRANSACTION
 								INNER JOIN [tempdb].[dbo].[_dbaid_backup_config_perfcounter] [C]
 									ON [O].[object_name] + [O].[counter_name] + ISNULL([O].[instance_name],'''') = [C].[object_name] + [C].[counter_name] + ISNULL([C].[instance_name],'''') COLLATE Database_Default;';
 		IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_perfcounter') IS NOT NULL
-			EXEC @rc = sp_executesql @stmt=@backupsql;
+			EXEC @rc = sp_executesql @stmt = @backupsql;
 
 		IF (@rc <> 0) GOTO PROBLEM;
 
@@ -859,7 +860,7 @@ BEGIN TRANSACTION
 								INNER JOIN [tempdb].[dbo].[_dbaid_backup_config_alwayson] [C]
 									ON [O].[ag_name] = [C].[ag_name];';
 		IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_alwayson') IS NOT NULL
-			EXEC @rc = sp_executesql @stmt=@backupsql;
+			EXEC @rc = sp_executesql @stmt = @backupsql;
 
 		IF (@rc <> 0) GOTO PROBLEM;
 
@@ -889,7 +890,7 @@ BEGIN TRANSACTION
 									ON [O].[name] = [C].[db_name];';
 
 		IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_database') IS NOT NULL
-			EXEC @rc = sp_executesql @stmt=@backupsql;
+			EXEC @rc = sp_executesql @stmt = @backupsql;
 
 		IF (@rc <> 0) GOTO PROBLEM;
 
@@ -906,7 +907,7 @@ BEGIN TRANSACTION
 								INNER JOIN [tempdb].[dbo].[_dbaid_backup_config_agentjob] [C]
 									ON [O].[name] = [C].[job_name];';
 		IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_agentjob') IS NOT NULL
-			EXEC @rc = sp_executesql @stmt=@backupsql;
+			EXEC @rc = sp_executesql @stmt = @backupsql;
 
 		IF (@rc <> 0) GOTO PROBLEM;
 
@@ -916,7 +917,7 @@ BEGIN TRANSACTION
 							FROM [tempdb].[dbo].[_dbaid_backup_config_perfcounter] 
 							WHERE [object_name]+[counter_name]+[instance_name] COLLATE Database_Default NOT IN (SELECT [object_name]+[counter_name]+[instance_name] FROM [_dbaid].[checkmk].[config_perfcounter]);';
 		IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_perfcounter') IS NOT NULL
-			EXEC @rc = sp_executesql @stmt=@backupsql;
+			EXEC @rc = sp_executesql @stmt = @backupsql;
 
 		IF (@rc <> 0) GOTO PROBLEM;
 
@@ -927,7 +928,7 @@ BEGIN TRANSACTION
 								INNER JOIN [tempdb].[dbo].[_dbaid_backup_config_perfcounter] [C]
 									ON [O].[object_name]+[O].[counter_name]+ISNULL([O].[instance_name],'''') = [C].[object_name]+[C].[counter_name]+ISNULL([C].[instance_name],'''') COLLATE Database_Default;';
 		IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_perfcounter') IS NOT NULL
-			EXEC @rc = sp_executesql @stmt=@backupsql;
+			EXEC @rc = sp_executesql @stmt = @backupsql;
 
 		IF (@rc <> 0) GOTO PROBLEM;
 	END
@@ -943,34 +944,34 @@ BEGIN
 	/* Cleanup tempdb tables once data has been successfully inserted / updated */
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[_dbaid_deprecated_tbparameters];';
 	IF OBJECT_ID('[tempdb].[dbo].[_dbaid_deprecated_tbparameters]') IS NOT NULL
-		EXEC @rc = sp_executesql @stmt=@backupsql;
+		EXEC @rc = sp_executesql @stmt = @backupsql;
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[_dbaid_backup_static_parameters];';
 	IF OBJECT_ID('tempdb.dbo._dbaid_backup_static_parameters') IS NOT NULL
-		EXEC @rc = sp_executesql @stmt=@backupsql;
+		EXEC @rc = sp_executesql @stmt = @backupsql;
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[_dbaid_backup_version];';
 	IF OBJECT_ID('tempdb.dbo._dbaid_backup_version') IS NOT NULL
-		EXEC @rc = sp_executesql @stmt=@backupsql;
+		EXEC @rc = sp_executesql @stmt = @backupsql;
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[_dbaid_backup_procedure];';
 	IF OBJECT_ID('tempdb.dbo._dbaid_backup_procedure') IS NOT NULL
-		EXEC @rc = sp_executesql @stmt=@backupsql;
+		EXEC @rc = sp_executesql @stmt = @backupsql;
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[_dbaid_backup_configuration];';
 	IF OBJECT_ID('tempdb.dbo._dbaid_backup_configuration') IS NOT NULL
-		EXEC @rc = sp_executesql @stmt=@backupsql;
+		EXEC @rc = sp_executesql @stmt = @backupsql;
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[_dbaid_backup_config_alwayson];';
 	IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_alwayson') IS NOT NULL
-		EXEC @rc = sp_executesql @stmt=@backupsql;
+		EXEC @rc = sp_executesql @stmt = @backupsql;
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[_dbaid_backup_config_database];';
 	IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_database') IS NOT NULL
-		EXEC @rc = sp_executesql @stmt=@backupsql;
+		EXEC @rc = sp_executesql @stmt = @backupsql;
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[_dbaid_backup_config_agentjob];';
 	IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_agentjob') IS NOT NULL
-		EXEC @rc = sp_executesql @stmt=@backupsql;
+		EXEC @rc = sp_executesql @stmt = @backupsql;
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[_dbaid_backup_config_perfcounter];';
 	IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_perfcounter') IS NOT NULL
-		EXEC @rc = sp_executesql @stmt=@backupsql;
+		EXEC @rc = sp_executesql @stmt = @backupsql;
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[_dbaid_Version];';
 	IF OBJECT_ID('tempdb.dbo._dbaid_Version') IS NOT NULL
-		EXEC @rc = sp_executesql @stmt=@backupsql;
+		EXEC @rc = sp_executesql @stmt = @backupsql;
 
 	COMMIT TRANSACTION;
 

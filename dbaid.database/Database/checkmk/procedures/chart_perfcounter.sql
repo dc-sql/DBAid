@@ -16,11 +16,12 @@ BEGIN
     IF EXISTS (SELECT 1 FROM sys.system_objects WHERE [name] = N'dm_os_host_info' AND [schema_id] = SCHEMA_ID(N'sys'))
 	    IF ((SELECT [host_platform] FROM sys.dm_os_host_info) LIKE N'%Linux%')
 	    BEGIN
-		    SET @DetectedOS = 'Linux'
+		    SET @DetectedOS = 'Linux';
 	    END
 	    ELSE IF ((SELECT SERVERPROPERTY('EngineEdition')) = 8) 
-		    SET @DetectedOS = 'AzureManagedInstance'
-	    ELSE SET @DetectedOS = 'Windows' /* If it's not Linux or Azure Managed Instance, then we assume Windows. */
+				SET @DetectedOS = 'AzureManagedInstance';
+			ELSE 
+				SET @DetectedOS = 'Windows'; /* If it's not Linux or Azure Managed Instance, then we assume Windows. */
     ELSE 
 	    SELECT @DetectedOS = N'Windows'; /* if dm_os_host_info object doesn't exist, then we assume Windows. */
         
@@ -45,7 +46,7 @@ BEGIN
 								,[ms_ticks] BIGINT);
 
 		INSERT INTO @sample1
-			SELECT ROW_NUMBER() OVER (ORDER BY [S].[object_name],[S].[cntr_type],[S].[counter_name],[S].[instance_name]) AS [rownum]
+			SELECT ROW_NUMBER() OVER (ORDER BY [S].[object_name], [S].[cntr_type], [S].[counter_name], [S].[instance_name]) AS [rownum]
 				,[S].[object_name]
 				,[S].[counter_name]
 				,[S].[instance_name]
@@ -55,14 +56,14 @@ BEGIN
 			FROM [sys].[dm_os_performance_counters] [S]
 				INNER JOIN [checkmk].[config_perfcounter] [C]
 					ON RTRIM([S].[object_name]) LIKE [C].[object_name] COLLATE DATABASE_DEFAULT
-						AND RTRIM([S].[counter_name]) LIKE ISNULL([C].[counter_name],'%') COLLATE DATABASE_DEFAULT
-						AND RTRIM([S].[instance_name]) LIKE ISNULL([C].[instance_name],'%') COLLATE DATABASE_DEFAULT
-				CROSS APPLY (SELECT [ms_ticks] FROM sys.dm_os_sys_info) [T](ms_ticks)
+						AND RTRIM([S].[counter_name]) LIKE ISNULL([C].[counter_name], '%') COLLATE DATABASE_DEFAULT
+						AND RTRIM([S].[instance_name]) LIKE ISNULL([C].[instance_name], '%') COLLATE DATABASE_DEFAULT
+				CROSS APPLY (SELECT [ms_ticks] FROM sys.dm_os_sys_info) [T](ms_ticks);
 
 		WAITFOR DELAY '00:00:01';
 
 		INSERT INTO @sample2
-			SELECT ROW_NUMBER() OVER (ORDER BY [S].[object_name],[S].[cntr_type],[S].[counter_name],[S].[instance_name]) AS [rownum]
+			SELECT ROW_NUMBER() OVER (ORDER BY [S].[object_name], [S].[cntr_type], [S].[counter_name], [S].[instance_name]) AS [rownum]
 				,[S].[object_name]
 				,[S].[counter_name]
 				,[S].[instance_name]
@@ -80,31 +81,31 @@ BEGIN
 			,CAST([C].[warning_threshold] AS NUMERIC(20,2)) AS [warn]
 			,CAST([C].[critical_threshold] AS NUMERIC(20,2)) AS [crit]
 			,N'''' 
-			+ REPLACE(REPLACE(LOWER(RTRIM([S1].[object_name])),N'SQLServer:',N''),N' ','_')
+			+ REPLACE(REPLACE(LOWER(RTRIM([S1].[object_name])), N'SQLServer:', N''), N' ', '_')
 			+ N'_' 
-			+ REPLACE(LOWER(RTRIM([S1].[counter_name])),N' ',N'_')
-			+ CASE WHEN LEN(RTRIM([S1].[instance_name])) > 0 THEN N'_' + REPLACE(LOWER(RTRIM([S1].[instance_name])),N' ',N'_') ELSE N'' END
+			+ REPLACE(LOWER(RTRIM([S1].[counter_name])), N' ', N'_')
+			+ CASE WHEN LEN(RTRIM([S1].[instance_name])) > 0 THEN N'_' + REPLACE(LOWER(RTRIM([S1].[instance_name])), N' ', N'_') ELSE N'' END
 			+ N'''='
 			+ CAST([X].[calc_value] AS NVARCHAR(20))
 			+ ISNULL([U].[uom], N'')
 			+ N';'
-			+ ISNULL(CAST([C].[warning_threshold] AS NVARCHAR(20)),N'')
+			+ ISNULL(CAST([C].[warning_threshold] AS NVARCHAR(20)), N'')
 			+ N';'
-			+ ISNULL(CAST([C].[critical_threshold] AS NVARCHAR(20)),N'')
+			+ ISNULL(CAST([C].[critical_threshold] AS NVARCHAR(20)), N'')
 			+ N';;' COLLATE Database_Default AS [pnp]
 		FROM @sample1 [S1]
 			INNER JOIN @sample2 [S2]
 				ON [S1].[rownum] = [S2].[rownum]
 			INNER JOIN [checkmk].[config_perfcounter] [C]
 				ON RTRIM([S1].[object_name]) LIKE [C].[object_name] COLLATE DATABASE_DEFAULT
-					AND RTRIM([S1].[counter_name]) LIKE ISNULL([C].[counter_name],'%') COLLATE DATABASE_DEFAULT
-					AND RTRIM([S1].[instance_name]) LIKE ISNULL([C].[instance_name],'%') COLLATE DATABASE_DEFAULT
+					AND RTRIM([S1].[counter_name]) LIKE ISNULL([C].[counter_name], '%') COLLATE DATABASE_DEFAULT
+					AND RTRIM([S1].[instance_name]) LIKE ISNULL([C].[instance_name], '%') COLLATE DATABASE_DEFAULT
 			LEFT JOIN @sample1 [S1BASE]
 				ON [S1].[cntr_type] IN (537003264, 1073874176)
 					AND [S1BASE].[cntr_type] = 1073939712
 					AND [S1].[object_name] = [S1BASE].[object_name]
 					AND [S1].[instance_name] = [S1BASE].[instance_name]
-					AND REPLACE(REPLACE(REPLACE(RTRIM([S1].[counter_name]),N'(ms)',N''),N'Ratio',N''),N'Avg ',N'') = REPLACE(REPLACE(REPLACE(REPLACE(RTRIM([S1BASE].[counter_name]),N'Ratio',N''),N' Base',N''),N' BS',N''),N'Avg ',N'')
+					AND REPLACE(REPLACE(REPLACE(RTRIM([S1].[counter_name]), N'(ms)', N''), N'Ratio', N''), N'Avg ', N'') = REPLACE(REPLACE(REPLACE(REPLACE(RTRIM([S1BASE].[counter_name]), N'Ratio', N''), N' Base', N''), N' BS', N''), N'Avg ', N'')
 			LEFT JOIN @sample2 [S2BASE]
 				ON [S1BASE].[rownum] = [S2BASE].[rownum]
 			CROSS APPLY (SELECT CAST(ROUND(CASE WHEN [S1].[cntr_type] = 537003264 THEN	CASE 
@@ -129,7 +130,7 @@ BEGIN
 									WHEN [S1].[counter_name] LIKE N'%(KB)%' OR [S1].[instance_name] LIKE N'%(KB)%' THEN N'KB'
 									WHEN [S1].[counter_name] LIKE N'%Byte%' AND [S1].[counter_name] NOT LIKE N'%/sec%' THEN N'B'
 									ELSE NULL END) [U](uom)
-		WHERE [S1].[cntr_type] IN (537003264,1073874176,272696576,65792)
+		WHERE [S1].[cntr_type] IN (537003264, 1073874176, 272696576, 65792)
 		ORDER BY [S1].[object_name]
 				,[S1].[counter_name]
 				,[S1].[instance_name]

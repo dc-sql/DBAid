@@ -19,11 +19,12 @@ BEGIN
     IF EXISTS (SELECT 1 FROM sys.system_objects WHERE [name] = N'dm_os_host_info' AND [schema_id] = SCHEMA_ID(N'sys'))
 	    IF ((SELECT [host_platform] FROM sys.dm_os_host_info) LIKE N'%Linux%')
 	    BEGIN
-		    SET @DetectedOS = 'Linux'
+		    SET @DetectedOS = 'Linux';
 	    END
 	    ELSE IF ((SELECT SERVERPROPERTY('EngineEdition')) = 8) 
-		    SET @DetectedOS = 'AzureManagedInstance'
-	    ELSE SET @DetectedOS = 'Windows' /* If it's not Linux or Azure Managed Instance, then we assume Windows. */
+				SET @DetectedOS = 'AzureManagedInstance';
+			ELSE 
+				SET @DetectedOS = 'Windows'; /* If it's not Linux or Azure Managed Instance, then we assume Windows. */
     ELSE 
 	    SELECT @DetectedOS = N'Windows'; /* if dm_os_host_info object doesn't exist, then we assume Windows. */
         
@@ -214,7 +215,8 @@ BEGIN
 				CROSS APPLY (SELECT SUM([A].[fg_size_available_mb]) AS [fg_size_available_mb]
 							FROM (SELECT CASE WHEN SUM([SI].[size_available_mb]) >= MAX([SI].[disk_available_mb]) 
 												THEN MAX([SI].[disk_available_mb]) + (SUM([FI].[size_reserved_mb])-SUM([FI].[size_used_mb]))
-												ELSE SUM([SI].[size_available_mb]) END AS [fg_size_available_mb]
+												ELSE SUM([SI].[size_available_mb]) 
+										END AS [fg_size_available_mb]
 									FROM @space_info [SI]
 										INNER JOIN @file_info [FI]
 											ON [SI].[database_name] = [FI].[database_name]
