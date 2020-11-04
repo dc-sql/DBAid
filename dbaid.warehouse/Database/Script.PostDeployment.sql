@@ -384,8 +384,10 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobserver @job_id = @jobId, @server_name = N'
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback;
 COMMIT TRANSACTION
 GOTO EndSave
+
 QuitWithRollback:
     IF (@@TRANCOUNT > 0) ROLLBACK TRANSACTION;
+
 EndSave:
 GO
 
