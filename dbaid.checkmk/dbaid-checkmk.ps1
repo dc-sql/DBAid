@@ -49,10 +49,10 @@ try {
     <##### Highest version of legacy DBAid is 6.3.0 #####>
     if ($DBAidVersion -lt 10) {
         <##### Get lists of check & chart procedures to execute #####>
-        $SQLQuery = $ConnectionString + "`"SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'check'`""
+        $SQLQuery = $ConnectionString + "`"SELECT [proc] = QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'check'`""
         $CheckProcedureList = (Invoke-Expression $SQLQuery).proc
 
-        $SQLQuery = $ConnectionString + "`"SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'chart'`""
+        $SQLQuery = $ConnectionString + "`"SELECT [proc] = QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'chart'`""
         $ChartProcedureList = (Invoke-Expression $SQLQuery).proc
 
         <##### Get SQL Server version information. Pass through function to remove invalid characters and have on one line for CheckMK to handle it. Function name different between DBAid and DBAid2. #####>
@@ -65,11 +65,11 @@ try {
     }
     else {
         <##### Get lists of check & chart procedures to execute #####>
-        $SQLQuery = $ConnectionString + "`"SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'checkmk' AND [name] LIKE N'check%'`""
+        $SQLQuery = $ConnectionString + "`"SELECT [proc] = QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'checkmk' AND [name] LIKE N'check%'`""
         $CheckProcedureList = (Invoke-Expression $SQLQuery).proc
-        $SQLQuery = $ConnectionString + "`"SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'checkmk' AND [name] LIKE N'chart%'`""
+        $SQLQuery = $ConnectionString + "`"SELECT [proc] = QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'checkmk' AND [name] LIKE N'chart%'`""
         $ChartProcedureList = (Invoke-Expression $SQLQuery).proc
-        $SQLQuery = $ConnectionString + "`"SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'checkmk' AND [name] LIKE N'inventory%'`""
+        $SQLQuery = $ConnectionString + "`"SELECT [proc] = QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'checkmk' AND [name] LIKE N'inventory%'`""
         $InventoryProcedureList = (Invoke-Expression $SQLQuery).proc
 
         <##### Get SQL Server version information. Pass through function to remove invalid characters and have on one line for CheckMK to handle it. Function name different between DBAid and DBAid2. #####>
