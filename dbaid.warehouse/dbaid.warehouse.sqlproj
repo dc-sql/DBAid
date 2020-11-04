@@ -85,6 +85,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <PostDeploy Include="Database\Script.PostDeployment.sql" />
+  </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>Powershell -ExecutionPolicy UnRestricted -File "$(ProjectDir)$(OutputPath)PostBuild.ps1"</PostBuildEvent>
   </PropertyGroup>
