@@ -885,7 +885,7 @@ BEGIN TRANSACTION
 								,[capacity_check_warning_free] = [C].[capacity_check_warning_free]
 								,[capacity_check_critical_free] = [C].[capacity_check_critical_free]
 								,[capacity_check_enabled] = [C].[capacity_check_enabled]'
-						+	N'FROM [_dbaid].[dbo].[config_database] [O]
+						+	N'FROM [_dbaid].[checkmk].[config_database] [O]
 								INNER JOIN [tempdb].[dbo].[_dbaid_backup_config_database] [C]
 									ON [O].[name] = [C].[db_name];';
 
