@@ -2,11 +2,11 @@
 <configuration>
   <connectionStrings>
     <clear />
-    <add name="MSSQLSERVER" connectionString="Server=.;Database=dbmaid;Trusted_Connection=True;" />
+    <add name="ServerName@Instance" connectionString="Server=ServerName\Instance;Database=_dbaid_warehouse;Trusted_Connection=True;" />
   </connectionStrings>
   <appSettings>
     <add key="Inbox" value="email.address@domain.co.nz" />
-    <add key="SearchSubject" value="DBAid Collector" />
+    <add key="SearchSubject" value="DBAid SQL Collector XML" />
     <add key="WorkingDirectory" value="C:\Temp\DBAid-Extractor" />
     <add key="ProcessedFileRetentionDays" value="5" />
     <add key="LogVerbose" value="false" />

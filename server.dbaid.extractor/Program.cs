@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Data;
 using System.Data.SqlClient;
-using System.Security.Cryptography;
-using System.Text;
 using System.IO;
 using dbaid.common;
 using System.Xml;
@@ -14,8 +11,8 @@ namespace server.dbaid.extractor
 {
     class Program
     {
-        private const string privateKeyProc = "[dbo].[usp_crypto_privatekey]"; // Takes one parameter of servername
-        private const string ext = ".encrypted";
+        private const string privateKeyProc = "[dbo].[usp_crypto_privatekey]"; // Takes one parameter of servername. Needs to be in _dbaid_warehouse code, updated to return password used to encrypt 7z archive. Which will be different per server, not per customer by default. Unless process dictates using the same for all servers per customer.
+        private const string ext = ".encrypted";  // will be .zip for DBAid 10.0.0 onwards.
         private const string processedDir = "processed";
         private const string processedExt = ".processed";
         private const string logID = "DBAid-Extractor-";
@@ -85,7 +82,7 @@ namespace server.dbaid.extractor
             //download emails from exchange
             try
             {
-                Exchange.DownloadAttachement(inbox, searchSubject, workingDirectory, logFile, logVerbose);
+                Exchange.DownloadAttachment(inbox, searchSubject, workingDirectory, logFile, logVerbose);
             }
             catch (Exception ex)
             {
@@ -115,6 +112,9 @@ namespace server.dbaid.extractor
                     parameters.Add("server_name", servername);
                 }
 
+                /*********************************************************/
+                /* All this will change due to using encrypted zip files */
+                /*********************************************************/
                 try /* Read in and decrypt encrypted files */
                 {
                     string privateKey = Query.Execute(csb.ConnectionString, privateKeyProc, parameters).Rows[0][0].ToString();

@@ -8,7 +8,7 @@ namespace server.dbaid.extractor
 {
     class Exchange
     {
-        public static void DownloadAttachement(string mailaddress, string subject, string outfolder, string logFile, bool logVerbose)
+        public static void DownloadAttachment(string mailaddress, string subject, string outfolder, string logFile, bool logVerbose)
         {
             ExchangeService exservice = new ExchangeService(ExchangeVersion.Exchange2010_SP2);
             exservice.UseDefaultCredentials = true;
