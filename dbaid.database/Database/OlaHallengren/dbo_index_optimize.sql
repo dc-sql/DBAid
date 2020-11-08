@@ -2,7 +2,7 @@
   --// Source:  https://ola.hallengren.com                                                        //--
   --// License: https://ola.hallengren.com/license.html                                           //--
   --// GitHub:  https://github.com/olahallengren/sql-server-maintenance-solution                  //--
-  --// Version: 2020-01-26 14:06:53                                                               //--
+  --// Version: 2020-11-01 18:16:36                                                               //--
   ----------------------------------------------------------------------------------------------------
 /*
 SET ANSI_NULLS ON
@@ -18,43 +18,42 @@ ALTER PROCEDURE [dbo].[IndexOptimize]
 --*/
 CREATE PROCEDURE [dbo].[index_optimize]
 (
-  @Databases nvarchar(max) = NULL,
-  @FragmentationLow nvarchar(max) = NULL,
-  @FragmentationMedium nvarchar(max) = 'INDEX_REORGANIZE,INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE',
-  @FragmentationHigh nvarchar(max) = 'INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE',
-  @FragmentationLevel1 int = 5,
-  @FragmentationLevel2 int = 30,
-  @MinNumberOfPages int = 1000,
-  @MaxNumberOfPages int = NULL,
-  @SortInTempdb nvarchar(max) = 'N',
-  @MaxDOP int = NULL,
-  @FillFactor int = NULL,
-  @PadIndex nvarchar(max) = NULL,
-  @LOBCompaction nvarchar(max) = 'Y',
-  @UpdateStatistics nvarchar(max) = NULL,
-  @OnlyModifiedStatistics nvarchar(max) = 'N',
-  @StatisticsModificationLevel int = NULL,
-  @StatisticsSample int = NULL,
-  @StatisticsResample nvarchar(max) = 'N',
-  @PartitionLevel nvarchar(max) = 'Y',
-  @MSShippedObjects nvarchar(max) = 'N',
-  @Indexes nvarchar(max) = NULL,
-  @TimeLimit int = NULL,
-  @Delay int = NULL,
-  @WaitAtLowPriorityMaxDuration int = NULL,
-  @WaitAtLowPriorityAbortAfterWait nvarchar(max) = NULL,
-  @Resumable nvarchar(max) = 'N',
-  @AvailabilityGroups nvarchar(max) = NULL,
-  @LockTimeout int = NULL,
-  @LockMessageSeverity int = 16,
-  @StringDelimiter nvarchar(max) = ',',
-  @DatabaseOrder nvarchar(max) = NULL,
-  @DatabasesInParallel nvarchar(max) = 'N',
-  @LogToTable nvarchar(max) = 'N',
-  @Execute nvarchar(max) = 'Y'
+    @Databases nvarchar(max) = NULL,
+    @FragmentationLow nvarchar(max) = NULL,
+    @FragmentationMedium nvarchar(max) = 'INDEX_REORGANIZE,INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE',
+    @FragmentationHigh nvarchar(max) = 'INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE',
+    @FragmentationLevel1 int = 5,
+    @FragmentationLevel2 int = 30,
+    @MinNumberOfPages int = 1000,
+    @MaxNumberOfPages int = NULL,
+    @SortInTempdb nvarchar(max) = 'N',
+    @MaxDOP int = NULL,
+    @FillFactor int = NULL,
+    @PadIndex nvarchar(max) = NULL,
+    @LOBCompaction nvarchar(max) = 'Y',
+    @UpdateStatistics nvarchar(max) = NULL,
+    @OnlyModifiedStatistics nvarchar(max) = 'N',
+    @StatisticsModificationLevel int = NULL,
+    @StatisticsSample int = NULL,
+    @StatisticsResample nvarchar(max) = 'N',
+    @PartitionLevel nvarchar(max) = 'Y',
+    @MSShippedObjects nvarchar(max) = 'N',
+    @Indexes nvarchar(max) = NULL,
+    @TimeLimit int = NULL,
+    @Delay int = NULL,
+    @WaitAtLowPriorityMaxDuration int = NULL,
+    @WaitAtLowPriorityAbortAfterWait nvarchar(max) = NULL,
+    @Resumable nvarchar(max) = 'N',
+    @AvailabilityGroups nvarchar(max) = NULL,
+    @LockTimeout int = NULL,
+    @LockMessageSeverity int = 16,
+    @StringDelimiter nvarchar(max) = ',',
+    @DatabaseOrder nvarchar(max) = NULL,
+    @DatabasesInParallel nvarchar(max) = 'N',
+    @LogToTable nvarchar(max) = 'N',
+    @Execute nvarchar(max) = 'Y'
 )
 WITH ENCRYPTION
-
 AS
 
 BEGIN
@@ -63,7 +62,7 @@ BEGIN
   --// Source:  https://ola.hallengren.com                                                        //--
   --// License: https://ola.hallengren.com/license.html                                           //--
   --// GitHub:  https://github.com/olahallengren/sql-server-maintenance-solution                  //--
-  --// Version: 2020-01-26 14:06:53                                                               //--
+  --// Version: 2020-11-01 18:16:36                                                               //--
   ----------------------------------------------------------------------------------------------------
 
   EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
@@ -79,6 +78,7 @@ BEGIN
   DECLARE @DatabaseMessage nvarchar(max)
   DECLARE @ErrorMessage nvarchar(max)
   DECLARE @Severity int
+
   DECLARE @StartTime datetime2 = SYSDATETIME()
   DECLARE @SchemaName nvarchar(max) = OBJECT_SCHEMA_NAME(@@PROCID)
   DECLARE @ObjectName nvarchar(max) = OBJECT_NAME(@@PROCID)
@@ -2399,7 +2399,8 @@ BEGIN
   END
 
   ----------------------------------------------------------------------------------------------------
-REVERT;
+
+  REVERT;
 
 END
 

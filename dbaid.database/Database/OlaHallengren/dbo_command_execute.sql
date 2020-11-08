@@ -2,7 +2,7 @@
   --// Source:  https://ola.hallengren.com                                                        //--
   --// License: https://ola.hallengren.com/license.html                                           //--
   --// GitHub:  https://github.com/olahallengren/sql-server-maintenance-solution                  //--
-  --// Version: 2020-01-26 14:06:53                                                               //--
+  --// Version: 2020-11-01 18:16:36                                                               //--
   ----------------------------------------------------------------------------------------------------
 /*
 SET ANSI_NULLS ON
@@ -18,26 +18,25 @@ ALTER PROCEDURE [dbo].[CommandExecute]
 --*/
 CREATE PROCEDURE [dbo].[CommandExecute]
 (
-  @DatabaseContext nvarchar(max),
-  @Command nvarchar(max),
-  @CommandType nvarchar(max),
-  @Mode int,
-  @Comment nvarchar(max) = NULL,
-  @DatabaseName nvarchar(max) = NULL,
-  @SchemaName nvarchar(max) = NULL,
-  @ObjectName nvarchar(max) = NULL,
-  @ObjectType nvarchar(max) = NULL,
-  @IndexName nvarchar(max) = NULL,
-  @IndexType int = NULL,
-  @StatisticsName nvarchar(max) = NULL,
-  @PartitionNumber int = NULL,
-  @ExtendedInfo xml = NULL,
-  @LockMessageSeverity int = 16,
-  @LogToTable nvarchar(max),
-  @Execute nvarchar(max)
+    @DatabaseContext nvarchar(max),
+    @Command nvarchar(max),
+    @CommandType nvarchar(max),
+    @Mode int,
+    @Comment nvarchar(max) = NULL,
+    @DatabaseName nvarchar(max) = NULL,
+    @SchemaName nvarchar(max) = NULL,
+    @ObjectName nvarchar(max) = NULL,
+    @ObjectType nvarchar(max) = NULL,
+    @IndexName nvarchar(max) = NULL,
+    @IndexType int = NULL,
+    @StatisticsName nvarchar(max) = NULL,
+    @PartitionNumber int = NULL,
+    @ExtendedInfo xml = NULL,
+    @LockMessageSeverity int = 16,
+    @LogToTable nvarchar(max),
+    @Execute nvarchar(max)
 )
 WITH ENCRYPTION
-
 AS
 
 BEGIN
@@ -46,7 +45,7 @@ BEGIN
   --// Source:  https://ola.hallengren.com                                                        //--
   --// License: https://ola.hallengren.com/license.html                                           //--
   --// GitHub:  https://github.com/olahallengren/sql-server-maintenance-solution                  //--
-  --// Version: 2020-01-26 14:06:53                                                               //--
+  --// Version: 2020-11-01 18:16:36                                                               //--
   ----------------------------------------------------------------------------------------------------
 
   SET NOCOUNT ON
