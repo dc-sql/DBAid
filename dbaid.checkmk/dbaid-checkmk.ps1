@@ -1,4 +1,80 @@
-﻿<##### List of SQL Server instances to check. E.g. @("server1","server1\instance1") #####>
+﻿<#
+.SYNOPSIS
+    This script is for use as a CheckMK plugin.
+    
+.DESCRIPTION
+    This script is part of the DBAid toolset.
+
+    This script connects to the specified SQL Server instance(s) and runs stored procedures in the [checmk] schema of the [_dbaid] database.
+
+    It is intended that the script connects to SQL Server instances on the machine it is running from, not remote SQL Server instances.
+
+    For Windows: Copy this file into [C:\Program Files (x86)\check_mk\local]. 
+    For Linux  : Copy this file into [/usr/lib/check_mk_agent/plugins].
+    
+    (NB - these are the default plugin folder locations)
+
+.PARAMETER SqlServer
+    This is a string array of SQL Server instances to connect to. It can be passed in as a parameter when running the script manually, but CheckMK just executes the script without passing parameter values, so you will need to edit the script to put in desired values. 
+
+    The entries can use servername or IP address. 
+    
+    You can specify a named instance by appending \InstanceName. 
+    
+    You can connect to a specific TCP port number by appending ,PortNumber. 
+
+    You can use a combination of the above. As long as it represents a valid server name such as you would use in SQL Server Management Studio or a .NET conenction string.
+    
+    For example:
+
+    [string[]]$SqlServer = @("Server1")
+    [string[]]$SqlServer = @("Server1\Instance1")
+    [string[]]$SqlServer = @("192.168.1.2,1435")
+    [string[]]$SqlServer = @("Server1", "Server1\Instance1", "Server1,1435")
+
+    Or if for some reason you are passing the parameter in when running the script (which you wouldn't be doing under normal circumstances):
+
+    $servers = @("Server1","Server1\Instance1","Server1,1435")
+    .\dbaid-checkmk.ps1 -SqlServer $servers
+
+.LINK
+    https://github.com/dc-sql/DBAid
+
+.LINK 
+    https://checkmk.com
+
+.EXAMPLE
+    dbaid-checkmk.ps1
+
+    Expected output (Windows):
+
+    0 mssql_MSSQLSERVER - Microsoft SQL Server 2016 (SP2-CU11-GDR) (KB4535706) - 13.0.5622.0 (X64) Dec 15 2019 08:03:11 Copyright (c) Microsoft CorporationDeveloper Edition (64-bit) on Windows 10 Enterprise 10.0 <X64> (Build 18363: ) (Hypervisor)
+    1 mssql_agentjob_MSSQLSERVER count=2 WARNING - job=[Fail Job 1];state=FAIL;runtime_min=0.00;runtime_check_min=200;\n job=[Fail Job 2];state=FAIL;runtime_min=0.00;runtime_check_min=200;\n 
+    0 mssql_alwayson_MSSQLSERVER count=0 NA - Always-On is not available.;\n 
+    1 mssql_backup_MSSQLSERVER count=7 WARNING - [master]; recovery_model=SIMPLE; last_full=2020-10-29 13:06:05; last_diff=NEVER; last_tran=NEVER;\n [model]; recovery_model=FULL; last_full=2020-10-29 13:06:06; last_diff=NEVER; last_tran=NEVER;\n [msdb]; recovery_model=SIMPLE; last_full=2020-10-29 13:06:06; last_diff=NEVER; last_tran=NEVER;\n [AdventureWorks2016]; recovery_model=SIMPLE; last_full=NEVER; last_diff=NEVER; last_tran=NEVER;\n [AdventureWorksDW2016]; recovery_model=SIMPLE; last_full=NEVER; last_diff=NEVER; last_tran=NEVER;\n [_dbaid]; recovery_model=SIMPLE; last_full=NEVER; last_diff=NEVER; last_tran=NEVER;\n [TestFG]; recovery_model=FULL; last_full=NEVER; last_diff=NEVER; last_tran=NEVER;\n 
+    0 mssql_database_MSSQLSERVER count=0 NA - 8 online; 0 restoring; 0 recovering;\n 
+    1 mssql_integrity_MSSQLSERVER count=6 WARNING - database=[master]; last_checkdb=2020-05-27 10:40:28;\n database=[model]; last_checkdb=2020-05-27 10:40:29;\n database=[msdb]; last_checkdb=2020-05-27 10:40:29;\n database=[AdventureWorks2016]; last_checkdb=2019-08-02 17:13:47;\n database=[AdventureWorksDW2016]; last_checkdb=2019-08-02 17:13:49;\n database=[TestFG]; last_checkdb=NEVER;\n 
+    0 mssql_logshipping_MSSQLSERVER count=0 NA - Logshipping is currently not configured.;\n 
+    0 mssql_mirroring_MSSQLSERVER count=0 NA - Mirroring is currently not configured.;\n 
+    0 mssql_capacity_combined_MSSQLSERVER 'C'=360003.00;549504.00;248727728.00;0;261164114.40 
+    0 mssql_capacity_fg_MSSQLSERVER _dbaid_LOG; used=0.79; reserved=8.00; max=26161.00|_dbaid_ROWS_PRIMARY; used=5.25; reserved=8.00; max=26161.00|AdventureWorks2016_LOG; used=0.70; reserved=2.00; max=26155.00|AdventureWorks2016_ROWS_PRIMARY; used=205.44; reserved=207.63; max=26360.63
+
+    Expected output (Linux):
+    0 mssql_MSSQLSERVER - Microsoft SQL Server 2017 (RTM-CU21) (KB4557397) - 14.0.3335.7 (X64) Jun 12 2020 20:39:00 Copyright (C) 2017 Microsoft CorporationDeveloper Edition (64-bit) on Linux (Ubuntu 16.04.6 LTS)
+    0 mssql_agentjob_MSSQLSERVER count=0 NA - No agent job(s) enabled;;\n
+    0 mssql_alwayson_MSSQLSERVER count=0 NA - Always-On is not available.;\n
+    1 mssql_backup_MSSQLSERVER count=3 WARNING - [master]; recovery_model=SIMPLE; last_full=NEVER; last_diff=NEVER; last_tran=NEVER;\n [model]; recovery_model=FULL; last_full=NEVER; last_diff=NEVER; last_tran=NEVER;\n [msdb]; recovery_model=SIMPLE; last_full=NEVER; last_diff=NEVER; last_tran=NEVER;\n
+    0 mssql_database_MSSQLSERVER count=0 NA - 5 online; 0 restoring; 0 recovering;\n
+    1 mssql_integrity_MSSQLSERVER count=3 WARNING - database=[master]; last_checkdb=NEVER;\n database=[model]; last_checkdb=NEVER;\n database=[msdb]; last_checkdb=NEVER;\n
+    0 mssql_logshipping_MSSQLSERVER count=0 NA - Logshipping is currently not configured.;\n
+    0 mssql_mirroring_MSSQLSERVER count=0 NA - Mirroring is currently not configured.;\n
+    0 mssql_capacity_combined_MSSQLSERVER - Monitor unsupported by Linux SQL instance
+    0 mssql_capacity_fg_MSSQLSERVER - Monitor unsupported by Linux SQL instance
+    0 mssql_perfcounter_MSSQLSERVER - Monitor unsupported by Linux SQL instance
+
+#>
+
+<##### List of SQL Server instances to check. E.g. @("server1","server1\instance1") #####>
 <##### If an instance is using TLS, add -EncryptConnection. E.g. @("server1 -EncryptConnection", "server1\instance1 -EncryptConnection", "server1\instance2") #####>
 Param(
     [parameter(Mandatory=$false)]

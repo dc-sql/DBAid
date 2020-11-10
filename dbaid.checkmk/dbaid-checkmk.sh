@@ -1,0 +1,1 @@
+pwsh -File /usr/lib/check_mk_agent/plugins/dbaid-checkmk.ps1
