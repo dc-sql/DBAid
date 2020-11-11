@@ -219,10 +219,6 @@
       <DefaultValue>@datacom.co.nz</DefaultValue>
       <Value>$(SqlCmdVar__14)</Value>
     </SqlCmdVariable>
-    <SqlCmdVariable Include="PublicKey">
-      <DefaultValue>Generate public key using CLR project dbaid.keygen</DefaultValue>
-      <Value>$(SqlCmdVar__15)</Value>
-    </SqlCmdVariable>
     <SqlCmdVariable Include="CollectorServiceAccount">
       <DefaultValue>NT AUTHORITY\SYSTEM</DefaultValue>
       <Value>$(SqlCmdVar__5)</Value>
