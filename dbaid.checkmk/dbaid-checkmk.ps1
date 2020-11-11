@@ -10,20 +10,20 @@
     It is intended that the script connects to SQL Server instances on the machine it is running from, not remote SQL Server instances.
 
     For Windows: Copy this file into [C:\Program Files (x86)\check_mk\local]. 
-    For Linux  : Copy this file into [/usr/lib/check_mk_agent/plugins].
+    For Linux  : Copy this file into [/usr/lib/check_mk_agent/plugins]. In addition, a shell script is required as CheckMK on Linux cannot directly execute PowerShell scripts. See Related Links (DBAid).
     
     (NB - these are the default plugin folder locations)
+    
+    This has been tested against SQL instances in Docker containers on a Linux host. 
+    Wrinkle: all instances come back as "MSSQLSERVER", as opposed to named instances (because they are not named instances; using Docker is a workaround to have multiple instances on a Linux host).
 
 .PARAMETER SqlServer
     This is a string array of SQL Server instances to connect to. It can be passed in as a parameter when running the script manually, but CheckMK just executes the script without passing parameter values, so you will need to edit the script to put in desired values. 
 
     The entries can use servername or IP address. 
-    
     You can specify a named instance by appending \InstanceName. 
-    
     You can connect to a specific TCP port number by appending ,PortNumber. 
-
-    You can use a combination of the above. As long as it represents a valid server name such as you would use in SQL Server Management Studio or a .NET conenction string.
+    You can use a combination of the above. As long as it represents a valid server name such as you would use in SQL Server Management Studio or a .NET connection string.
     
     For example:
 
@@ -36,12 +36,21 @@
 
     $servers = @("Server1","Server1\Instance1","Server1,1435")
     .\dbaid-checkmk.ps1 -SqlServer $servers
+    
+    Additional Invoke-Sqlcmd connection string parameters can be specified with the server names. For example, if TLS is used by one of the instances, you can provide the EncryptConnection parameter as follows:
+    
+    [string[]]$SqlServer = @("Server1", "Server1\Instance1 -EncryptConnection", "Server1,1435")
+    
+    See Invoke-Sqlcmd documentation for details on parameters (under Related Links).
 
 .LINK
-    https://github.com/dc-sql/DBAid
+    DBAid source code: https://github.com/dc-sql/DBAid
 
 .LINK 
-    https://checkmk.com
+    Official CheckMK site: https://checkmk.com
+
+.LINK
+    Invoke-Sqlcmd module: https://docs.microsoft.com/en-us/powershell/module/sqlserver/invoke-Sqlcmd?view=sqlserver-ps
 
 .EXAMPLE
     dbaid-checkmk.ps1
@@ -59,7 +68,9 @@
     0 mssql_capacity_combined_MSSQLSERVER 'C'=360003.00;549504.00;248727728.00;0;261164114.40 
     0 mssql_capacity_fg_MSSQLSERVER _dbaid_LOG; used=0.79; reserved=8.00; max=26161.00|_dbaid_ROWS_PRIMARY; used=5.25; reserved=8.00; max=26161.00|AdventureWorks2016_LOG; used=0.70; reserved=2.00; max=26155.00|AdventureWorks2016_ROWS_PRIMARY; used=205.44; reserved=207.63; max=26360.63
 
+
     Expected output (Linux):
+    
     0 mssql_MSSQLSERVER - Microsoft SQL Server 2017 (RTM-CU21) (KB4557397) - 14.0.3335.7 (X64) Jun 12 2020 20:39:00 Copyright (C) 2017 Microsoft CorporationDeveloper Edition (64-bit) on Linux (Ubuntu 16.04.6 LTS)
     0 mssql_agentjob_MSSQLSERVER count=0 NA - No agent job(s) enabled;;\n
     0 mssql_alwayson_MSSQLSERVER count=0 NA - Always-On is not available.;\n
@@ -74,120 +85,97 @@
 
 #>
 
-<##### List of SQL Server instances to check. E.g. @("server1","server1\instance1") #####>
-<##### If an instance is using TLS, add -EncryptConnection. E.g. @("server1 -EncryptConnection", "server1\instance1 -EncryptConnection", "server1\instance2") #####>
+<#  List of SQL Server instances to connect to.  #>
 Param(
     [parameter(Mandatory=$false)]
     [string[]]$SqlServer = @("servername")
 )
 Set-Location $PSScriptRoot
 
-
+<#  Loop through the SQL instances one by one.  #>
 foreach ($Instance in $SqlServer) {
 try {
-    <##### Database holding required procedures to run for checks. #####>
+    <#  Database holding required procedures to run for checks.  #>
     [string]$Database = '_dbaid'
     
-    <##### Reset variable to null otherwise catch block returns incorrect value #####>
+    <#  Reset variable to null otherwise catch block returns incorrect value.  #>
     [string]$InstanceName = $null
 
-    <##### When $Instance is expanded, it will include -EncryptConnection (if specified) which will be interpreted as a switch to Invoke-Sqlcmd #####>
-    <##### When using Linux, must have Kerberos configured or pass in Username and Password parameters. Also need to use -Hostname rather than -ServerInstance 
-           e.g. [string]$ConnectionString = "Invoke-SqlCmd -Hostname ""$($Instance)"" -Database ""$($Database)"" -Username ""user"" -Password ""password"" -Query "      
-           2020-10-22: Tested with PowerShell 7.0.3 
-    #####>
+    <# 
+        When $Instance is expanded, it will include any additional parameters, e.g. -EncryptConnection (if specified) which will be interpreted as switches to Invoke-Sqlcmd
+        When using Linux, must have Kerberos configured or pass in Username and Password parameters (which requires them in plaintext - not great).
+    #>
+    [string]$ConnectionString = "Invoke-Sqlcmd -ServerInstance ""$($Instance)"" -Database ""$($Database)"" -Query "
 
-    [string]$ConnectionString = "Invoke-SqlCmd -ServerInstance ""$($Instance)"" -Database ""$($Database)"" -Query "
+    <#
+        The next bit will get tripped up if you are trying to run this script on one machine but connecting to a SQL instance running on another machine.
+        But then as per .DESCRIPTION above, this script is supposed to be executed on the machine that SQL Server is installed on.
+        We could test for this, but this in turn would get tripped up by instances running in Docker containers (example scenario being multiple instances on a single Linux host; can't do named instances otherwise).
+          The SERVERPROPERTY('ComputerNamePhysicalNetBIOS') function on a SQL instance in a Docker container returns the name assigned to the Docker container, not the Linux host name.
+          The check_mk_agent runs on the Linux host, not within the Docker container, so $Env:HOSTNAME will return the host name, not the Docker container name.
+    #>
 
-    <##### If running PowerShell 6 or higher, could use $IsWindows. Lowest requirement for this script to work, however, is PowerShell 5.  #####>
+    <#  If running PowerShell 6 or higher, could use $IsWindows. Lowest requirement for this script to work, however, is PowerShell 5. Can revisit in the future.  #>
     if ($Env:PSModulePath -like "*\WindowsPowerShell\Modules*") {
-        <##### Check if this is a clustered SQL instance. #####>
+        <#  Check if this is a clustered SQL instance. #>
         $SQLQuery = $ConnectionString + "`"SELECT CAST(SERVERPROPERTY('IsClustered') AS bit) AS [IsClustered]`""
         $IsClustered = Invoke-Expression $SQLQuery
         
-        <##### Get NetBIOS name according to SQL Server. I.e. computer name that SQL instance is running on #####>
+        <#  Get NetBIOS name according to SQL Server. I.e. computer name that SQL instance is running on.  #>
         $SQLQuery = $ConnectionString + "`"SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS [NetBIOSName]`""
         $NetBIOSName = Invoke-Expression $SQLQuery
 
-        <##### Get computer name according to PowerShell. This may be different than what SQL Server thinks if SQL Server is clustered #####>
+        <#  Get computer name according to PowerShell. This may be different than what SQL Server thinks if SQL Server is clustered.  #>
         $ComputerName = $env:computername
 
-        <##### if computer name & NetBIOS name don't match and SQL instance is clustered, this script is running on the passive node for this SQL instance; so don't run the SQL checks, they'll be run on the active node #####>
+        <#  If computer name & NetBIOS name don't match and SQL instance is clustered, this script is running on the passive node for this SQL instance; so don't run the SQL checks, they'll be run on the active node.  #>
         if ($ComputerName.ToUpper() -ne $NetBIOSName.NetBIOSName.ToUpper() -and $IsClustered.IsClustered -eq 1) {
             continue
         }
     }
 
-    <##### Get list of procedures to run for checks. All should be in the [check] or [checkmk] schema (depending if DBAid or DBAid2)  #####>
-    $SQLQuery = $ConnectionString + "`"IF EXISTS (SELECT 1 FROM [sys].[objects] WHERE [object_id] = OBJECT_ID('version') AND [schema_id] = SCHEMA_ID('dbo')) BEGIN SELECT MAX(LEFT([version], 3)) AS [ver] FROM [dbo].[version] END ELSE SELECT 10 AS [ver];`""
-    [decimal]$DBAidVersion = (Invoke-Expression $SQLQuery).ver
+    <#  Get list of procedures to run for checks. All should be in the [checkmk] schema.  #>
+    $SQLQuery = $ConnectionString + "`"SELECT [proc] = QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'checkmk' AND [name] LIKE N'check%'`""
+    $CheckProcedureList = (Invoke-Expression $SQLQuery).proc
+    $SQLQuery = $ConnectionString + "`"SELECT [proc] = QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'checkmk' AND [name] LIKE N'chart%'`""
+    $ChartProcedureList = (Invoke-Expression $SQLQuery).proc
+    $SQLQuery = $ConnectionString + "`"SELECT [proc] = QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'checkmk' AND [name] LIKE N'inventory%'`""
+    $InventoryProcedureList = (Invoke-Expression $SQLQuery).proc
 
-    <##### Highest version of legacy DBAid is 6.3.0 #####>
-    if ($DBAidVersion -lt 10) {
-        <##### Get lists of check & chart procedures to execute #####>
-        $SQLQuery = $ConnectionString + "`"SELECT [proc] = QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'check'`""
-        $CheckProcedureList = (Invoke-Expression $SQLQuery).proc
+    <#  Get SQL Server version information. Pass through function to remove invalid characters and have on one line for CheckMK to handle it.  #>
+    $SQLQuery = $ConnectionString + "`"SELECT [clean_string] AS [InstanceVersion] FROM [system].[get_clean_string](@@VERSION)`""
+    $InstanceVersion = (Invoke-Expression $SQLQuery).InstanceVersion
 
-        $SQLQuery = $ConnectionString + "`"SELECT [proc] = QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'chart'`""
-        $ChartProcedureList = (Invoke-Expression $SQLQuery).proc
-
-        <##### Get SQL Server version information. Pass through function to remove invalid characters and have on one line for CheckMK to handle it. Function name different between DBAid and DBAid2. #####>
-        $SQLQuery = $ConnectionString + "`"SELECT [string] AS [InstanceVersion] FROM [dbo].[cleanstring](@@VERSION)`""
-        $InstanceVersion = (Invoke-Expression $SQLQuery).InstanceVersion
-
-        <##### Refresh check configuration (e.g. to pick up any new jobs or databases added since last check) #####>
-        $SQLQuery = $ConnectionString + "`"EXEC [maintenance].[check_config]`""
+    <#  Refresh check configuration (i.e. to pick up any new jobs or databases added since last check).  #>
+    foreach ($iproc in $InventoryProcedureList) {
+        $SQLQuery = $ConnectionString + "`"EXEC $iproc`" -OutputAs DataSet"
         Invoke-Expression $SQLQuery
     }
-    else {
-        <##### Get lists of check & chart procedures to execute #####>
-        $SQLQuery = $ConnectionString + "`"SELECT [proc] = QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'checkmk' AND [name] LIKE N'check%'`""
-        $CheckProcedureList = (Invoke-Expression $SQLQuery).proc
-        $SQLQuery = $ConnectionString + "`"SELECT [proc] = QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'checkmk' AND [name] LIKE N'chart%'`""
-        $ChartProcedureList = (Invoke-Expression $SQLQuery).proc
-        $SQLQuery = $ConnectionString + "`"SELECT [proc] = QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'checkmk' AND [name] LIKE N'inventory%'`""
-        $InventoryProcedureList = (Invoke-Expression $SQLQuery).proc
-
-        <##### Get SQL Server version information. Pass through function to remove invalid characters and have on one line for CheckMK to handle it. Function name different between DBAid and DBAid2. #####>
-        $SQLQuery = $ConnectionString + "`"SELECT [clean_string] AS [InstanceVersion] FROM [system].[get_clean_string](@@VERSION)`""
-        $InstanceVersion = (Invoke-Expression $SQLQuery).InstanceVersion
-
-        <##### Refresh check configuration (e.g. to pick up any new jobs or databases added since last check) #####>
-        foreach ($iproc in $InventoryProcedureList) {
-            $SQLQuery = $ConnectionString + "`"EXEC $iproc`" -OutputAs DataSet"
-            Invoke-Expression $SQLQuery
-        }
-    }
-
-    <##### Get SQL instance name. Used in output as part of CheckMK service name #####>
+    
+    <#  Get SQL instance name. Used in output as part of CheckMK service name.  #>
     $SQLQuery = $ConnectionString + "`"SELECT ISNULL(SERVERPROPERTY('InstanceName'), 'MSSQLSERVER') AS [InstanceName]`""
     $InstanceName = (Invoke-Expression $SQLQuery).InstanceName
     
-    <##### Output SQL Server instance information in CheckMK format #####>
+    <#  Output SQL Server instance information in CheckMK format.  #>
     Write-Host "0 mssql_$($InstanceName) - $($InstanceVersion)"
     
-    <##### Process each check procedure in the [check] or [checkmk] schema (depending on whether DBAid or DBAid2) #####>
+    <#  Process each check procedure in the [checkmk] schema.  #>
     foreach ($ckproc in $CheckProcedureList) {
-        <##### Pull part of procedure name to use in CheckMK service name. Different for DBAid and DBAid2 #####>
-        if ($DBAidVersion -lt 10) {
-            $ServiceName = $ckproc.Substring($ckproc.IndexOf('.') + 2).Replace(']','')
-        }
-        else {
-            $ServiceName = $ckproc.Substring($ckproc.IndexOf('_') + 1).Replace(']','')
-        }
+        <#  Pull part of procedure name to use in CheckMK service name.  #>
+        $ServiceName = $ckproc.Substring($ckproc.IndexOf('_') + 1).Replace(']','')
 
-        <##### Execute procedure, store results in dataset variable (i.e. PowerShell table equivalent) #####>
+        <#  Execute procedure, store results in dataset variable (i.e. PowerShell table equivalent).  #>
         $SQLQuery = $ConnectionString + "`"EXEC $ckproc`" -OutputAs DataSet"
         $ckDataSet = Invoke-Expression $SQLQuery
         
-        <##### Get rowcount of dataset variable. If the top row returned has [state] value of 'NA', then set count=0 (basically, nothing wrong detected). If there's more than one row returned, there's probably a fault. #####>
+        <#  Get rowcount of dataset variable. If the top row returned has [state] value of 'NA', then set count=0 (i.e. monitor doesn't apply, nothing wrong detected). If there's more than one row returned, there's probably a fault.  #>
         $Count = $ckDataSet.Tables[0].Rows.Count
         $Count = Switch($ckDataSet.Tables[0].Rows[0].state){'NA'{0} default{$Count}}
 
-        <##### Get status for the monitor as indicated by value in [state] column. #####>
+        <#  Get status for the monitor as indicated by value in [state] column.  #>
         $Status = Switch($ckDataSet.Tables[0].Rows[0].state){ 'NA'{0} 'OK'{0} 'WARNING'{1} 'CRITICAL'{2} default{3}}
 
-        <##### Initialize variables for storing state & status detail strings #####>
+        <#  Initialize variables for storing state & status detail strings.  #>
         [string]$StatusDetails = ""
         [string]$State = ""
 
@@ -196,43 +184,37 @@ try {
             $State = $ckrow.state
         }
 
-        <##### write output for CheckMK agent to consume #####>
+        <#  Write output for CheckMK agent to consume.  #>
         Write-Host "$Status mssql_$($ServiceName)_$($InstanceName) count=$Count $State - $StatusDetails"
     }
 
-    <##### Process each chart procedure in the [check] or [checkmk] schema (depending on whether DBAid or DBAid2) #####>
+    <#  Process each chart procedure in the [checkmk] schema.  #>
     foreach ($ctproc in $ChartProcedureList) {
-        <##### variables to manage pnp chart data. Initialize for each row of data being processed (i.e. per procedure call). #####>
+        <#  Variables to manage pnp chart data. Initialize for each row of data being processed (i.e. per procedure call).  #>
         [string]$pnpData = ""
         [int]$row = 0
-        $State = ""
-        $Status = 0
-        $StatusDetails = ""
+        [string]$State = ""
+        [int]$Status = 0
+        [string]$StatusDetails = ""
     
-        <##### Pull part of procedure name to use in CheckMK service name. Different for DBAid and DBAid2 #####>
-        if ($DBAidVersion -lt 10) {
-            $ServiceName = $ctproc.Substring($ctproc.IndexOf('.') + 2).Replace(']','')
-        }
-        else {
-            $ServiceName = $ctproc.Substring($ctproc.IndexOf('_') + 1).Replace(']','')
-        }
+        <#  Pull part of procedure name to use in CheckMK service name.  #>
+        $ServiceName = $ctproc.Substring($ctproc.IndexOf('_') + 1).Replace(']','')
 
-        <##### Execute procedure, store results in dataset variable (i.e. PowerShell table equivalent) #####>
+        <#  Execute procedure, store results in dataset variable (i.e. PowerShell table equivalent).  #>
         $SQLQuery = $ConnectionString + "`"EXEC $ctproc`" -As DataSet"
         $ctDataSet = Invoke-Expression $SQLQuery
 
         foreach ($ctrow in $ctDataset.Tables[0].Rows) {
-            <##### variables to manage pnp chart data. Initialize for each row of data being processed (i.e. each database or performance monitor counter). #####>
+            <#  Variables to manage pnp chart data. Initialize for each row of data being processed (i.e. each database or performance monitor counter).  #>
             [bool]$WarnExist = 0
             [bool]$CritExist = 0
             [decimal]$val = 0.0
             [decimal]$warn = 0.0
             [decimal]$crit = 0.0
 
-            <##### Check for current value, warning threshold, critical threshold, pnp chart data #####>
-            <##### DBAid2 has different column names. And more columns. #####>
-            <##### chart_capacity_fg has different columns returned compared to anything else, so anything else can use the older code #####>
-            if ($ctproc -ne "[checkmk].[chart_capacity_fg]") {#($DBAidVersion -lt 10) {
+            <#  Check for current value, warning threshold, critical threshold, pnp chart data.  #>
+            <#  chart_capacity_fg has different columns returned compared to anything else, so has its own code to handle data.  #>
+            if ($ctproc -ne "[checkmk].[chart_capacity_fg]") {
                 if (([DBNull]::Value).Equals($ctrow.val)) { 
                     $val = -1.0
                 }
@@ -262,16 +244,16 @@ try {
                     $pnpData = $ctrow.pnp
                 }
 
-                <##### if there is no chart data, skip the rest and move to next row in the data set #####>
+                <#  If there is no chart data, skip the rest and move to next row in the data set.  #>
                 if ($pnpData -eq "" -and $val -eq -1.0) {
                     continue
                 }
 
-                <##### check to see if warning and critical thresholds are defined, then check current value $val against threshold values for warning $warn and critical $crit #####>
+                <#  Check to see if warning and critical thresholds are defined, then check current value $val against threshold values for warning $warn and critical $crit.  #>
                 if ($CritExist -and $WarnExist) {
                     if ($crit -ge $warn) {
                         if ($val -ge $crit) {
-                            <##### split the pnp data at the '=' character to form a new array, take the first element of the new array [0] which amounts to the object exceeding a threshold (e.g. dbname_ROWS_used) and remove the single quote characters #####>
+`                            <#  Split the pnp data at the '=' character to form a new array, take the first element of the new array [0] which amounts to the object exceeding a threshold (e.g. dbname_ROWS_used) and remove the single quote characters.  #>
                             $State += "CRITICAL - " + ($ctrow.pnp).Split('=')[0].Replace("'", "") + "; "
                             $Status = 2
                         }
@@ -292,7 +274,7 @@ try {
                     }
                 }
 
-                <##### concatenate all the pnp data into one text string for CheckMK to consume. Use pipe separator for subsequent rows being concatenated #####>
+                <#  Concatenate all the pnp data into one text string for CheckMK to consume. Use pipe separator for subsequent rows being concatenated.  #>
                 if ($row -eq 0) {
                     $StatusDetails += $ctrow.pnp
                 }
@@ -301,7 +283,7 @@ try {
                 }
             }
             else {
-                # there is only [checkmk].[chart_capacity_fg] at time of writing. The code below may not be suitable if other chart procedures are created and don't/can't conform to same output.
+                <#  There is only [checkmk].[chart_capacity_fg] at time of writing. The code below may not be suitable if other chart procedures are created and don't/can't conform to same output.  #>
                 if (([DBNull]::Value).Equals($ctrow.used)) { 
                     $val = -1.0
                 }
@@ -331,16 +313,16 @@ try {
                     $pnpData = $ctrow.message
                 }
 
-                <##### if there is no chart data, skip the rest and move to next row in the data set #####>
+                <#  If there is no chart data, skip the rest and move to next row in the data set.  #>
                 if ($pnpData -eq "" -and $val -eq -1.0) {
                     continue
                 }
 
-                <##### check to see if warning and critical thresholds are defined, then check current value $val against threshold values for warning $warn and critical $crit #####>
+                <#  Check to see if warning and critical thresholds are defined, then check current value $val against threshold values for warning $warn and critical $crit.  #>
                 if ($CritExist -and $WarnExist) {
                     if ($crit -ge $warn) {
                         if ($val -ge $crit) {
-                            <##### split the pnp data at the '=' character to form a new array, take the first element of the new array [0] which amounts to the object exceeding a threshold (e.g. dbname_ROWS_used) and remove the single quote characters #####>
+                            <#  Split the pnp data at the '=' character to form a new array, take the first element of the new array [0] which amounts to the object exceeding a threshold (e.g. dbname_ROWS_used) and remove the single quote characters.  #>
                             $State += "CRITICAL - " + ($ctrow.message).Split('=')[0].Replace("'", "") + "; "
                             $Status = 2
                         }
@@ -361,7 +343,7 @@ try {
                     }
                 }
 
-                <##### concatenate all the pnp data into one text string for CheckMK to consume. Use pipe separator for subsequent rows being concatenated #####>
+                <#  Concatenate all the pnp data into one text string for CheckMK to consume. Use pipe separator for subsequent rows being concatenated.  #>
                 if ($row -eq 0) {
                     $StatusDetails += $ctrow.message
                 }
@@ -372,42 +354,37 @@ try {
             $row++
         }
 
-        <##### write output for CheckMK agent to consume #####>
-        # Output from [checkmk].[chart_capacity_fg] (i.e. message column) is not in a format that Nagios can understand.
-        #if ($DBAidVersion -lt 10) {
-            Write-Host "$Status mssql_$($ServiceName)_$($InstanceName) $StatusDetails $State"
-        #}
+        <#  Write output for CheckMK agent to consume.  #>
+        Write-Host "$Status mssql_$($ServiceName)_$($InstanceName) $StatusDetails $State"
     }
 }
 catch {
-    <##### work out the instance name based on name provided as we may not have been able to connect #####>
+    <#  Work out the instance name based on name provided as we may not have been able to connect.  #>
     if ($null -eq $InstanceName) {
-        $InstanceName = $Instance.ToUpper().Split('\')[1]  # element [0] is machine name, element [1] is instance name
+        $InstanceName = $Instance.ToUpper().Split('\')[1]  # element [0] is machine name, element [1] is instance name.  NB - MAY GET ODDITY IF "SERVER\INSTANCE,1234" IS PASSED
         if ($null -eq $InstanceName) {
             $InstanceName = 'MSSQLSERVER'
         }
-        <##### Strip off -EncryptConnection if it was specified. It's not part of the instance name #####>
+        <#  Strip off any additional parameters passed in with server\instance name (e.g. -EncryptConnection) if they were specified. They're not part of the instance name.  #>
         $InstanceName = $InstanceName.Split(' ')[0]  # element [0] is instance name, elements [1..N] we don't care about
     }
 
-    <##### write output for CheckMK agent to consume #####>
+    <#  Write output for CheckMK agent to consume.  #>
     Write-Host "2 mssql_$($InstanceName) - CRITICAL - Unable to run SQL Server checks. Check the following: Name is correct in dbaid-checkmk.ps1, SQL Server is running, permissions are granted to CheckMK service account in SQL Server."
 
-    #<# extra debug information used when writing/troubleshooting script.
+    #<#  Extra debug information used when writing/troubleshooting script. 
     Write-Host $_
     Write-Host $_.ScriptStackTrace
     #>
 }
 finally {
-    <##### Clean up the variables rather than waiting for .NET garbage collector #####>
+    <#  Clean up the variables rather than waiting for .NET garbage collector.  #>
     If (Test-Path variable:local:Database) { Remove-Variable Database }
-    If (Test-Path variable:local:UseTLS) { Remove-Variable UseTLS }
     If (Test-Path variable:local:ConnectionString) { Remove-Variable ConnectionString }
     If (Test-Path variable:local:SQLQuery) { Remove-Variable SQLQuery }
     If (Test-Path variable:local:CheckProcedureList) { Remove-Variable CheckProcedureList }
     If (Test-Path variable:local:ChartProcedureList) { Remove-Variable ChartProcedureList }
     If (Test-Path variable:local:InventoryProcedureList) { Remove-Variable InventoryProcedureList }
-    If (Test-Path variable:local:DBAidVersion) { Remove-Variable DBAidVersion }
     If (Test-Path variable:local:IsClustered) { Remove-Variable IsClustered }
     If (Test-Path variable:local:NetBIOSName) { Remove-Variable NetBIOSName }
     If (Test-Path variable:local:ComputerName) { Remove-Variable ComputerName }
@@ -418,7 +395,6 @@ finally {
     If (Test-Path variable:local:Status) { Remove-Variable Status }
     If (Test-Path variable:local:StatusDetails) { Remove-Variable StatusDetails }
     If (Test-Path variable:local:State) { Remove-Variable State }
-    If (Test-Path variable:local:ErrorString) { Remove-Variable ErrorString }
     If (Test-Path variable:local:ckrow) { Remove-Variable ckrow }
     If (Test-Path variable:local:ctrow) { Remove-Variable ctrow }
     If (Test-Path variable:local:ckDataSet) { Remove-Variable ckDataSet }
