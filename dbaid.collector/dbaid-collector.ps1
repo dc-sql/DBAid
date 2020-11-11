@@ -1,4 +1,82 @@
-﻿Param(
+﻿<#
+.SYNOPSIS
+    This script connects to one or more SQL Server instances and gathers information for proactive checks.
+    
+.DESCRIPTION
+    This script is part of the DBAid toolset.
+
+    This script connects to the specified SQL Server instance(s) and runs stored procedures in the [collector] schema of the [_dbaid] database.
+
+.PARAMETER CollectSqlServer
+    This is a string array of SQL Server instances to connect to. 
+    
+    The entries can use servername or IP address. 
+    You can specify a named instance by appending \InstanceName. 
+    You can connect to a specific TCP port number by appending ,PortNumber. 
+    You can use a combination of the above. As long as it represents a valid server name such as you would use in SQL Server Management Studio or a .NET connection string.
+    
+    For example:
+
+    [string[]]$CollectSqlServer = @("Server1")
+    [string[]]$CollectSqlServer = @("Server1\Instance1")
+    [string[]]$CollectSqlServer = @("192.168.1.2,1435")
+    [string[]]$CollectSqlServer = @("Server1", "Server1\Instance1", "Server1,1435")
+
+    Or if for some reason you are passing the parameter in when running the script (which you wouldn't be doing under normal circumstances):
+
+    $servers = @("Server1","Server1\Instance1","Server1,1435")
+    .\dbaid-checkmk.ps1 -CollectSqlServer $servers
+    
+    Additional Invoke-Sqlcmd connection string parameters can be specified with the server names. For example, if TLS is used by one of the instances, you can provide the EncryptConnection parameter as follows:
+    
+    [string[]]$SqlServer = @("Server1", "Server1\Instance1 -EncryptConnection", "Server1,1435")
+    
+    See Invoke-Sqlcmd documentation for details on parameters (under Related Links).
+
+.PARAMETER CollectDatabase
+    This is the database containing the stored procedures to run to gather information. Always "_dbaid".
+    
+.PARAMETER UpdateExecTimestamp
+    This switch updates metadata in the CollectDatabase regarding last execution time.
+    
+.PARAMETER OutputXmlFilePath
+    If specified, XML files are generated and saved to this path.
+    
+.PARAMETER ZipXml
+    This switch causes output XML files to be copied into a password-protected zip file. Primarily intended to be used when emailing output to a monitoring mailbox. NB - ensure value for SANITISED in [system].[configuration] in [_dbaid] database is set to 1. Password protected is not encrypted!
+
+.PARAMETER EmailEnable
+    This switch controls whether email with zipped XML files is sent or not.
+    
+.PARAMETER EmailTo
+    This is the recipient of the zipped XML files. Expected to be a shared mailbox/repository.
+    
+.PARAMETER EmailFrom
+    This is where the zipped XML files have come from. Often has the server name as the name. This will depend if you're emailing externally or not. Pick something that makes sense and so you can track it back to the origin if there are issues.
+    
+.PARAMETER EmailSMTP
+    This is the mail (SMTP) server to send email through.
+
+.PARAMETER DatamartSqlServer
+    This is the SQL instance to save collector data from multiple servers to. Requires a copy of the [_dbaid] database. If blank, is ignored.
+    
+.PARAMETER DatamartDatabase
+    This is the database to save collector data from multiple servers to. Is a copy of the [_dbaid] database. If blank, is ignored.
+
+.LINK
+    DBAid source code: https://github.com/dc-sql/DBAid
+
+.LINK 
+    Official CheckMK site: https://checkmk.com
+
+.LINK
+    Invoke-Sqlcmd module: https://docs.microsoft.com/en-us/powershell/module/sqlserver/invoke-Sqlcmd?view=sqlserver-ps
+
+.EXAMPLE
+    dbaid-collector.ps1
+
+#>
+Param(
     [parameter(Mandatory)]
     [string[]]$CollectSqlServer,
 
