@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script is part of the DBAid toolset.
 
-    This script connects to the specified SQL Server instance(s) and runs stored procedures in the [checmk] schema of the [_dbaid] database.
+    This script connects to the specified SQL Server instance(s) and runs stored procedures in the [checkmk] schema of the [_dbaid] database.
 
     It is intended that the script connects to SQL Server instances on the machine it is running from, not remote SQL Server instances.
 
