@@ -3,6 +3,8 @@
     This script connects to one or more SQL Server instances and gathers information for proactive checks.
     
 .DESCRIPTION
+    This script works for Windows only.
+
     This script is part of the DBAid toolset.
 
     This script connects to the specified SQL Server instance(s) and runs stored procedures in the [collector] schema of the [_dbaid] database.
