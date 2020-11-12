@@ -6,6 +6,8 @@
     This script is part of the DBAid toolset.
 
     This script connects to the specified SQL Server instance(s) and runs stored procedures in the [collector] schema of the [_dbaid] database.
+    
+    You will need to specify values for either OutputXmlFilePath or DatamartSqlServer and DatamartDatabase, otherwise you won't see any output!
 
 .PARAMETER CollectSqlServer
     This is a string array of SQL Server instances to connect to. 
@@ -40,7 +42,7 @@
     This switch updates metadata in the CollectDatabase regarding last execution time.
     
 .PARAMETER OutputXmlFilePath
-    If specified, XML files are generated and saved to this path.
+    If specified, XML files are generated and saved to this path. If blank, and neither DatamartSqlServer and DatamartDatabase are specified, no output will be generated.
     
 .PARAMETER ZipXml
     This switch causes output XML files to be copied into a password-protected zip file. Primarily intended to be used when emailing output to a monitoring mailbox. NB - ensure value for SANITISED in [system].[configuration] in [_dbaid] database is set to 1. Password protected is not encrypted!
@@ -58,10 +60,10 @@
     This is the mail (SMTP) server to send email through.
 
 .PARAMETER DatamartSqlServer
-    This is the SQL instance to save collector data from multiple servers to. Requires a copy of the [_dbaid] database. If blank, is ignored.
+    This is the SQL instance to save collector data from [multiple] servers to. Requires a copy of the [_dbaid] database. If blank, is ignored.
     
 .PARAMETER DatamartDatabase
-    This is the database to save collector data from multiple servers to. Is a copy of the [_dbaid] database. If blank, is ignored.
+    This is the database to save collector data from multiple servers to. Is a copy of the [_dbaid] database schema but can be a different name. Default value is [_dbaid]. Requires DatamartSqlServer parameter to be effective.
 
 .LINK
     DBAid source code: https://github.com/dc-sql/DBAid
@@ -108,7 +110,7 @@ Param(
     [string[]]$DatamartSqlServer,
 
     [parameter()]
-    [string]$DatamartDatabase
+    [string]$DatamartDatabase = '_dbaid'
 )
 
 Set-Location $PSScriptRoot
@@ -130,7 +132,7 @@ foreach ($CollectServer in $CollectSqlServer) {
         $ProcName = (((($Procedure).procedure).Split('.')).Replace(']', '')).Replace('[', '')[1]
 
         if ($UpdateExecTimestamp) {
-            $ProcQuery = $ProcQuery + "@update_execution_timestamp=1"
+            $ProcQuery = $ProcQuery + " @update_execution_timestamp = 1"
         }
 
         Write-Verbose -Message "Executing: $ProcQuery"
@@ -166,7 +168,7 @@ foreach ($CollectServer in $CollectSqlServer) {
                 $bc.DestinationTableName = $DestTable
                 $cn.Open()
                 $bc.WriteToServer($dt)
-		        $logInsert = "INSERT INTO [_dbaid].[datamart].[load_log] ([load_type]) VALUES (N'$LoadType')"
+		        $logInsert = "INSERT INTO [$DatamartDatabase].[datamart].[load_log] ([load_type]) VALUES (N'$LoadType')"
 		        (New-Object System.Data.SqlClient.SqlCommand($logInsert, $cn)).ExecuteNonQuery() | Out-Null
         
             } catch {
@@ -199,12 +201,12 @@ foreach ($CollectServer in $CollectSqlServer) {
 
     if ($ZipXml) {
         $SQLServer = (Invoke-Sqlcmd -ServerInstance $CollectServer -Query "SELECT @@SERVERNAME")[0]
-        [string]$secret = (Invoke-Sqlcmd -ServerInstance $SQLServer -Query "SELECT [value] FROM [_dbaid].[system].[configuration] WHERE [key] = N'COLLECTOR_SECRET'")[0]
-        [string]$instanceTag = (Invoke-Sqlcmd -ServerInstance $SQLServer -Query "EXEC [_dbaid].[system].[get_instance_tag];")[0]
+        [string]$secret = (Invoke-Sqlcmd -ServerInstance $SQLServer -Query "SELECT [value] FROM [$CollectDatabase].[system].[configuration] WHERE [key] = N'COLLECTOR_SECRET'")[0]
+        [string]$instanceTag = (Invoke-Sqlcmd -ServerInstance $SQLServer -Query "EXEC [$CollectDatabase].[system].[get_instance_tag];")[0]
         [string]$7zip = "$PSScriptRoot\7za.exe"
         [string]$7zipArgs = "a -mx=9 -tzip -sdel -p'$secret'"
-        [string]$7zipSource = "$PSScriptRoot\$instanceTag*.xml" 
-        [string]$7zipTarget = $instanceTag + '_' + (Get-Date -Format 'yyyyMMddHHmmss') + '.zip'
+        [string]$7zipSource = "$OutputXmlFilePath\$instanceTag*.xml" 
+        [string]$7zipTarget = "$OutputXmlFilePath\" + $instanceTag + '_' + (Get-Date -Format 'yyyyMMddHHmmss') + '.zip'
 
         $7zipCmd = "'$7zip' $7zipArgs '$7zipTarget' '$7zipSource'"
 
@@ -215,7 +217,7 @@ foreach ($CollectServer in $CollectSqlServer) {
         }
 
         if ($EmailEnable) {
-            [string[]]$EmailAttachments = (Get-ChildItem -Path "$PSScriptRoot\*.zip").FullName
+            [string[]]$EmailAttachments = (Get-ChildItem -Path "$OutputXmlFilePath\*.zip").FullName
             [string]$EmailBody = "DBAid collector results for: $SQLServer.$env:USERDNSDOMAIN"
 
             if ($EmailAttachments.Length -gt 0) {
