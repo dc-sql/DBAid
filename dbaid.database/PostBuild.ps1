@@ -9,8 +9,8 @@ $Release = Get-ChildItem -Path $Root -Filter "*dbaid*.sql"
 $PreUpgrade = $Root + "\PreUpgrade.sql"
 
 [array]$PreContent = Get-Content $PreUpgrade;
-[array]$RelContent = $(Get-Content $Release) -replace "local.dbaid.database", "_dbaid" -replace "COLLATE Latin1_General_CI_AS", "";
-[int]$PreIndex = $([array]::IndexOf($RelContent, ":on error exit")) + 1;
+[array]$RelContent = $(Get-Content $Release) -replace "local.dbaid.database", "_dbaid" -replace "COLLATE Latin1_General_CI_AS", "" -replace ":setvar DefaultFilePrefix ""_dbaid""", "" -replace ":setvar DefaultDataPath """"", "" -replace ":setvar DefaultLogPath """"", ""
+[int]$PreIndex = $([array]::IndexOf($RelContent, ":on error exit")) + 1
 [array]$Output = $RelContent[0..$PreIndex],$PreContent,$RelContent[$PreIndex..($RelContent.Length -1)]
 
 $Output | Set-Content $Release

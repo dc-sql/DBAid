@@ -87,7 +87,7 @@ BEGIN
   --// Version: 2020-11-01 18:16:36                                                               //--
   ----------------------------------------------------------------------------------------------------
   
-  EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+  EXECUTE AS LOGIN = N'_dbaid_sa';
 
   SET NOCOUNT ON
 
