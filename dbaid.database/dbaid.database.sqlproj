@@ -215,10 +215,6 @@
     <None Include="Database\datamart\load-collector-xml-into-datamart.ps1" />
   </ItemGroup>
   <ItemGroup>
-    <SqlCmdVariable Include="ClientDomain">
-      <DefaultValue>@datacom.co.nz</DefaultValue>
-      <Value>$(SqlCmdVar__14)</Value>
-    </SqlCmdVariable>
     <SqlCmdVariable Include="CollectorServiceAccount">
       <DefaultValue>NT AUTHORITY\SYSTEM</DefaultValue>
       <Value>$(SqlCmdVar__5)</Value>
