@@ -44,10 +44,13 @@
     This switch updates metadata in the CollectDatabase regarding last execution time.
     
 .PARAMETER OutputXmlFilePath
-    If specified, XML files are generated and saved to this path. If blank, and neither DatamartSqlServer and DatamartDatabase are specified, no output will be generated.
+    If specified, XML files are generated and saved to this path. If blank, and neither DatamartSqlServer and DatamartDatabase are specified, no output will be generated. XML file names start with the GUID for the server (created as part of [_dbaid] database installation), have the name of the procedure executed, with the current datetime appended in the format yyyymmddHHmm.
+    For example: 93D366FF-FAD9-4061-88BD-B3827EBFC978_get_instance_ci_202011031408.xml
     
 .PARAMETER ZipXml
-    This switch causes output XML files to be copied into a password-protected zip file. Primarily intended to be used when emailing output to a monitoring mailbox. NB - ensure value for SANITISED in [system].[configuration] in [_dbaid] database is set to 1. Password protected is not encrypted!
+    This switch causes output XML files to be copied into a password-protected zip file. Primarily intended to be used when emailing output to a monitoring mailbox. NB - ensure value for SANITISED in [system].[configuration] in [_dbaid] database is set to 1. Password protected is not encrypted! 
+    Zip files are named with the GUID for the server (created as part of [_dbaid] database installation) with the current datetime appended in the format yyyymmddHHmm.
+    For example: 93D366FF-FAD9-4061-88BD-B3827EBFC978_202011031408.zip
 
 .PARAMETER EmailEnable
     This switch controls whether email with zipped XML files is sent or not.
@@ -76,9 +79,55 @@
 .LINK
     Invoke-Sqlcmd module: https://docs.microsoft.com/en-us/powershell/module/sqlserver/invoke-Sqlcmd?view=sqlserver-ps
 
+.LINK
+    SqlServer PowerShell package: https://www.powershellgallery.com/packages/SqlServer/21.1.18229
+.LINK
+    Send-MailKitMessage PowerShell package: https://www.powershellgallery.com/packages/Send-MailKitMessage/2.0.1
+
 .EXAMPLE
     dbaid-collector.ps1
 
+    If you have configured the required parameters in the script file itself, this is all that needs to be executed.
+
+.EXAMPLE
+    dbaid-collector.ps1 -CollectSqlServer "Server1" -OutputXmlFilePath "C:\DBAid\Output"
+
+    This connects to the default SQL Server instance on "Server1" and outputs XML files to "C:\DBAid\Output". 
+
+.EXAMPLE
+    dbaid-collector.ps1 -CollectSqlServer "Server1\Instance1" -OutputXmlFilePath "C:\DBAid\Output" -UpdateExecTimeStamp
+
+    This connects to the named SQL Server instance "Instance1" on "Server1" and outputs XML files to "C:\DBAid\Output". Metadata in the "_dbaid" database regarding last execution time of the collector procedures is updated.
+
+.EXAMPLE
+    dbaid-collector.ps1 -CollectSqlServer "Server1,50000" -OutputXmlFilePath "C:\DBAid\Output"
+
+    This connects to the SQL Server instance on "Server1" listening on TCP port 50000 and outputs XML files to "C:\DBAid\Output". 
+
+.EXAMPLE
+    dbaid-collector.ps1 -CollectSqlServer "Server1 -EncryptConnection" -OutputXmlFilePath "C:\DBAid\Output" -ZipXml
+
+    This connects to the default SQL Server instance on "Server1" that has TLS connection encryption enabled and outputs XML files to "C:\DBAid\Output". The XML files are added to a password-protected zip file then deleted from disk. 
+
+.EXAMPLE
+    dbaid-collector.ps1 -CollectSqlServer "Server1" -OutputXmlFilePath "C:\DBAid\Output" -ZipXml
+
+    This connects to the default SQL Server instance on "Server1" and outputs XML files to "C:\DBAid\Output". The XML files are added to a password-protected zip file then deleted from disk. 
+
+.EXAMPLE
+    dbaid-collector.ps1 -CollectSqlServer "Server1" -OutputXmlFilePath "C:\DBAid\Output" -ZipXml -EmailEnable -EmailTo "someone@domain.co.nz" -EmailFrom "Server1@domain.net.nz" -EmailSMTP "smtp.domain.co.nz"
+
+    This connects to the default SQL Server instance on "Server1" and outputs XML files to "C:\DBAid\Output". The XML files are added to a password-protected zip file then deleted from disk. The zip file is then emailed to "someone@domain.co.nz" via "smtp.domain.co.nz" then deleted from disk.
+
+.EXAMPLE
+    dbaid-collector.ps1 -CollectSqlServer "Server1" -DatamartSqlServer "DWServer1" -DatamartDatabase "_dbaid_warehouse"
+
+    This connects to the default SQL Server instance on "Server1" and sends data to the "_dbaid_warehouse" database on the default SQL Server instance on "DWServer1". The "_dbaid_warehouse" database uses the same schema as the "_dbaid" database.
+
+.EXAMPLE
+    dbaid-collector.ps1 -CollectSqlServer "Server1","Server1\Instance1" -OutputXmlFilePath "C:\DBAid\Output"
+
+    This connects to both the default SQL Server instance and named SQL Server instance "Instance1" on "Server1" and outputs XML files to "C:\DBAid\Output".
 #>
 Param(
     [parameter(Mandatory)]
@@ -116,15 +165,16 @@ Param(
 )
 
 Set-Location $PSScriptRoot
-<##### Requires Send-MailKitMessage PowerShell module: https://www.powershellgallery.com/packages/Send-MailKitMessage/2.0.1 #####>
+
 Import-Module Send-MailKitMessage
+Import-Module SqlServer
 
 $Timestamp = Get-Date -Format 'yyyyMMddHHmm'
 
 foreach ($CollectServer in $CollectSqlServer) {
     Write-Verbose -Message "Connecting to: $CollectServer"
-    $InstanceTag = Invoke-Sqlcmd -ServerInstance $CollectServer -Database $CollectDatabase -Query 'EXEC [system].[get_instance_tag]' | Select-Object -ExpandProperty instance_tag
-    $ProcedureList = Invoke-Sqlcmd -ServerInstance $CollectServer -Database $CollectDatabase -Query "EXEC [system].[get_procedure_list] @schema_name = 'collector'"
+    $InstanceTag = Invoke-Sqlcmd -ServerInstance "$CollectServer" -Database "$CollectDatabase" -Query 'EXEC [system].[get_instance_tag]' | Select-Object -ExpandProperty instance_tag
+    $ProcedureList = Invoke-Sqlcmd -ServerInstance "$CollectServer" -Database "$CollectDatabase" -Query "EXEC [system].[get_procedure_list] @schema_name = 'collector'"
 
     # EXPORT DATA #
     foreach ($Procedure in $ProcedureList) {
@@ -146,7 +196,7 @@ foreach ($CollectServer in $CollectSqlServer) {
             $dt = New-Object System.Data.Datatable($ProcName)
         }
 
-        <####### NB - [owner_sid] value will get garbled due to conversion from varbinary to sql_variant in [collector].[get_database_ci]  #######>
+        <#  NB - [owner_sid] value will get garbled due to conversion from varbinary to sql_variant in [collector].[get_database_ci]  #>
         if ($OutputXmlFilePath) {
             Write-Verbose -Message "Outputting XML to: $OutputXmlFilePath"
             If (Test-Path $OutputXmlFilePath) {
@@ -182,25 +232,6 @@ foreach ($CollectServer in $CollectSqlServer) {
         }
     }
 
-<# Offloaded to comcryptor.ps1. Not sure whether to bundle all in one script or not. Would be tidier in some respects
-    if ($ZipXml) {
-        [string]$Secret = Invoke-Sqlcmd -ServerInstance $CollectServer -Database $CollectDatabase -Query "SELECT [value] FROM [_dbaid].[system].[configuration] WHERE [key] = N'COLLECTOR_SECRET'" | Select-Object -ExpandProperty value
-        [string]$7zip = "7za.exe"
-        [string]$7zipArgs = "a -mx=9 -tzip -sdel -p'$Secret'"
-        [string]$7zipSource = Join-Path $OutputXmlFilePath "$InstanceTag*.xml" 
-        [string]$7zipTarget = $InstanceTag + '_' + $Timestamp + '.zip'
-
-        $7zipCmd = "'$7zip' $7zipArgs '$7zipTarget' '$7zipSource'"
-
-        if ((Get-ChildItem -Path $7zipSource).Length -gt 0) {
-            Write-Verbose -Message "Zipping XML file into: $7zipTarget"
-            Invoke-Expression "&$7zipCmd"
-        } else {
-            Write-Error "No xml files found in output directory: $OutputXmlFilePath"
-        }
-    }
-#>
-
     if ($ZipXml) {
         $SQLServer = (Invoke-Sqlcmd -ServerInstance $CollectServer -Query "SELECT @@SERVERNAME")[0]
         [string]$secret = (Invoke-Sqlcmd -ServerInstance $SQLServer -Query "SELECT [value] FROM [$CollectDatabase].[system].[configuration] WHERE [key] = N'COLLECTOR_SECRET'")[0]
@@ -223,14 +254,14 @@ foreach ($CollectServer in $CollectSqlServer) {
             [string]$EmailBody = "DBAid collector results for: $SQLServer.$env:USERDNSDOMAIN"
 
             if ($EmailAttachments.Length -gt 0) {
-            <######## Send-MailMessage is deprecated, shouldn't be using it. See https://aka.ms/SendMailMessage. MailKit is recommended replacement: https://github.com/jstedfast/MailKit ########>
-            Send-MailMessage -To $EmailTo -From $EmailFrom -Subject "DBAid SQL Collector XML" -Body $EmailBody -Attachments $EmailAttachments -SmtpServer $EmailSMTP
+            <#  Send-MailMessage is deprecated. MailKit is recommended replacement. See links above.  #>
+            Send-MailKitMessage -ToList $EmailTo -From $EmailFrom -Subject "DBAid SQL Collector XML" -HTMLBody $EmailBody -AttachmentList $EmailAttachments -SMTPServer $EmailSMTP
     
             foreach ($item in $EmailAttachments) {
                 Remove-Item -Path $item -Force
             }
             } else {
-             Write-Host 'No zip files in current directory. '
+                Write-Host 'No zip files in current directory. '
             }
         }
     }
