@@ -10,12 +10,19 @@
     It is intended that the script connects to SQL Server instances on the machine it is running from, not remote SQL Server instances.
 
     For Windows: Copy this file into [C:\Program Files (x86)\check_mk\local]. 
-    For Linux  : Copy this file into [/usr/lib/check_mk_agent/plugins]. In addition, a shell script is required as CheckMK on Linux cannot directly execute PowerShell scripts. See Related Links (DBAid).
+    For Linux  : Copy this file into [/usr/share/check-mk-agent/plugins]. In addition, a shell script is required as CheckMK on Linux cannot directly execute PowerShell scripts. See Related Links (DBAid source code).
     
     (NB - these are the default plugin folder locations)
     
     This has been tested against SQL instances in Docker containers on a Linux host. 
     Wrinkle: all instances come back as "MSSQLSERVER", as opposed to named instances (because they are not named instances; using Docker is a workaround to have multiple instances on a Linux host).
+
+    Credentials for Linux:
+
+    When configuring the plugin for use in Linux, you will need to create a SQL native login [_dbaid_checkmk] in each instance, with the same password. You will then need to run PowerShell to create a credential for the login and save the encrypted password to a file:
+    
+    $Credential = Get-Credential
+    $Credential.Password | ConvertFrom-SecureString | Out-File /usr/share/check-mk-agent/plugins/dbaid-checkmk.cred
 
 .PARAMETER SqlServer
     This is a string array of SQL Server instances to connect to. It can be passed in as a parameter when running the script manually, but CheckMK just executes the script without passing parameter values, so you will need to edit the script to put in desired values. 
@@ -37,11 +44,7 @@
     $servers = @("Server1","Server1\Instance1","Server1,1435")
     .\dbaid-checkmk.ps1 -SqlServer $servers
     
-    Additional Invoke-Sqlcmd connection string parameters can be specified with the server names. For example, if TLS is used by one of the instances, you can provide the EncryptConnection parameter as follows:
-    
-    [string[]]$SqlServer = @("Server1", "Server1\Instance1 -EncryptConnection", "Server1,1435")
-    
-    See Invoke-Sqlcmd documentation for details on parameters (under Related Links).
+    NB - Connecting to servers configured to [only] accept TLS encrypted connections is not currently supported.
 
 .LINK
     DBAid source code: https://github.com/dc-sql/DBAid
@@ -92,6 +95,19 @@ Param(
 )
 Set-Location $PSScriptRoot
 
+if ($Env:PSModulePath -like "*\WindowsPowerShell\Modules*") {
+    $IsThisWindows = 1
+}
+else {
+    $IsThisWindows = 0
+}
+
+<##### Get credentials to connect to SQL Server (Linux only; Windows uses service account of CheckMK Agent service) #####>
+if ($IsThisWindows -eq 0) {
+    $HexPass = Get-Content "/usr/share/check-mk-agent/plugins/dbaid-checkmk.cred"
+    $Credential = New-Object -TypeName PSCredential -ArgumentList "_dbaid_checkmk", ($HexPass | ConvertTo-SecureString)
+}
+
 <#  Loop through the SQL instances one by one.  #>
 foreach ($Instance in $SqlServer) {
 try {
@@ -101,12 +117,6 @@ try {
     <#  Reset variable to null otherwise catch block returns incorrect value.  #>
     [string]$InstanceName = $null
 
-    <# 
-        When $Instance is expanded, it will include any additional parameters, e.g. -EncryptConnection (if specified) which will be interpreted as switches to Invoke-Sqlcmd
-        When using Linux, must have Kerberos configured or pass in Username and Password parameters (which requires them in plaintext - not great).
-    #>
-    [string]$ConnectionString = "Invoke-Sqlcmd -ServerInstance ""$($Instance)"" -Database ""$($Database)"" -Query "
-
     <#
         The next bit will get tripped up if you are trying to run this script on one machine but connecting to a SQL instance running on another machine.
         But then as per .DESCRIPTION above, this script is supposed to be executed on the machine that SQL Server is installed on.
@@ -115,15 +125,13 @@ try {
           The check_mk_agent runs on the Linux host, not within the Docker container, so $Env:HOSTNAME will return the host name, not the Docker container name.
     #>
 
-    <#  If running PowerShell 6 or higher, could use $IsWindows. Lowest requirement for this script to work, however, is PowerShell 5. Can revisit in the future.  #>
-    if ($Env:PSModulePath -like "*\WindowsPowerShell\Modules*") {
+    <#  If running PowerShell 6 or higher, could use system $IsWindows. Lowest requirement for this script to work, however, is PowerShell 5. Can revisit in the future.  #>
+    if ($IsThisWindows -eq 1) {
         <#  Check if this is a clustered SQL instance. #>
-        $SQLQuery = $ConnectionString + "`"SELECT CAST(SERVERPROPERTY('IsClustered') AS bit) AS [IsClustered]`""
-        $IsClustered = Invoke-Expression $SQLQuery
+        $IsClustered = Invoke-SqlCmd -ServerInstance $Instance -Credential $Credential -Query "SELECT CAST(SERVERPROPERTY('IsClustered') AS bit) AS [IsClustered]"
         
         <#  Get NetBIOS name according to SQL Server. I.e. computer name that SQL instance is running on.  #>
-        $SQLQuery = $ConnectionString + "`"SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS [NetBIOSName]`""
-        $NetBIOSName = Invoke-Expression $SQLQuery
+        $NetBIOSName = Invoke-SqlCmd -ServerInstance $Instance -Credential $Credential -Query "SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS [NetBIOSName]"
 
         <#  Get computer name according to PowerShell. This may be different than what SQL Server thinks if SQL Server is clustered.  #>
         $ComputerName = $env:computername
@@ -135,26 +143,42 @@ try {
     }
 
     <#  Get list of procedures to run for checks. All should be in the [checkmk] schema.  #>
-    $SQLQuery = $ConnectionString + "`"SELECT [proc] = QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'checkmk' AND [name] LIKE N'check%'`""
-    $CheckProcedureList = (Invoke-Expression $SQLQuery).proc
-    $SQLQuery = $ConnectionString + "`"SELECT [proc] = QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'checkmk' AND [name] LIKE N'chart%'`""
-    $ChartProcedureList = (Invoke-Expression $SQLQuery).proc
-    $SQLQuery = $ConnectionString + "`"SELECT [proc] = QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'checkmk' AND [name] LIKE N'inventory%'`""
-    $InventoryProcedureList = (Invoke-Expression $SQLQuery).proc
+    if ($IsThisWindows -eq 1) {
+        $CheckProcedureList = (Invoke-SqlCmd -ServerInstance $Instance -Database $Database -Query "SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'checkmk' AND [name] LIKE N'check%'").proc
+        $ChartProcedureList = (Invoke-SqlCmd -ServerInstance $Instance -Database $Database -Query "SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'checkmk' AND [name] LIKE N'chart%'").proc
+        $InventoryProcedureList = (Invoke-SqlCmd -ServerInstance $Instance -Database $Database -Query "SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'checkmk' AND [name] LIKE N'inventory%'").proc
+    }
+    else {
+        $CheckProcedureList = (Invoke-SqlCmd -ServerInstance $Instance -Database $Database -Credential $Credential -Query "SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'checkmk' AND [name] LIKE N'check%'").proc
+        $ChartProcedureList = (Invoke-SqlCmd -ServerInstance $Instance -Database $Database -Credential $Credential -Query "SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'checkmk' AND [name] LIKE N'chart%'").proc
+        $InventoryProcedureList = (Invoke-SqlCmd -ServerInstance $Instance -Database $Database -Credential $Credential -Query "SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'checkmk' AND [name] LIKE N'inventory%'").proc
+    }
 
     <#  Get SQL Server version information. Pass through function to remove invalid characters and have on one line for CheckMK to handle it.  #>
-    $SQLQuery = $ConnectionString + "`"SELECT [clean_string] AS [InstanceVersion] FROM [system].[get_clean_string](@@VERSION)`""
-    $InstanceVersion = (Invoke-Expression $SQLQuery).InstanceVersion
+    if ($IsThisWindows -eq 1) {
+        $InstanceVersion = (Invoke-SqlCmd -ServerInstance $Instance -Database $Database -Query "SELECT [clean_string] AS [InstanceVersion] FROM [system].[get_clean_string](@@VERSION)").InstanceVersion
+    }
+    else {
+        $InstanceVersion = (Invoke-SqlCmd -ServerInstance $Instance -Database $Database -Credential $Credential -Query "SELECT [clean_string] AS [InstanceVersion] FROM [system].[get_clean_string](@@VERSION)").InstanceVersion
+    }
 
     <#  Refresh check configuration (i.e. to pick up any new jobs or databases added since last check).  #>
     foreach ($iproc in $InventoryProcedureList) {
-        $SQLQuery = $ConnectionString + "`"EXEC $iproc`" -OutputAs DataSet"
-        Invoke-Expression $SQLQuery
+        if ($IsThisWindows -eq 1) {
+            $SQLQuery = Invoke-SqlCmd -ServerInstance $Instance -Database $Database -Query "EXEC $iproc" -OutputAs DataSet
+        }
+        else {
+            $SQLQuery = Invoke-SqlCmd -ServerInstance $Instance -Database $Database -Credential $Credential -Query "EXEC $iproc" -OutputAs DataSet
+        }
     }
     
     <#  Get SQL instance name. Used in output as part of CheckMK service name.  #>
-    $SQLQuery = $ConnectionString + "`"SELECT ISNULL(SERVERPROPERTY('InstanceName'), 'MSSQLSERVER') AS [InstanceName]`""
-    $InstanceName = (Invoke-Expression $SQLQuery).InstanceName
+    if ($IsThisWindows -eq 1) {
+        $InstanceName = (Invoke-SqlCmd -ServerInstance $Instance -Database $Database -Query "SELECT ISNULL(SERVERPROPERTY('InstanceName'), 'MSSQLSERVER') AS [InstanceName]").InstanceName
+    }
+    else {
+        $InstanceName = (Invoke-SqlCmd -ServerInstance $Instance -Database $Database -Credential $Credential -Query "SELECT ISNULL(SERVERPROPERTY('InstanceName'), 'MSSQLSERVER') AS [InstanceName]").InstanceName
+    }
     
     <#  Output SQL Server instance information in CheckMK format.  #>
     Write-Host "0 mssql_$($InstanceName) - $($InstanceVersion)"
@@ -165,9 +189,13 @@ try {
         $ServiceName = $ckproc.Substring($ckproc.IndexOf('_') + 1).Replace(']','')
 
         <#  Execute procedure, store results in dataset variable (i.e. PowerShell table equivalent).  #>
-        $SQLQuery = $ConnectionString + "`"EXEC $ckproc`" -OutputAs DataSet"
-        $ckDataSet = Invoke-Expression $SQLQuery
-        
+        if ($IsThisWindows -eq 1) {
+            $ckDataSet = Invoke-SqlCmd -ServerInstance $Instance -Database $Database -Query "EXEC $ckproc" -OutputAs DataSet
+        }
+        else {
+            $ckDataSet = Invoke-SqlCmd -ServerInstance $Instance -Database $Database -Credential $Credential -Query "EXEC $ckproc" -OutputAs DataSet
+        }
+
         <#  Get rowcount of dataset variable. If the top row returned has [state] value of 'NA', then set count=0 (i.e. monitor doesn't apply, nothing wrong detected). If there's more than one row returned, there's probably a fault.  #>
         $Count = $ckDataSet.Tables[0].Rows.Count
         $Count = Switch($ckDataSet.Tables[0].Rows[0].state){'NA'{0} default{$Count}}
@@ -201,8 +229,12 @@ try {
         $ServiceName = $ctproc.Substring($ctproc.IndexOf('_') + 1).Replace(']','')
 
         <#  Execute procedure, store results in dataset variable (i.e. PowerShell table equivalent).  #>
-        $SQLQuery = $ConnectionString + "`"EXEC $ctproc`" -As DataSet"
-        $ctDataSet = Invoke-Expression $SQLQuery
+        if ($IsThisWindows -eq 1) {
+            $ctDataSet = Invoke-SqlCmd -ServerInstance $Instance -Database $Database -Query "EXEC $ctproc" -As DataSet
+        }
+        else {
+            $ctDataSet = Invoke-SqlCmd -ServerInstance $Instance -Database $Database -Credential $Credential -Query "EXEC $ctproc" -As DataSet
+        }
 
         foreach ($ctrow in $ctDataset.Tables[0].Rows) {
             <#  Variables to manage pnp chart data. Initialize for each row of data being processed (i.e. each database or performance monitor counter).  #>
