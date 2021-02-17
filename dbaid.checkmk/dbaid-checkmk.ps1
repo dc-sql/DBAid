@@ -55,10 +55,14 @@
 .LINK
     Invoke-Sqlcmd module: https://docs.microsoft.com/en-us/powershell/module/sqlserver/invoke-Sqlcmd?view=sqlserver-ps
 
-.EXAMPLE
-    dbaid-checkmk.ps1
+.LINK
+    Get-Credential command: https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.security/get-credential?view=powershell-7.1
 
-    Expected output (Windows):
+.EXAMPLE
+    Windows:    
+    %SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe dbaid-checkmk.ps1
+
+    Example output (Windows):
 
     0 mssql_MSSQLSERVER - Microsoft SQL Server 2016 (SP2-CU11-GDR) (KB4535706) - 13.0.5622.0 (X64) Dec 15 2019 08:03:11 Copyright (c) Microsoft CorporationDeveloper Edition (64-bit) on Windows 10 Enterprise 10.0 <X64> (Build 18363: ) (Hypervisor)
     1 mssql_agentjob_MSSQLSERVER count=2 WARNING - job=[Fail Job 1];state=FAIL;runtime_min=0.00;runtime_check_min=200;\n job=[Fail Job 2];state=FAIL;runtime_min=0.00;runtime_check_min=200;\n 
@@ -72,7 +76,10 @@
     0 mssql_capacity_fg_MSSQLSERVER _dbaid_LOG; used=0.79; reserved=8.00; max=26161.00|_dbaid_ROWS_PRIMARY; used=5.25; reserved=8.00; max=26161.00|AdventureWorks2016_LOG; used=0.70; reserved=2.00; max=26155.00|AdventureWorks2016_ROWS_PRIMARY; used=205.44; reserved=207.63; max=26360.63
 
 
-    Expected output (Linux):
+    Linux:
+    pwsh -File /usr/lib/check_mk_agent/plugins/dbaid-checkmk.ps1
+
+    Example output:
     
     0 mssql_MSSQLSERVER - Microsoft SQL Server 2017 (RTM-CU21) (KB4557397) - 14.0.3335.7 (X64) Jun 12 2020 20:39:00 Copyright (C) 2017 Microsoft CorporationDeveloper Edition (64-bit) on Linux (Ubuntu 16.04.6 LTS)
     0 mssql_agentjob_MSSQLSERVER count=0 NA - No agent job(s) enabled;;\n
@@ -128,10 +135,10 @@ try {
     <#  If running PowerShell 6 or higher, could use system $IsWindows. Lowest requirement for this script to work, however, is PowerShell 5. Can revisit in the future.  #>
     if ($IsThisWindows -eq 1) {
         <#  Check if this is a clustered SQL instance. #>
-        $IsClustered = Invoke-SqlCmd -ServerInstance $Instance -Credential $Credential -Query "SELECT CAST(SERVERPROPERTY('IsClustered') AS bit) AS [IsClustered]"
+        $IsClustered = Invoke-SqlCmd -ServerInstance $Instance -Query "SELECT CAST(SERVERPROPERTY('IsClustered') AS bit) AS [IsClustered]"
         
         <#  Get NetBIOS name according to SQL Server. I.e. computer name that SQL instance is running on.  #>
-        $NetBIOSName = Invoke-SqlCmd -ServerInstance $Instance -Credential $Credential -Query "SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS [NetBIOSName]"
+        $NetBIOSName = Invoke-SqlCmd -ServerInstance $Instance -Query "SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS [NetBIOSName]"
 
         <#  Get computer name according to PowerShell. This may be different than what SQL Server thinks if SQL Server is clustered.  #>
         $ComputerName = $env:computername
@@ -165,10 +172,10 @@ try {
     <#  Refresh check configuration (i.e. to pick up any new jobs or databases added since last check).  #>
     foreach ($iproc in $InventoryProcedureList) {
         if ($IsThisWindows -eq 1) {
-            $SQLQuery = Invoke-SqlCmd -ServerInstance $Instance -Database $Database -Query "EXEC $iproc" -OutputAs DataSet
+            Invoke-SqlCmd -ServerInstance $Instance -Database $Database -Query "EXEC $iproc" -OutputAs DataSet
         }
         else {
-            $SQLQuery = Invoke-SqlCmd -ServerInstance $Instance -Database $Database -Credential $Credential -Query "EXEC $iproc" -OutputAs DataSet
+            Invoke-SqlCmd -ServerInstance $Instance -Database $Database -Credential $Credential -Query "EXEC $iproc" -OutputAs DataSet
         }
     }
     
@@ -411,6 +418,9 @@ catch {
 }
 finally {
     <#  Clean up the variables rather than waiting for .NET garbage collector.  #>
+    If (Test-Path variable:local:HexPass) { Remove-Variable HexPass }
+    If (Test-Path variable:local:Credential) { Remove-Variable Credential }
+    If (Test-Path variable:local:IsThisWindows) { Remove-Variable IsThisWindows }
     If (Test-Path variable:local:Database) { Remove-Variable Database }
     If (Test-Path variable:local:ConnectionString) { Remove-Variable ConnectionString }
     If (Test-Path variable:local:SQLQuery) { Remove-Variable SQLQuery }
