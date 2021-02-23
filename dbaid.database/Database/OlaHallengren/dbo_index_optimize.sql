@@ -9,12 +9,12 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[IndexOptimize]') AND type in (N'P', N'PC'))
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[index_optimize]') AND type in (N'P', N'PC'))
 BEGIN
-  EXEC dbo.sp_executesql @statement = N'CREATE PROCEDURE [dbo].[IndexOptimize] AS'
+  EXEC dbo.sp_executesql @statement = N'CREATE PROCEDURE [dbo].[index_optimize] AS'
 END
 GO
-ALTER PROCEDURE [dbo].[IndexOptimize]
+ALTER PROCEDURE [dbo].[index_optimize]
 --*/
 CREATE PROCEDURE [dbo].[index_optimize]
 (

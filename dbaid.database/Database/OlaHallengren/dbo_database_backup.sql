@@ -5,12 +5,12 @@
   --// Version: 2020-11-01 18:16:36                                                               //--
   ----------------------------------------------------------------------------------------------------
 /*
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[DatabaseBackup]') AND type in (N'P', N'PC'))
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[database_backup]') AND type in (N'P', N'PC'))
 BEGIN
-  EXEC dbo.sp_executesql @statement = N'CREATE PROCEDURE [dbo].[DatabaseBackup] AS'
+  EXEC dbo.sp_executesql @statement = N'CREATE PROCEDURE [dbo].[database_backup] AS'
 END
 GO
-ALTER PROCEDURE [dbo].[DatabaseBackup]
+ALTER PROCEDURE [dbo].[database_backup]
 --*/
 CREATE PROCEDURE [dbo].[database_backup]
 (

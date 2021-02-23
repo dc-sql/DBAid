@@ -9,14 +9,14 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[DatabaseIntegrityCheck]') AND type in (N'P', N'PC'))
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[integrity_check]') AND type in (N'P', N'PC'))
 BEGIN
-  EXEC dbo.sp_executesql @statement = N'CREATE PROCEDURE [dbo].[DatabaseIntegrityCheck] AS'
+  EXEC dbo.sp_executesql @statement = N'CREATE PROCEDURE [dbo].[integrity_check] AS'
 END
 GO
-ALTER PROCEDURE [dbo].[DatabaseIntegrityCheck]
+ALTER PROCEDURE [dbo].[integrity_check]
 --*/
-CREATE PROCEDURE [dbo].[DatabaseIntegrityCheck]
+CREATE PROCEDURE [dbo].[integrity_check]
 
 @Databases nvarchar(max) = NULL,
 @CheckCommands nvarchar(max) = 'CHECKDB',
