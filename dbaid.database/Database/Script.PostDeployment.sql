@@ -98,10 +98,39 @@ BEGIN
 END
 GO
 
+/* Create login for Checkmk plugin if running on Linux. New password to be set by DBA afterwards, as it will need to be known to create PS credential. */
+/* sys.dm_os_host_info is relatively new (SQL 2017+ despite what BOL says; not from 2008). If it's there, query it (result being 'Linux' or 'Windows'). If not there, it's Windows. */
+DECLARE @DetectedOS NVARCHAR(7);
+IF EXISTS (SELECT 1 FROM sys.system_objects WHERE [name] = N'dm_os_host_info' AND [schema_id] = SCHEMA_ID(N'sys'))
+	IF ((SELECT [host_platform] FROM sys.dm_os_host_info) LIKE N'%Linux%')
+	BEGIN
+		SET @DetectedOS = 'Linux';
+	END
+	ELSE IF ((SELECT SERVERPROPERTY('EngineEdition')) = 8) 
+			SET @DetectedOS = 'AzureManagedInstance';
+		ELSE 
+			SET @DetectedOS = 'Windows'; /* If it's not Linux or Azure Managed Instance, then we assume Windows. */
+ELSE 
+	SELECT @DetectedOS = N'Windows'; /* if dm_os_host_info object doesn't exist, then we assume Windows. */
+
+IF @DetectedOS = 'Linux'
+BEGIN
+	IF NOT EXISTS (SELECT 1 FROM [sys].[server_principals] WHERE [type] IN ('U','S') AND LOWER(name) = LOWER('_dbaid_checkmk')) 
+	BEGIN
+		DECLARE @Pass uniqueidentifier = NEWID();
+		DECLARE @sql nvarchar(max) = '';
+		SELECT @sql = N'CREATE LOGIN [_dbaid_checkmk] WITH PASSWORD=''' + CAST(@Pass AS nvarchar(64)) + N''';';
+		EXEC sp_executesql @sql;
+	END
+END
+GO
+
 /* Instance Security */
 GRANT IMPERSONATE ON LOGIN::[_dbaid_sa] TO [$(CollectorServiceAccount)];
 GRANT IMPERSONATE ON LOGIN::[_dbaid_sa] TO [$(CheckServiceAccount)];
 GRANT VIEW ANY DEFINITION TO [$(CollectorServiceAccount)];
+IF EXISTS (SELECT 1 FROM [sys].[server_principals] WHERE [name] = N'_dbaid_checkmk')
+	GRANT IMPERSONATE ON LOGIN::[_dbaid_sa] TO [_dbaid_checkmk];
 GO
 
 /* #######################################################################################################################################
@@ -118,11 +147,25 @@ GO
 IF NOT EXISTS (SELECT 1 FROM [sys].[database_principals] WHERE [type] IN ('U','S') AND LOWER(name) = LOWER('$(CheckServiceAccount)'))
 	CREATE USER [$(CheckServiceAccount)] FOR LOGIN [$(CheckServiceAccount)];
 GO
+IF NOT EXISTS (SELECT 1 FROM [sys].[database_principals] WHERE [type] IN ('U','S') AND LOWER(name) = LOWER('_dbaid_checkmk'))
+	CREATE USER [_dbaid_checkmk] FOR LOGIN [_dbaid_checkmk];
+GO
 
 GRANT SELECT ON [system].[configuration] TO [admin];
+GRANT SELECT ON [system].[get_clean_string] TO [monitor];
 GRANT EXECUTE ON [checkmk].[inventory_agentjob] TO [monitor];
 GRANT EXECUTE ON [checkmk].[inventory_alwayson] TO [monitor];
 GRANT EXECUTE ON [checkmk].[inventory_database] TO [monitor];
+GRANT EXECUTE ON [checkmk].[check_database] TO [monitor];
+GRANT EXECUTE ON [checkmk].[check_logshipping] TO [monitor];
+GRANT EXECUTE ON [checkmk].[check_mirroring] TO [monitor];
+GRANT EXECUTE ON [checkmk].[chart_capacity_fg] TO [monitor];
+GRANT EXECUTE ON [checkmk].[chart_perfcounter] TO [monitor];
+GRANT EXECUTE ON [checkmk].[check_alwayson] TO [monitor];
+GRANT EXECUTE ON [checkmk].[check_backup] TO [monitor];
+GRANT EXECUTE ON [checkmk].[check_agentjob] TO [monitor];
+GRANT EXECUTE ON [checkmk].[chart_capacity_combined] TO [monitor];
+GRANT EXECUTE ON [checkmk].[check_integrity] TO [monitor];
 
 /* legacy stuff, may need to enable later
 --GRANT SELECT ON [dbo].[static_parameters] TO [admin];
@@ -133,10 +176,13 @@ GRANT EXECUTE ON [dbo].[insert_service] TO [monitor];
 GO
 --*/
 
-EXEC sp_addrolemember 'admin', '$(CollectorServiceAccount)';
-EXEC sp_addrolemember 'monitor', '$(CheckServiceAccount)';
+ALTER ROLE [admin] ADD MEMBER [$(CollectorServiceAccount)];
+ALTER ROLE [monitor] ADD MEMBER [$(CheckServiceAccount)];
 GO
 
+IF EXISTS (SELECT 1 FROM [sys].[database_principals] WHERE [name] = N'_dbaid_checkmk')
+  ALTER ROLE [monitor] ADD MEMBER [_dbaid_checkmk];
+GO
 
 /* #######################################################################################################################################
 #	

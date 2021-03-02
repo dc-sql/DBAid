@@ -2,7 +2,7 @@
   --// Source:  https://ola.hallengren.com                                                        //--
   --// License: https://ola.hallengren.com/license.html                                           //--
   --// GitHub:  https://github.com/olahallengren/sql-server-maintenance-solution                  //--
-  --// Version: 2020-11-01 18:16:36                                                               //--
+  --// Version: 2020-12-31 18:58:56                                                               //--
   ----------------------------------------------------------------------------------------------------
 /*
 SET ANSI_NULLS ON
@@ -17,29 +17,29 @@ GO
 ALTER PROCEDURE [dbo].[integrity_check]
 --*/
 CREATE PROCEDURE [dbo].[integrity_check]
-
-@Databases nvarchar(max) = NULL,
-@CheckCommands nvarchar(max) = 'CHECKDB',
-@PhysicalOnly nvarchar(max) = 'N',
-@DataPurity nvarchar(max) = 'N',
-@NoIndex nvarchar(max) = 'N',
-@ExtendedLogicalChecks nvarchar(max) = 'N',
-@TabLock nvarchar(max) = 'N',
-@FileGroups nvarchar(max) = NULL,
-@Objects nvarchar(max) = NULL,
-@MaxDOP int = NULL,
-@AvailabilityGroups nvarchar(max) = NULL,
-@AvailabilityGroupReplicas nvarchar(max) = 'ALL',
-@Updateability nvarchar(max) = 'ALL',
-@TimeLimit int = NULL,
-@LockTimeout int = NULL,
-@LockMessageSeverity int = 16,
-@StringDelimiter nvarchar(max) = ',',
-@DatabaseOrder nvarchar(max) = NULL,
-@DatabasesInParallel nvarchar(max) = 'N',
-@LogToTable nvarchar(max) = 'N',
-@Execute nvarchar(max) = 'Y'
-
+(
+    @Databases nvarchar(max) = NULL,
+    @CheckCommands nvarchar(max) = 'CHECKDB',
+    @PhysicalOnly nvarchar(max) = 'N',
+    @DataPurity nvarchar(max) = 'N',
+    @NoIndex nvarchar(max) = 'N',
+    @ExtendedLogicalChecks nvarchar(max) = 'N',
+    @TabLock nvarchar(max) = 'N',
+    @FileGroups nvarchar(max) = NULL,
+    @Objects nvarchar(max) = NULL,
+    @MaxDOP int = NULL,
+    @AvailabilityGroups nvarchar(max) = NULL,
+    @AvailabilityGroupReplicas nvarchar(max) = 'ALL',
+    @Updateability nvarchar(max) = 'ALL',
+    @TimeLimit int = NULL,
+    @LockTimeout int = NULL,
+    @LockMessageSeverity int = 16,
+    @StringDelimiter nvarchar(max) = ',',
+    @DatabaseOrder nvarchar(max) = NULL,
+    @DatabasesInParallel nvarchar(max) = 'N',
+    @LogToTable nvarchar(max) = 'N',
+    @Execute nvarchar(max) = 'Y'
+)
 AS
 
 BEGIN

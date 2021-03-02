@@ -2,7 +2,7 @@
   --// Source:  https://ola.hallengren.com                                                        //--
   --// License: https://ola.hallengren.com/license.html                                           //--
   --// GitHub:  https://github.com/olahallengren/sql-server-maintenance-solution                  //--
-  --// Version: 2020-11-01 18:16:36                                                               //--
+  --// Version: 2020-12-31 18:58:56                                                               //--
   ----------------------------------------------------------------------------------------------------
 /*
 SET ANSI_NULLS ON
@@ -33,10 +33,10 @@ CREATE PROCEDURE [dbo].[CommandExecute]
     @PartitionNumber int = NULL,
     @ExtendedInfo xml = NULL,
     @LockMessageSeverity int = 16,
+    @ExecuteAsUser nvarchar(max) = NULL,
     @LogToTable nvarchar(max),
     @Execute nvarchar(max)
 )
-WITH ENCRYPTION
 AS
 
 BEGIN
@@ -45,7 +45,7 @@ BEGIN
   --// Source:  https://ola.hallengren.com                                                        //--
   --// License: https://ola.hallengren.com/license.html                                           //--
   --// GitHub:  https://github.com/olahallengren/sql-server-maintenance-solution                  //--
-  --// Version: 2020-11-01 18:16:36                                                               //--
+  --// Version: 2020-12-31 18:58:56                                                               //--
   ----------------------------------------------------------------------------------------------------
 
   SET NOCOUNT ON
@@ -76,6 +76,8 @@ BEGIN
   DECLARE @ReturnCode int = 0
 
   DECLARE @EmptyLine nvarchar(max) = CHAR(9)
+
+  DECLARE @RevertCommand nvarchar(max)
 
   ----------------------------------------------------------------------------------------------------
   --// Check core requirements                                                                    //--
@@ -139,6 +141,12 @@ BEGIN
     SELECT 'The value for the parameter @LockMessageSeverity is not supported.', 16, 1
   END
 
+  IF LEN(@ExecuteAsUser) > 128
+  BEGIN
+    INSERT INTO @Errors ([Message], Severity, [State])
+    SELECT 'The value for the parameter @ExecuteAsUser is not supported.', 16, 1
+  END
+
   IF @LogToTable NOT IN('Y','N') OR @LogToTable IS NULL
   BEGIN
     INSERT INTO @Errors ([Message], Severity, [State])
@@ -177,6 +185,17 @@ BEGIN
   BEGIN
     SET @ReturnCode = 50000
     GOTO ReturnCode
+  END
+
+  ----------------------------------------------------------------------------------------------------
+  --// Execute as user                                                                            //--
+  ----------------------------------------------------------------------------------------------------
+
+  IF @ExecuteAsUser IS NOT NULL
+  BEGIN
+    SET @Command = 'EXECUTE AS USER = ''' + REPLACE(@ExecuteAsUser,'''','''''') + '''; ' + @Command + '; REVERT;'
+
+    SET @RevertCommand = 'REVERT'
   END
 
   ----------------------------------------------------------------------------------------------------
@@ -235,6 +254,11 @@ BEGIN
       IF NOT (ERROR_NUMBER() IN(1205,1222) AND @LockMessageSeverity = 10)
       BEGIN
         SET @ReturnCode = ERROR_NUMBER()
+      END
+
+      IF @ExecuteAsUser IS NOT NULL
+      BEGIN
+        EXECUTE @sp_executesql @RevertCommand
       END
     END CATCH
   END
