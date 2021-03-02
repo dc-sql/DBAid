@@ -820,7 +820,7 @@ BEGIN TRANSACTION
 	IF OBJECT_ID(N'tempdb.dbo._dbaid_Version') IS NOT NULL
 		SELECT @ver = [ver] FROM [tempdb].[dbo].[_dbaid_Version];
 
-	IF PARSENAME(@ver, 3) < 10 -- get major version; if less than 10, it's legacy DBAid, so tables & schemas are different
+	IF CAST(PARSENAME(@ver, 3) AS int) < 10 -- get major version; if less than 10, it's legacy DBAid, so tables & schemas are different
 	BEGIN 
 		/* Restore legacy [dbo].[config_alwayson] data */
 		SET @backupsql = N'UPDATE [_dbaid].[checkmk].[config_alwayson]
@@ -933,7 +933,7 @@ BEGIN TRANSACTION
 								,[capacity_check_enabled] = [C].[capacity_check_enabled]'
 						+	N'FROM [_dbaid].[checkmk].[config_database] [O]
 								INNER JOIN [tempdb].[dbo].[_dbaid_backup_config_database] [C]
-									ON [O].[name] = [C].[db_name];';
+									ON [O].[name] = [C].[name];';
 
 		IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_database') IS NOT NULL
 			EXEC @rc = sp_executesql @stmt = @backupsql;
@@ -951,7 +951,7 @@ BEGIN TRANSACTION
 								,[is_continuous_running_job] = [C].[is_continuous_running_job]
 							FROM [_dbaid].[checkmk].[config_agentjob] [O]
 								INNER JOIN [tempdb].[dbo].[_dbaid_backup_config_agentjob] [C]
-									ON [O].[name] = [C].[job_name];';
+									ON [O].[name] = [C].[name];';
 		IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_agentjob') IS NOT NULL
 			EXEC @rc = sp_executesql @stmt = @backupsql;
 
