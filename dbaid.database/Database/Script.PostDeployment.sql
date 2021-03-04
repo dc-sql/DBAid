@@ -121,11 +121,15 @@ BEGIN
 		DECLARE @sql nvarchar(max) = '';
 		SELECT @sql = N'CREATE LOGIN [_dbaid_checkmk] WITH PASSWORD=''' + CAST(@Pass AS nvarchar(64)) + N''';';
 		EXEC sp_executesql @sql;
+		USE [_dbaid];
+		IF NOT EXISTS (SELECT 1 FROM [sys].[database_principals] WHERE [type] IN ('U','S') AND LOWER(name) = LOWER('_dbaid_checkmk'))
+			CREATE USER [_dbaid_checkmk] FOR LOGIN [_dbaid_checkmk];
 	END
 END
 GO
 
 /* Instance Security */
+USE [master];
 GRANT IMPERSONATE ON LOGIN::[_dbaid_sa] TO [$(CollectorServiceAccount)];
 GRANT IMPERSONATE ON LOGIN::[_dbaid_sa] TO [$(CheckServiceAccount)];
 GRANT VIEW ANY DEFINITION TO [$(CollectorServiceAccount)];
@@ -147,9 +151,6 @@ GO
 IF NOT EXISTS (SELECT 1 FROM [sys].[database_principals] WHERE [type] IN ('U','S') AND LOWER(name) = LOWER('$(CheckServiceAccount)'))
 	CREATE USER [$(CheckServiceAccount)] FOR LOGIN [$(CheckServiceAccount)];
 GO
-IF NOT EXISTS (SELECT 1 FROM [sys].[database_principals] WHERE [type] IN ('U','S') AND LOWER(name) = LOWER('_dbaid_checkmk'))
-	CREATE USER [_dbaid_checkmk] FOR LOGIN [_dbaid_checkmk];
-GO
 
 GRANT SELECT ON [system].[configuration] TO [admin];
 GRANT SELECT ON [system].[get_clean_string] TO [monitor];
@@ -166,15 +167,6 @@ GRANT EXECUTE ON [checkmk].[check_backup] TO [monitor];
 GRANT EXECUTE ON [checkmk].[check_agentjob] TO [monitor];
 GRANT EXECUTE ON [checkmk].[chart_capacity_combined] TO [monitor];
 GRANT EXECUTE ON [checkmk].[check_integrity] TO [monitor];
-
-/* legacy stuff, may need to enable later
---GRANT SELECT ON [dbo].[static_parameters] TO [admin];
---GRANT EXECUTE ON [maintenance].[check_config] TO [monitor];
-GRANT EXECUTE ON [dbo].[insert_service] TO [admin];
-GRANT EXECUTE ON [dbo].[instance_tag] TO [admin];
-GRANT EXECUTE ON [dbo].[insert_service] TO [monitor];
-GO
---*/
 
 ALTER ROLE [admin] ADD MEMBER [$(CollectorServiceAccount)];
 ALTER ROLE [monitor] ADD MEMBER [$(CheckServiceAccount)];
@@ -778,7 +770,8 @@ GO';
 		BEGIN
 			IF (SELECT [job_id] FROM msdb.dbo.sysalerts WHERE [name]=@alertname) = '00000000-0000-0000-0000-000000000000'
 				EXEC msdb.dbo.sp_update_alert @name=@alertname, @job_name=N'_dbaid_set_ag_agent_job_state'
-			ELSE PRINT N'WARNING: Cannot configure Agent alert for "_dbaid_set_ag_agent_job_state", as message_id 1480 is already configured.'
+			ELSE 
+				PRINT N'WARNING: Cannot configure Agent alert for "_dbaid_set_ag_agent_job_state", as message_id 1480 is already configured.'
 		END
 		ELSE IF NOT EXISTS (SELECT 1 FROM msdb.dbo.sysalerts WHERE [name] = N'_dbaid_set_ag_agent_job_state')
 			EXEC msdb.dbo.sp_add_alert @name = N'_dbaid_set_ag_agent_job_state', @message_id = 1480, @severity = 0, @enabled = 0, @delay_between_responses = 0, @include_event_description_in = 1, @job_name = N'_dbaid_set_ag_agent_job_state';
