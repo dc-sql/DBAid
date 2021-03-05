@@ -199,6 +199,9 @@
     <Build Include="Database\OlaHallengren\dbo_integrity_check.sql" />
     <Build Include="Database\who_is_active\who_is_active.sql" />
     <None Include="dbaid.database.publish.xml" />
+    <None Include="_dbaid_delete_system_history.sh">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Database\Script.PostDeployment.sql" />
