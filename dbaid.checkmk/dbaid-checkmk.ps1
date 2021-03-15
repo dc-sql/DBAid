@@ -14,8 +14,9 @@
     
     (NB - these are the default plugin folder locations)
     
-    This has been tested against SQL instances in Docker containers on a Linux host. 
+    This has been tested against SQL instances in Docker containers on a Linux host with Checkmk running from the host.
     Wrinkle: all instances come back as "MSSQLSERVER", as opposed to named instances (because they are not named instances; using Docker is a workaround to have multiple instances on a Linux host).
+    It could be possible to run Checkmk from within a container but would require a custom Docker image based on Microsoft SQL image with required additional components added. In which case, this plugin would need to be included in the image.
 
     Credentials for Linux:
 
@@ -51,7 +52,7 @@
     Official CheckMK site: https://checkmk.com
 
 .LINK
-    Invoke-Sqlcmd module: https://docs.microsoft.com/en-us/powershell/module/sqlserver/invoke-Sqlcmd?view=sqlserver-ps
+    Invoke-Sqlcmd command: https://docs.microsoft.com/en-us/powershell/module/sqlserver/invoke-Sqlcmd?view=sqlserver-ps
 
 .LINK
     Get-Credential command: https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.security/get-credential?view=powershell-7.1
