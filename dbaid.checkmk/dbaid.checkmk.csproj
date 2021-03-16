@@ -82,10 +82,15 @@
     <None Include="dbaid-checkmk.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="dbaid-checkmk.sh" />
+    <None Include="dbaid-checkmk.sh">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config" />
     <None Include="PNP4nagios_php_templates\mssql_capacity.php" />
     <None Include="PNP4nagios_php_templates\mssql_perfcounter.php" />
+    <None Include="dbaid_delete_system_history.sh">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="FodyWeavers.xml">
