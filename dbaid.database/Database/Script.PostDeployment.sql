@@ -320,7 +320,7 @@ BEGIN
 			@enabled=0, @category_name=N'_dbaid_maintenance', @description=N'Executes [system].[delete_system_history] to cleanup job, backup, cmdlog history in [_dbaid] and msdb database.', 
 			@job_id = @jobId OUTPUT;
 
-		SET @out = @JobTokenLogDir + N'_dbaid_maintenance_history_' + @JobTokenDateTime + N'.log';
+		SET @out = @JobTokenLogDir + N'_dbaid_delete_system_history_' + @JobTokenDateTime + N'.log';
 
 		EXEC msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'DeleteSystemHistory', 
 			@step_id=1, @cmdexec_success_code=0, @on_success_action=3, @on_fail_action=2, 
