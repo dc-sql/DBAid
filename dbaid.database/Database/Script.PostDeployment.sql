@@ -299,7 +299,7 @@ SELECT @JobTokenServer = N'$' + N'(ESCAPE_DQUOTE(SRVR))'
 	,@owner = (SELECT [name] FROM sys.server_principals WHERE [sid] = 0x01)
 	,@timestamp = CONVERT(VARCHAR(8), GETDATE(), 112) + CAST(DATEPART(HOUR, GETDATE()) AS VARCHAR(2)) + CAST(DATEPART(MINUTE, GETDATE()) AS VARCHAR(2)) + CAST(DATEPART(SECOND, GETDATE()) AS VARCHAR(2));
 
-SELECT @JobTokenLogDir = LEFT(CAST(SERVERPROPERTY('ErrorLogFileName') AS NVARCHAR(260)),LEN(CAST(SERVERPROPERTY('ErrorLogFileName') AS NVARCHAR(260))) - CHARINDEX(@Slash,REVERSE(CAST(SERVERPROPERTY('ErrorLogFileName') AS NVARCHAR(260))))) + @Slash;
+SELECT @JobTokenLogDir = LEFT(CAST(SERVERPROPERTY('ErrorLogFileName') AS NVARCHAR(260)),LEN(CAST(SERVERPROPERTY('ErrorLogFileName') AS NVARCHAR(260))) - CHARINDEX(@Slash,REVERSE(CAST(SERVERPROPERTY('ErrorLogFileName') AS NVARCHAR(260)))));
 
 IF ((SELECT LOWER(CAST(SERVERPROPERTY('Edition') AS NVARCHAR(128)))) LIKE '%express%')
 	PRINT 'Express Edition Detected. No SQL Agent.';
@@ -320,7 +320,7 @@ BEGIN
 			@enabled=0, @category_name=N'_dbaid_maintenance', @description=N'Executes [system].[delete_system_history] to cleanup job, backup, cmdlog history in [_dbaid] and msdb database.', 
 			@job_id = @jobId OUTPUT;
 
-		SET @out = @JobTokenLogDir + N'_dbaid_delete_system_history_' + @JobTokenDateTime + N'.log';
+		SET @out = @JobTokenLogDir + @Slash + N'_dbaid_delete_system_history_' + @JobTokenDateTime + N'.log';
 
 		EXEC msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'DeleteSystemHistory', 
 			@step_id=1, @cmdexec_success_code=0, @on_success_action=3, @on_fail_action=2, 
@@ -336,7 +336,7 @@ BEGIN
 		/* Not valid for Linux. Need bash equivalent. */
 		IF @DetectedOS = N'Windows'
 		BEGIN
-			SET @cmd = N'cmd /q /c "For /F "tokens=1 delims=" %v In (''ForFiles /P "' + @JobTokenLogDir + N'" /m "_dbaid_*.log" /d -30 2^>^&1'') do if EXIST "' + @JobTokenLogDir + N'"%v echo del "' + @JobTokenLogDir + N'"%v& del "' + @JobTokenLogDir + N'"\%v"'; 
+			SET @cmd = N'cmd /q /c "For /F "tokens=1 delims=" %v In (''ForFiles /P "' + @JobTokenLogDir + N'" /m "_dbaid_*.log" /d -30 2^>^&1'') do if EXIST "' + @JobTokenLogDir + @Slash + N'"%v echo del "' + @JobTokenLogDir + @Slash + N'"%v& del "' + @JobTokenLogDir + @Slash + N'"\%v"'; 
 				
 			EXEC msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'DeleteLogFiles', 
 				@step_id=2, @cmdexec_success_code=0, @on_success_action=1, @on_fail_action=2, @subsystem=N'CmdExec', 
@@ -375,7 +375,7 @@ BEGIN
 		SELECT @cmd = N'EXEC [_dbaid].[dbo].[database_backup] @Databases=''USER_DATABASES'', @BackupType=''DIFF'', @CheckSum=''Y''' 
 			+ CASE @DetectedOS WHEN N'Windows' THEN N', @CleanupTime=72' ELSE N';' END;
 
-		SELECT @out = @JobTokenLogDir + N'_dbaid_backup_user_diff_' + @JobTokenDateTime + N'.log';
+		SELECT @out = @JobTokenLogDir + @Slash + N'_dbaid_backup_user_diff_' + @JobTokenDateTime + N'.log';
 
 		EXEC msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'_dbaid_backup_user_diff', 
 				@step_id=1, @cmdexec_success_code=0, @on_success_action=1, @on_fail_action=2, 
@@ -411,7 +411,7 @@ BEGIN
 		SELECT @cmd = N'EXEC [_dbaid].[dbo].[database_backup] @Databases=''USER_DATABASES'', @BackupType=''FULL'', @CheckSum=''Y''' 
 			+ CASE @DetectedOS WHEN N'Windows' THEN N', @CleanupTime=72' ELSE N';' END;
 
-		SELECT @out = @JobTokenLogDir + N'_dbaid_backup_user_full_' + @JobTokenDateTime + N'.log';
+		SELECT @out = @JobTokenLogDir + @Slash + N'_dbaid_backup_user_full_' + @JobTokenDateTime + N'.log';
 
 		EXEC msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'_dbaid_backup_user_full', 
 			@step_id=1, @cmdexec_success_code=0, @on_success_action=1, @on_fail_action=2, 
@@ -447,7 +447,7 @@ BEGIN
 		SELECT @cmd = N'EXEC [_dbaid].[dbo].[database_backup] @Databases=''USER_DATABASES'', @BackupType=''LOG'', @CheckSum=''Y''' 
 			+ CASE @DetectedOS WHEN N'Windows' THEN N', @CleanupTime=72' ELSE N';' END;
 
-		SELECT @out = @JobTokenLogDir + N'_dbaid_backup_user_tran_' + @JobTokenDateTime + N'.log';
+		SELECT @out = @JobTokenLogDir + @Slash + N'_dbaid_backup_user_tran_' + @JobTokenDateTime + N'.log';
 
 		EXEC msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'_dbaid_backup_user_tran', 
 			@step_id=1, @cmdexec_success_code=0, @on_success_action=1, @on_fail_action=2, 
@@ -483,7 +483,7 @@ BEGIN
 		SELECT @cmd = N'EXEC [_dbaid].[dbo].[database_backup] @Databases=''SYSTEM_DATABASES'', @BackupType=''FULL'', @CheckSum=''Y''' 
 			+ CASE @DetectedOS WHEN N'Windows' THEN N', @CleanupTime=72' ELSE N';' END;
 
-		SELECT @out = @JobTokenLogDir + N'_dbaid_backup_system_full_' + @JobTokenDateTime + N'.log';
+		SELECT @out = @JobTokenLogDir + @Slash + N'_dbaid_backup_system_full_' + @JobTokenDateTime + N'.log';
 
 		EXEC msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'_dbaid_backup_system_full', 
 			@step_id=1, @cmdexec_success_code=0, @on_success_action=1, @on_fail_action=2,
@@ -550,7 +550,7 @@ BEGIN
 			@job_id = @jobId OUTPUT;
 
 		SET @cmd = N'EXEC [_dbaid].[dbo].[index_optimize] @Databases=''USER_DATABASES'', @UpdateStatistics=''ALL'', @OnlyModifiedStatistics=''Y'', @StatisticsResample=''Y'', @MSShippedObjects=''Y'', @LockTimeout=600, @LogToTable=''Y''';
-		SET @out = @JobTokenLogDir + N'_dbaid_index_optimise_user_' + @JobTokenDateTime + N'.log';
+		SET @out = @JobTokenLogDir + @Slash + N'_dbaid_index_optimise_user_' + @JobTokenDateTime + N'.log';
 
 		EXEC msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'_dbaid_index_optimise_user', 
 			@step_id=1, @cmdexec_success_code=0, @on_success_action=1, @on_fail_action=2,
@@ -584,7 +584,7 @@ BEGIN
 			@job_id = @jobId OUTPUT;
 
 		SET @cmd = N'EXEC [_dbaid].[dbo].[index_optimize] @Databases=''SYSTEM_DATABASES'', @UpdateStatistics=''ALL'', @OnlyModifiedStatistics=''Y'', @StatisticsResample=''Y'', @MSShippedObjects=''Y'', @LockTimeout=600, @LogToTable=''Y''';
-		SET @out = @JobTokenLogDir + N'_dbaid_index_optimise_system_' + @JobTokenDateTime + N'.log';
+		SET @out = @JobTokenLogDir + @Slash + N'_dbaid_index_optimise_system_' + @JobTokenDateTime + N'.log';
 
 		EXEC msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'_dbaid_index_optimise_system', 
 			@step_id=1, @cmdexec_success_code=0, @on_success_action=1, @on_fail_action=2, 
@@ -618,7 +618,7 @@ BEGIN
 			@job_id = @jobId OUTPUT;
 
 		SET @cmd = N'EXEC [_dbaid].[dbo].[integrity_check] @Databases=''USER_DATABASES'', @CheckCommands=''CHECKDB'', @LockTimeout=600, @LogToTable=''Y''';
-		SET @out = @JobTokenLogDir + N'_dbaid_integrity_check_user_' + @JobTokenDateTime + N'.log';
+		SET @out = @JobTokenLogDir + @Slash + N'_dbaid_integrity_check_user_' + @JobTokenDateTime + N'.log';
 
 		EXEC msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'_dbaid_integrity_check_user', 
 			@step_id=1, @cmdexec_success_code=0, @on_success_action=1, @on_fail_action=2, 
@@ -652,7 +652,7 @@ BEGIN
 			@job_id = @jobId OUTPUT;
 
 		SET @cmd = N'EXEC [_dbaid].[dbo].[integrity_check] @Databases=''SYSTEM_DATABASES'', @CheckCommands=''CHECKDB'', @LockTimeout=600, @LogToTable=''Y''';
-		SET @out = @JobTokenLogDir + N'_dbaid_integrity_check_system_' + @JobTokenDateTime + N'.log';
+		SET @out = @JobTokenLogDir + @Slash + N'_dbaid_integrity_check_system_' + @JobTokenDateTime + N'.log';
 
 		EXEC msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'_dbaid_integrity_check_system',
 			@step_id=1, @cmdexec_success_code=0, @on_success_action=1, @on_fail_action=2, 
@@ -691,7 +691,7 @@ BEGIN
 			@job_id = @jobId OUTPUT;
 
 		SET @cmd = N'EXEC [_dbaid].[system].[set_ag_agent_job_state] @ag_name = N''<Availability Group Name>'', @wait_seconds = 30;';
-		SET @out = @JobTokenLogDir + N'_dbaid_integrity_check_system_' + @JobTokenDateTime + N'.log';
+		SET @out = @JobTokenLogDir + @Slash + N'_dbaid_integrity_check_system_' + @JobTokenDateTime + N'.log';
 
 		EXEC msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'_dbaid_set_ag_agent_job_state',
 			@step_id=1, @cmdexec_success_code=0, @on_success_action=1, @on_fail_action=2, @subsystem=N'TSQL',
