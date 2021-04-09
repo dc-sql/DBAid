@@ -166,15 +166,42 @@ Param(
 
 Set-Location $PSScriptRoot
 
-Import-Module Send-MailKitMessage
+#Import-Module Send-MailKitMessage
 Import-Module SqlServer
 
 $Timestamp = Get-Date -Format 'yyyyMMddHHmm'
 
 foreach ($CollectServer in $CollectSqlServer) {
+  
+    <#  Build final connectionstring #>
+    [string]$ConnectionString = ''
+
+    <#  If running PowerShell 6 or higher, could use system $IsWindows. Lowest requirement for this script to work, however, is PowerShell 5. Can revisit in the future.  #>
+    if ($Env:PSModulePath -like "*\WindowsPowerShell\Modules*") {
+        $IsThisWindows = 1
+    }
+    else {
+        $IsThisWindows = 0
+    }
+
+    <##### Get credentials to connect to SQL Server (Linux only; Windows uses service account of CheckMK Agent service) #####>
+    if ($IsThisWindows -eq 0) {
+        <##### Need to store this credential elsewhere, as it is unrelated to Checkmk. Process needs steps to create required folder & set permissions #####>
+        $HexPass = Get-Content "/usr/lib/check_mk_agent/plugins/dbaid-collector.cred"
+        $Credential = New-Object -TypeName PSCredential -ArgumentList "_dbaid_collector", ($HexPass | ConvertTo-SecureString)
+    }    
+    
+    <##### Set connection string according to platform. If Windows, use Integrated Security (i.e. service account for Checkmk Agent service). If Linux, use SQL native login. #####>
+    if ($IsThisWindows -eq 1) {
+        $ConnectionString = -join ($Instance, ';Initial Catalog=_dbaid;Application Name=DBAid Collector;Integrated Security=SSPI;')
+    }
+    else {
+        $ConnectionString = -join ($Instance, ';Initial Catalog=_dbaid;Application Name=DBAid Collector;User=_dbaid_collector;Password=', $Credential.GetNetworkCredential().Password)
+    }
+    
     Write-Verbose -Message "Connecting to: $CollectServer"
-    $InstanceTag = Invoke-Sqlcmd -ServerInstance "$CollectServer" -Database "$CollectDatabase" -Query 'EXEC [system].[get_instance_tag]' | Select-Object -ExpandProperty instance_tag
-    $ProcedureList = Invoke-Sqlcmd -ServerInstance "$CollectServer" -Database "$CollectDatabase" -Query "EXEC [system].[get_procedure_list] @schema_name = 'collector'"
+    $InstanceTag = Invoke-Sqlcmd -ConnectionString $ConnectionString -Query 'EXEC [system].[get_instance_tag]' | Select-Object -ExpandProperty instance_tag
+    $ProcedureList = Invoke-Sqlcmd -ConnectionString $ConnectionString -Query "EXEC [system].[get_procedure_list] @schema_name = 'collector'"
 
     # EXPORT DATA #
     foreach ($Procedure in $ProcedureList) {
@@ -188,7 +215,7 @@ foreach ($CollectServer in $CollectSqlServer) {
         }
 
         Write-Verbose -Message "Executing: $ProcQuery"
-        $dt = Invoke-Sqlcmd -ServerInstance $CollectServer -Database $CollectDatabase -Query $ProcQuery -OutputAs DataTables
+        $dt = Invoke-Sqlcmd -ConnectionString $ConnectionString -Query $ProcQuery -OutputAs DataTables
 
         if ($dt) {
             $dt.TableName = $ProcName 
