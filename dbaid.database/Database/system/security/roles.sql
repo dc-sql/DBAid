@@ -10,4 +10,5 @@ GO
 CREATE ROLE [monitor];
 GO
 
-
+CREATE ROLE [collector];
+GO

@@ -70,7 +70,7 @@ BEGIN
 	EXEC(@cmd);
 END
 
-EXEC master..sp_addsrvrolemember @loginame = N'_dbaid_sa', @rolename = N'sysadmin'
+ALTER SERVER ROLE [sysadmin] ADD MEMBER [_dbaid_sa];
 ALTER LOGIN [_dbaid_sa] DISABLE;
 GO
 
@@ -78,5 +78,5 @@ USE [_dbaid];
 GO
 
 /* set database to _dbaid_sa owner */
-EXEC dbo.sp_changedbowner @loginame = N'_dbaid_sa';
+ALTER AUTHORIZATION ON DATABASE::[_dbaid] TO [_dbaid_sa];
 GO

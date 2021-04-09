@@ -98,7 +98,7 @@ BEGIN
 END
 GO
 
-/* Create login for Checkmk plugin if running on Linux. New password to be set by DBA afterwards, as it will need to be known to create PS credential. */
+/* Create logins for Checkmk plugin & Collector if running on Linux. New passwords to be set by DBA afterwards, as they will need to be known to create PS credential. */
 /* sys.dm_os_host_info is relatively new (SQL 2017+ despite what BOL says; not from 2008). If it's there, query it (result being 'Linux' or 'Windows'). If not there, it's Windows. */
 DECLARE @DetectedOS NVARCHAR(7);
 IF EXISTS (SELECT 1 FROM sys.system_objects WHERE [name] = N'dm_os_host_info' AND [schema_id] = SCHEMA_ID(N'sys'))
@@ -125,6 +125,18 @@ BEGIN
 		IF NOT EXISTS (SELECT 1 FROM [sys].[database_principals] WHERE [type] IN ('U','S') AND LOWER(name) = LOWER('_dbaid_checkmk'))
 			CREATE USER [_dbaid_checkmk] FOR LOGIN [_dbaid_checkmk];
 	END
+
+	IF NOT EXISTS (SELECT 1 FROM [sys].[server_principals] WHERE [type] IN ('U','S') AND LOWER(name) = LOWER('_dbaid_collector')) 
+	BEGIN
+		DECLARE @Pass uniqueidentifier = NEWID();
+		DECLARE @sql nvarchar(max) = '';
+		SELECT @sql = N'CREATE LOGIN [_dbaid_collector] WITH PASSWORD=''' + CAST(@Pass AS nvarchar(64)) + N''';';
+		EXEC sp_executesql @sql;
+		USE [_dbaid];
+		IF NOT EXISTS (SELECT 1 FROM [sys].[database_principals] WHERE [type] IN ('U','S') AND LOWER(name) = LOWER('_dbaid_collector'))
+			CREATE USER [_dbaid_collector] FOR LOGIN [_dbaid_collector];
+	END
+
 END
 GO
 
@@ -135,6 +147,8 @@ GRANT IMPERSONATE ON LOGIN::[_dbaid_sa] TO [$(CheckServiceAccount)];
 GRANT VIEW ANY DEFINITION TO [$(CollectorServiceAccount)];
 IF EXISTS (SELECT 1 FROM [sys].[server_principals] WHERE [name] = N'_dbaid_checkmk')
 	GRANT IMPERSONATE ON LOGIN::[_dbaid_sa] TO [_dbaid_checkmk];
+IF EXISTS (SELECT 1 FROM [sys].[server_principals] WHERE [name] = N'_dbaid_collector')
+	GRANT IMPERSONATE ON LOGIN::[_dbaid_sa] TO [_dbaid_collector];
 GO
 
 /* #######################################################################################################################################
@@ -167,13 +181,21 @@ GRANT EXECUTE ON [checkmk].[check_backup] TO [monitor];
 GRANT EXECUTE ON [checkmk].[check_agentjob] TO [monitor];
 GRANT EXECUTE ON [checkmk].[chart_capacity_combined] TO [monitor];
 GRANT EXECUTE ON [checkmk].[check_integrity] TO [monitor];
+GRANT EXECUTE ON SCHEMA::[collector] TO [collector];
+GRANT EXECUTE ON [system].[get_instance_tag] TO [collector];
+GRANT EXECUTE ON [system].[get_procedure_list] TO [collector];
 
 ALTER ROLE [admin] ADD MEMBER [$(CollectorServiceAccount)];
+ALTER ROLE [collector] ADD MEMBER [$(CollectorServiceAccount)];
 ALTER ROLE [monitor] ADD MEMBER [$(CheckServiceAccount)];
 GO
 
 IF EXISTS (SELECT 1 FROM [sys].[database_principals] WHERE [name] = N'_dbaid_checkmk')
   ALTER ROLE [monitor] ADD MEMBER [_dbaid_checkmk];
+GO
+
+IF EXISTS (SELECT 1 FROM [sys].[database_principals] WHERE [name] = N'_dbaid_collector')
+  ALTER ROLE [collector] ADD MEMBER [_dbaid_collector];
 GO
 
 /* #######################################################################################################################################
