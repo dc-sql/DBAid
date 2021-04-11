@@ -133,6 +133,8 @@ BEGIN
 		SELECT @Pass = NEWID();
 		SELECT @sql = N'CREATE LOGIN [_dbaid_collector] WITH PASSWORD=''' + CAST(@Pass AS nvarchar(64)) + N''';';
 		EXEC sp_executesql @sql;
+		/* Disable login by default; Collector is an optional thing and may not be required. */
+		ALTER LOGIN [_dbaid_collector] DISABLE;
 		USE [_dbaid];
 		IF NOT EXISTS (SELECT 1 FROM [sys].[database_principals] WHERE [type] IN ('U','S') AND LOWER(name) = LOWER('_dbaid_collector'))
 			CREATE USER [_dbaid_collector] FOR LOGIN [_dbaid_collector];
