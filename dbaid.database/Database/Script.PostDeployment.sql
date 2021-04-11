@@ -115,10 +115,12 @@ ELSE
 
 IF @DetectedOS = 'Linux'
 BEGIN
+	DECLARE @Pass uniqueidentifier;
+	DECLARE @sql nvarchar(max) = N'';
+
 	IF NOT EXISTS (SELECT 1 FROM [sys].[server_principals] WHERE [type] IN ('U','S') AND LOWER(name) = LOWER('_dbaid_checkmk')) 
 	BEGIN
-		DECLARE @Pass uniqueidentifier = NEWID();
-		DECLARE @sql nvarchar(max) = '';
+		SELECT @Pass = NEWID();
 		SELECT @sql = N'CREATE LOGIN [_dbaid_checkmk] WITH PASSWORD=''' + CAST(@Pass AS nvarchar(64)) + N''';';
 		EXEC sp_executesql @sql;
 		USE [_dbaid];
@@ -128,8 +130,7 @@ BEGIN
 
 	IF NOT EXISTS (SELECT 1 FROM [sys].[server_principals] WHERE [type] IN ('U','S') AND LOWER(name) = LOWER('_dbaid_collector')) 
 	BEGIN
-		DECLARE @Pass uniqueidentifier = NEWID();
-		DECLARE @sql nvarchar(max) = '';
+		SELECT @Pass = NEWID();
 		SELECT @sql = N'CREATE LOGIN [_dbaid_collector] WITH PASSWORD=''' + CAST(@Pass AS nvarchar(64)) + N''';';
 		EXEC sp_executesql @sql;
 		USE [_dbaid];
