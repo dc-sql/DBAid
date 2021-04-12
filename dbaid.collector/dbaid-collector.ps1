@@ -166,7 +166,7 @@ Param(
 
 Set-Location $PSScriptRoot
 
-#Import-Module Send-MailKitMessage
+Import-Module Send-MailKitMessage
 Import-Module SqlServer
 
 $Timestamp = Get-Date -Format 'yyyyMMddHHmm'
@@ -179,15 +179,17 @@ foreach ($CollectServer in $CollectSqlServer) {
     <#  If running PowerShell 6 or higher, could use system $IsWindows. Lowest requirement for this script to work, however, is PowerShell 5. Can revisit in the future.  #>
     if ($Env:PSModulePath -like "*\WindowsPowerShell\Modules*") {
         $IsThisWindows = 1
+        $Slash = "\"
     }
     else {
         $IsThisWindows = 0
+        $Slash = "/"
     }
 
     <##### Get credentials to connect to SQL Server (Linux only; Windows uses service account of CheckMK Agent service) #####>
     if ($IsThisWindows -eq 0) {
         <##### Need to store this credential elsewhere, as it is unrelated to Checkmk. Process needs steps to create required folder & set permissions #####>
-        $HexPass = Get-Content "/usr/lib/check_mk_agent/plugins/dbaid-collector.cred"
+        $HexPass = Get-Content "/usr/local/bin/dbaid-collector.cred"
         $Credential = New-Object -TypeName PSCredential -ArgumentList "_dbaid_collector", ($HexPass | ConvertTo-SecureString)
     }    
     
@@ -260,20 +262,20 @@ foreach ($CollectServer in $CollectSqlServer) {
     }
 
     if ($ZipXml) {
-        $SQLServer = (Invoke-Sqlcmd -ServerInstance $CollectServer -Query "SELECT @@SERVERNAME")[0]
-        [string]$secret = (Invoke-Sqlcmd -ServerInstance $SQLServer -Query "SELECT [value] FROM [$CollectDatabase].[system].[configuration] WHERE [key] = N'COLLECTOR_SECRET'")[0]
-        [string]$instanceTag = (Invoke-Sqlcmd -ServerInstance $SQLServer -Query "EXEC [$CollectDatabase].[system].[get_instance_tag];")[0]
-        [string]$7zip = "$PSScriptRoot\7za.exe"
+        $SQLServer = (Invoke-Sqlcmd -ConnectionString $ConnectionString -Query "SELECT @@SERVERNAME")[0]
+        [string]$secret = (Invoke-Sqlcmd -ConnectionString $ConnectionString -Query "SELECT [value] FROM [$CollectDatabase].[system].[configuration] WHERE [key] = N'COLLECTOR_SECRET'")[0]
+        [string]$instanceTag = (Invoke-Sqlcmd -ConnectionString $ConnectionString -Query "EXEC [$CollectDatabase].[system].[get_instance_tag];")[0]
+        [string]$7zip = "$PSScriptRoot" + $Slash + "7za.exe"
         [string]$7zipArgs = "a -mx=9 -tzip -sdel -p'$secret'"
-        [string]$7zipSource = "$OutputXmlFilePath\$instanceTag*.xml" 
-        [string]$7zipTarget = "$OutputXmlFilePath\" + $instanceTag + '_' + (Get-Date -Format 'yyyyMMddHHmmss') + '.zip'
+        [string]$7zipSource = "$OutputXmlFilePath" + $Slash + "$instanceTag*.xml" 
+        [string]$7zipTarget = "$OutputXmlFilePath" + $Slash + $instanceTag + '_' + (Get-Date -Format 'yyyyMMddHHmmss') + '.zip'
 
         $7zipCmd = "'$7zip' $7zipArgs '$7zipTarget' '$7zipSource'"
 
         if ((Get-ChildItem -Path $7zipSource).Length -gt 0) {
             Invoke-Expression "&$7zipCmd"
         } else {
-            Write-Host 'No xml files in current directory. '
+            Write-Host 'No xml files in current directory to add to zip file. '
         }
 
         if ($EmailEnable) {
@@ -282,13 +284,13 @@ foreach ($CollectServer in $CollectSqlServer) {
 
             if ($EmailAttachments.Length -gt 0) {
             <#  Send-MailMessage is deprecated. MailKit is recommended replacement. See links above.  #>
-            Send-MailKitMessage -ToList $EmailTo -From $EmailFrom -Subject "DBAid SQL Collector XML" -HTMLBody $EmailBody -AttachmentList $EmailAttachments -SMTPServer $EmailSMTP
+            Send-MailKitMessage -SMTPServer $EmailSMTP -Port 25 -From $EmailFrom -RecipientList $EmailTo -Subject "DBAid SQL Collector XML" -HTMLBody $EmailBody -AttachmentList $EmailAttachments
     
             foreach ($item in $EmailAttachments) {
                 Remove-Item -Path $item -Force
             }
             } else {
-                Write-Host 'No zip files in current directory. '
+                Write-Host 'No zip files to remove in current directory. '
             }
         }
     }
