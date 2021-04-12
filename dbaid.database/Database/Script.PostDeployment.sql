@@ -397,8 +397,7 @@ BEGIN
 			@job_id = @jobId OUTPUT;
 
 		/* No support for @CleanupTime parameter on Linux. */
-		SELECT @cmd = N'EXEC [_dbaid].[dbo].[database_backup] @Databases=''USER_DATABASES'', @BackupType=''DIFF'', @CheckSum=''Y''' 
-			+ CASE @DetectedOS WHEN N'Windows' THEN N', @CleanupTime=72' ELSE N';' END;
+		SELECT @cmd = N'EXEC [_dbaid].[dbo].[database_backup] @Databases=''USER_DATABASES'', @BackupType=''DIFF'', @CheckSum=''Y'', @CleanupTime=72;';
 
 		SELECT @out = @JobTokenLogDir + @Slash + N'_dbaid_backup_user_diff_' + @JobTokenDateTime + N'.log';
 
@@ -433,8 +432,7 @@ BEGIN
 			@category_name=N'_dbaid_maintenance', 
 			@job_id = @jobId OUTPUT;
 
-		SELECT @cmd = N'EXEC [_dbaid].[dbo].[database_backup] @Databases=''USER_DATABASES'', @BackupType=''FULL'', @CheckSum=''Y''' 
-			+ CASE @DetectedOS WHEN N'Windows' THEN N', @CleanupTime=72' ELSE N';' END;
+		SELECT @cmd = N'EXEC [_dbaid].[dbo].[database_backup] @Databases=''USER_DATABASES'', @BackupType=''FULL'', @CheckSum=''Y'', @CleanupTime=72;';
 
 		SELECT @out = @JobTokenLogDir + @Slash + N'_dbaid_backup_user_full_' + @JobTokenDateTime + N'.log';
 
@@ -453,7 +451,7 @@ BEGIN
 		END
 		ELSE
 			EXEC msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'_dbaid_backup_user_full',
-				@enabled=1, @freq_type=4, @freq_interval=1, @freq_subday_type=1, @active_start_time=200000;
+				@enabled=1, @freq_type=4, @freq_interval=1, @freq_subday_type=1, @active_start_time=180500;
 
 		EXEC msdb.dbo.sp_add_jobserver @job_id=@jobId, @server_name = N'(local)';
 	COMMIT TRANSACTION
@@ -469,8 +467,7 @@ BEGIN
 			@category_name=N'_dbaid_maintenance', 
 			@job_id = @jobId OUTPUT;
 
-		SELECT @cmd = N'EXEC [_dbaid].[dbo].[database_backup] @Databases=''USER_DATABASES'', @BackupType=''LOG'', @CheckSum=''Y''' 
-			+ CASE @DetectedOS WHEN N'Windows' THEN N', @CleanupTime=72' ELSE N';' END;
+		SELECT @cmd = N'EXEC [_dbaid].[dbo].[database_backup] @Databases=''USER_DATABASES'', @BackupType=''LOG'', @CheckSum=''Y'', @CleanupTime=72;';
 
 		SELECT @out = @JobTokenLogDir + @Slash + N'_dbaid_backup_user_tran_' + @JobTokenDateTime + N'.log';
 
@@ -505,8 +502,7 @@ BEGIN
 			@category_name=N'_dbaid_maintenance', 
 			@job_id = @jobId OUTPUT;
 
-		SELECT @cmd = N'EXEC [_dbaid].[dbo].[database_backup] @Databases=''SYSTEM_DATABASES'', @BackupType=''FULL'', @CheckSum=''Y''' 
-			+ CASE @DetectedOS WHEN N'Windows' THEN N', @CleanupTime=72' ELSE N';' END;
+		SELECT @cmd = N'EXEC [_dbaid].[dbo].[database_backup] @Databases=''SYSTEM_DATABASES'', @BackupType=''FULL'', @CheckSum=''Y'', @CleanupTime=72;';
 
 		SELECT @out = @JobTokenLogDir + @Slash + N'_dbaid_backup_system_full_' + @JobTokenDateTime + N'.log';
 
@@ -660,7 +656,7 @@ BEGIN
 		END
 		ELSE
 			EXEC msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'_dbaid_integrity_check_user',  
-				@enabled=1, @freq_type=8, @freq_interval=1, @freq_subday_type=1, @freq_recurrence_factor=1, @active_start_time=40000;
+				@enabled=1, @freq_type=8, @freq_interval=1, @freq_subday_type=1, @freq_recurrence_factor=1, @active_start_time=40500;
 
 		EXEC msdb.dbo.sp_add_jobserver @job_id=@jobId, @server_name = N'(local)';
 	COMMIT TRANSACTION
