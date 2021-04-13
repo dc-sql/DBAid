@@ -990,6 +990,16 @@ BEGIN TRANSACTION
 		IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_perfcounter') IS NOT NULL
 			EXEC @rc = sp_executesql @stmt = @backupsql;
 
+		/* Restore [system].[configuration] data */
+		SET @backupsql = N'UPDATE [_dbaid].[system].[configuration]
+							SET [key] = [C].[key]
+								,[value] = [C].[value]
+							FROM [_dbaid].[system].[configuration] [O]
+								INNER JOIN [tempdb].[dbo].[_dbaid_backup_configuration] [C]
+									ON [O].[key] = [C].[key] COLLATE Database_Default;';
+		IF OBJECT_ID('tempdb.dbo._dbaid_backup_configuration') IS NOT NULL
+			EXEC @rc = sp_executesql @stmt = @backupsql;
+
 		IF (@rc <> 0) GOTO PROBLEM;
 	END
 
