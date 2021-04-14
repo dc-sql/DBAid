@@ -14,28 +14,17 @@
 .PARAMETER CollectSqlServer
     This is a string array of SQL Server instances to connect to. 
     
-    The entries can use servername or IP address. 
-    You can specify a named instance by appending \InstanceName. 
-    You can connect to a specific TCP port number by appending ,PortNumber. 
-    You can use a combination of the above. As long as it represents a valid server name such as you would use in SQL Server Management Studio or a .NET connection string.
-    
-    For example:
+    The entries use standard .NET connection string format. For example:
 
-    [string[]]$CollectSqlServer = @("Server1")
-    [string[]]$CollectSqlServer = @("Server1\Instance1")
-    [string[]]$CollectSqlServer = @("192.168.1.2,1435")
-    [string[]]$CollectSqlServer = @("Server1", "Server1\Instance1", "Server1,1435")
+    [string[]]$SqlServer = @("Data Source=Server1;")
+    [string[]]$SqlServer = @("Data Source=Server1\Instance1;")
+    [string[]]$SqlServer = @("Data Source=192.168.1.2,1435;")
+    [string[]]$SqlServer = @("Data Source=Server1;", "Data Source=Server1\Instance1;", "Data Source=Server1,1435;")
 
-    Or if for some reason you are passing the parameter in when running the script (which you wouldn't be doing under normal circumstances):
+    As these are standard .NET connection strings, you can include additional parameters (for example, Encrypt, MultiSubnetFailover, ConnectionTimeout) separated by semi-colons. For example:
+    
+    [string[]]$SqlServer = @("Data Source=Server1;MultiSubnetFailover=True;", "Data Source=Server1\Instance1;Encrypt=True;", "Data Source=Server1,1435;Encrypt=True;TrustServerCertificate=True;")
 
-    $servers = @("Server1","Server1\Instance1","Server1,1435")
-    .\dbaid-checkmk.ps1 -CollectSqlServer $servers
-    
-    Additional Invoke-Sqlcmd connection string parameters can be specified with the server names. For example, if TLS is used by one of the instances, you can provide the EncryptConnection parameter as follows:
-    
-    [string[]]$SqlServer = @("Server1", "Server1\Instance1 -EncryptConnection", "Server1,1435")
-    
-    See Invoke-Sqlcmd documentation for details on parameters (under Related Links).
 
 .PARAMETER CollectDatabase
     This is the database containing the stored procedures to run to gather information. Always "_dbaid".
@@ -90,47 +79,52 @@
     If you have configured the required parameters in the script file itself, this is all that needs to be executed.
 
 .EXAMPLE
-    dbaid-collector.ps1 -CollectSqlServer "Server1" -OutputXmlFilePath "C:\DBAid\Output"
+    dbaid-collector.ps1 -CollectSqlServer "Data Source=Server1" -OutputXmlFilePath "C:\DBAid\Output"
 
     This connects to the default SQL Server instance on "Server1" and outputs XML files to "C:\DBAid\Output". 
 
 .EXAMPLE
-    dbaid-collector.ps1 -CollectSqlServer "Server1\Instance1" -OutputXmlFilePath "C:\DBAid\Output" -UpdateExecTimeStamp
+    dbaid-collector.ps1 -CollectSqlServer "Data Source=Server1" -OutputXmlFilePath "/var/log/dbaid-collector"
+
+    This connects to the default SQL Server instance on "Server1" and outputs XML files to "/var/log/dbaid-collector". 
+
+.EXAMPLE
+    dbaid-collector.ps1 -CollectSqlServer "Data Source=Server1\Instance1" -OutputXmlFilePath "C:\DBAid\Output" -UpdateExecTimeStamp
 
     This connects to the named SQL Server instance "Instance1" on "Server1" and outputs XML files to "C:\DBAid\Output". Metadata in the "_dbaid" database regarding last execution time of the collector procedures is updated.
 
 .EXAMPLE
-    dbaid-collector.ps1 -CollectSqlServer "Server1,50000" -OutputXmlFilePath "C:\DBAid\Output"
+    dbaid-collector.ps1 -CollectSqlServer "Data Source=Server1,50000" -OutputXmlFilePath "C:\DBAid\Output"
 
     This connects to the SQL Server instance on "Server1" listening on TCP port 50000 and outputs XML files to "C:\DBAid\Output". 
 
 .EXAMPLE
-    dbaid-collector.ps1 -CollectSqlServer "Server1 -EncryptConnection" -OutputXmlFilePath "C:\DBAid\Output" -ZipXml
+    dbaid-collector.ps1 -CollectSqlServer "Data Source=Server1;Encrypt" -OutputXmlFilePath "C:\DBAid\Output" -ZipXml
 
     This connects to the default SQL Server instance on "Server1" that has TLS connection encryption enabled and outputs XML files to "C:\DBAid\Output". The XML files are added to a password-protected zip file then deleted from disk. 
 
 .EXAMPLE
-    dbaid-collector.ps1 -CollectSqlServer "Server1" -OutputXmlFilePath "C:\DBAid\Output" -ZipXml
+    dbaid-collector.ps1 -CollectSqlServer "Data Source=Server1" -OutputXmlFilePath "C:\DBAid\Output" -ZipXml
 
     This connects to the default SQL Server instance on "Server1" and outputs XML files to "C:\DBAid\Output". The XML files are added to a password-protected zip file then deleted from disk. 
 
 .EXAMPLE
-    dbaid-collector.ps1 -CollectSqlServer "Server1" -OutputXmlFilePath "C:\DBAid\Output" -ZipXml -EmailEnable -EmailTo "someone@domain.co.nz" -EmailFrom "Server1@domain.net.nz" -EmailSMTP "smtp.domain.co.nz"
+    dbaid-collector.ps1 -CollectSqlServer "Data Source=Server1" -OutputXmlFilePath "C:\DBAid\Output" -ZipXml -EmailEnable -EmailTo "someone@domain.co.nz" -EmailFrom "Server1@domain.net.nz" -EmailSMTP "smtp.domain.co.nz"
 
     This connects to the default SQL Server instance on "Server1" and outputs XML files to "C:\DBAid\Output". The XML files are added to a password-protected zip file then deleted from disk. The zip file is then emailed to "someone@domain.co.nz" via "smtp.domain.co.nz" then deleted from disk.
 
 .EXAMPLE
-    dbaid-collector.ps1 -CollectSqlServer "Server1" -DatamartSqlServer "DWServer1" -DatamartDatabase "_dbaid_warehouse"
+    dbaid-collector.ps1 -CollectSqlServer "Data Source=Server1" -DatamartSqlServer "DWServer1" -DatamartDatabase "_dbaid_warehouse"
 
     This connects to the default SQL Server instance on "Server1" and sends data to the "_dbaid_warehouse" database on the default SQL Server instance on "DWServer1". The "_dbaid_warehouse" database uses the same schema as the "_dbaid" database.
 
 .EXAMPLE
-    dbaid-collector.ps1 -CollectSqlServer "Server1","Server1\Instance1" -OutputXmlFilePath "C:\DBAid\Output"
+    dbaid-collector.ps1 -CollectSqlServer @("Data Source=Server1","Data Source=Server1\Instance1") -OutputXmlFilePath "C:\DBAid\Output"
 
     This connects to both the default SQL Server instance and named SQL Server instance "Instance1" on "Server1" and outputs XML files to "C:\DBAid\Output".
 #>
 Param(
-    [parameter(Mandatory)]
+    [parameter()]
     [string[]]$CollectSqlServer,
 
     [parameter()]
@@ -186,7 +180,7 @@ foreach ($CollectServer in $CollectSqlServer) {
         $Slash = "/"
     }
 
-    <##### Get credentials to connect to SQL Server (Linux only; Windows uses service account of CheckMK Agent service) #####>
+    <##### Get credentials to connect to SQL Server (Linux only; Windows uses service account of SQL Agent service (if run as SQL Agent job) or AD login if run via Windows Task Scheduler.) #####>
     if ($IsThisWindows -eq 0) {
         <##### Need to store this credential elsewhere, as it is unrelated to Checkmk. Process needs steps to create required folder & set permissions #####>
         $HexPass = Get-Content "/usr/local/bin/dbaid-collector.cred"
@@ -264,11 +258,16 @@ foreach ($CollectServer in $CollectSqlServer) {
     if ($ZipXml) {
         $SQLServer = (Invoke-Sqlcmd -ConnectionString $ConnectionString -Query "SELECT @@SERVERNAME")[0]
         [string]$secret = (Invoke-Sqlcmd -ConnectionString $ConnectionString -Query "SELECT [value] FROM [$CollectDatabase].[system].[configuration] WHERE [key] = N'COLLECTOR_SECRET'")[0]
-        [string]$instanceTag = (Invoke-Sqlcmd -ConnectionString $ConnectionString -Query "EXEC [$CollectDatabase].[system].[get_instance_tag];")[0]
-        [string]$7zip = "$PSScriptRoot" + $Slash + "7za.exe"
+        # declared above... don't need it here as well [string]$InstanceTag = (Invoke-Sqlcmd -ConnectionString $ConnectionString -Query "EXEC [$CollectDatabase].[system].[get_instance_tag];")[0]
+        if ($IsThisWindows -eq 1) {
+            [string]$7zip = "$PSScriptRoot" + $Slash + "7za.exe"
+        }
+        else {
+            [string]$7Zip = "7za"
+        }
         [string]$7zipArgs = "a -mx=9 -tzip -sdel -p'$secret'"
-        [string]$7zipSource = "$OutputXmlFilePath" + $Slash + "$instanceTag*.xml" 
-        [string]$7zipTarget = "$OutputXmlFilePath" + $Slash + $instanceTag + '_' + (Get-Date -Format 'yyyyMMddHHmmss') + '.zip'
+        [string]$7zipSource = "$OutputXmlFilePath" + $Slash + "$InstanceTag*.xml" 
+        [string]$7zipTarget = "$OutputXmlFilePath" + $Slash + $InstanceTag + '_' + (Get-Date -Format 'yyyyMMddHHmmss') + '.zip'
 
         $7zipCmd = "'$7zip' $7zipArgs '$7zipTarget' '$7zipSource'"
 
@@ -280,7 +279,7 @@ foreach ($CollectServer in $CollectSqlServer) {
 
         if ($EmailEnable) {
             [string[]]$EmailAttachments = (Get-ChildItem -Path "$OutputXmlFilePath\*.zip").FullName
-            [string]$EmailBody = "DBAid collector results for: $SQLServer.$env:USERDNSDOMAIN"
+            [string]$EmailBody = "DBAid collector results for: $SQLServer"
 
             if ($EmailAttachments.Length -gt 0) {
             <#  Send-MailMessage is deprecated. MailKit is recommended replacement. See links above.  #>
