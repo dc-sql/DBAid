@@ -19,21 +19,21 @@ USE [master]
 GO
 
 IF NOT EXISTS (SELECT 1 FROM sys.messages WHERE message_id=60000)
-	EXEC sp_addmessage @msgnum = 60000, @severity = 16, @msgtext = N'Filegroup Capacity Error: %s';
+	EXEC sp_addmessage @msgnum = 60000, @severity = 16, @msgtext = N'Filegroup Capacity Error: %s', @lang = 'us_english';
 IF NOT EXISTS (SELECT 1 FROM sys.messages WHERE message_id=60001)
-	EXEC sp_addmessage @msgnum = 60001, @severity = 16, @msgtext = N'SQL Agent Job Error: %s';
+	EXEC sp_addmessage @msgnum = 60001, @severity = 16, @msgtext = N'SQL Agent Job Error: %s', @lang = 'us_english';
 IF NOT EXISTS (SELECT 1 FROM sys.messages WHERE message_id=60002)
-	EXEC sp_addmessage @msgnum = 60002, @severity = 16, @msgtext = N'Always On Error: %s';
+	EXEC sp_addmessage @msgnum = 60002, @severity = 16, @msgtext = N'Always On Error: %s', @lang = 'us_english';
 IF NOT EXISTS (SELECT 1 FROM sys.messages WHERE message_id=60003)
-	EXEC sp_addmessage @msgnum = 60003, @severity = 16, @msgtext = N'Backup Error: %s';
+	EXEC sp_addmessage @msgnum = 60003, @severity = 16, @msgtext = N'Backup Error: %s', @lang = 'us_english';
 IF NOT EXISTS (SELECT 1 FROM sys.messages WHERE message_id=60004)
-	EXEC sp_addmessage @msgnum = 60004, @severity = 16, @msgtext = N'Database Error: %s';
+	EXEC sp_addmessage @msgnum = 60004, @severity = 16, @msgtext = N'Database Error: %s', @lang = 'us_english';
 IF NOT EXISTS (SELECT 1 FROM sys.messages WHERE message_id=60005)
-	EXEC sp_addmessage @msgnum = 60005, @severity = 16, @msgtext = N'Integrity Checks Error: %s';
+	EXEC sp_addmessage @msgnum = 60005, @severity = 16, @msgtext = N'Integrity Checks Error: %s', @lang = 'us_english';
 IF NOT EXISTS (SELECT 1 FROM sys.messages WHERE message_id=60006)
-	EXEC sp_addmessage @msgnum = 60006, @severity = 16, @msgtext = N'Log Shipping Error: %s';
+	EXEC sp_addmessage @msgnum = 60006, @severity = 16, @msgtext = N'Log Shipping Error: %s', @lang = 'us_english';
 IF NOT EXISTS (SELECT 1 FROM sys.messages WHERE message_id=60007)
-	EXEC sp_addmessage @msgnum = 60007, @severity = 16, @msgtext = N'DB Mirroring Error: %s';
+	EXEC sp_addmessage @msgnum = 60007, @severity = 16, @msgtext = N'DB Mirroring Error: %s', @lang = 'us_english';
 
 
 /* Turn on blocking report*/
