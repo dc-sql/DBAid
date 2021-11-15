@@ -2,7 +2,7 @@
 <configuration>
   <connectionStrings>
     <clear />
-    <add name="HostName@instance" connectionString="Server=Hostname\Instance;Database=_dbaid;Trusted_Connection=True;" />
+    <add name="HostName@instance" connectionString="Server=Hostname\Instance;Database=_dbaid;Trusted_Connection=True;Application Name=DBAid Collector" />
     <add name="HostName" connectionString="Server=Hostname;Database=_dbaid;Trusted_Connection=True;" />
   </connectionStrings>
   <appSettings>

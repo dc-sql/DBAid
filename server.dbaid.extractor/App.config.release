@@ -2,7 +2,7 @@
 <configuration>
   <connectionStrings>
     <clear />
-    <add name="MSSQLSERVER" connectionString="Server=.;Database=dbmaid;Trusted_Connection=True;" />
+    <add name="MSSQLSERVER" connectionString="Server=.;Database=dbmaid;Trusted_Connection=True;Application Name=DBAid Extractor" />
   </connectionStrings>
   <appSettings>
     <add key="Inbox" value="email.address@domain.co.nz" />
