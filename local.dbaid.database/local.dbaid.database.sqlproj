@@ -252,6 +252,9 @@
     <None Include="PostBuild.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="deployDBAid.ps1">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <SqlCmdVariable Include="ClientDomain">
