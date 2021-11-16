@@ -685,6 +685,30 @@ BEGIN
 			EXEC msdb.dbo.sp_add_jobserver @job_id=@jobId, @server_name = N'(local)';
 		COMMIT TRANSACTION
 	END
+
+	SET @jobId = NULL;
+
+	IF NOT EXISTS (SELECT [job_id] FROM [msdb].[dbo].[sysjobs_view] WHERE [name] = N'$(DatabaseName)_cycle_ERRORLOG')
+	BEGIN
+	BEGIN TRANSACTION
+		EXEC msdb.dbo.sp_add_job @job_name=N'$(DatabaseName)_cycle_ERRORLOG', @owner_login_name=N'$(DatabaseName)_sa',
+			@enabled=0, 
+			@category_name=N'_dbaid_maintenance', 
+			@job_id = @jobId OUTPUT;
+
+		SET @cmd = N'DBCC ERRORLOG;'
+
+		EXEC msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Cycle ERRORLOG', 
+				@step_id=1, @cmdexec_success_code=0, @on_success_action=1, @on_fail_action=2, 
+				@command=@cmd, 
+				@subsystem=N'TSQL';
+
+		EXEC msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'$(DatabaseName)_cycle_ERRORLOG',  
+				@enabled=1, @freq_type=8, @freq_interval=2, @freq_subday_type=1, @freq_recurrence_factor=1, @active_start_time=70000;
+
+		EXEC msdb.dbo.sp_add_jobserver @job_id=@jobId, @server_name = N'(local)';
+	COMMIT TRANSACTION
+	END
 END
 GO
 
