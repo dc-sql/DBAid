@@ -478,7 +478,7 @@ BEGIN
 					@owner_login_name=N'$(DatabaseName)_sa', @job_id = @jobId OUTPUT;
 
 			SET @cmd = N'sqlcmd -E -S "' + @JobTokenServer 
-						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [maintenance].[database_backup] @Databases = ''USER_DATABASES'', @BackupType = ''FULL'', @CheckSum = ''Y'', @CleanupTime = 72" -b';
+						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [$(DatabaseName)].[maintenance].[database_backup] @Databases = ''USER_DATABASES'', @BackupType = ''FULL'', @CheckSum = ''Y'', @MaxTransferSize = 131072, @CleanupTime = 72" -b';
 		
 			SET @out = @JobTokenLogDir + N'\$(DatabaseName)_backup_user_full_' + @JobTokenDateTime + N'.log';
 
@@ -506,7 +506,7 @@ BEGIN
 					@owner_login_name=N'$(DatabaseName)_sa', @job_id = @jobId OUTPUT;
 				
 			SET @cmd = N'sqlcmd -E -S "' + @JobTokenServer
-						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [maintenance].[database_backup] @Databases = ''USER_DATABASES'', @BackupType = ''LOG'', @CheckSum = ''Y'', @CleanupTime = 72" -b';
+						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [$(DatabaseName)].[maintenance].[database_backup] @Databases = ''USER_DATABASES'', @BackupType = ''LOG'', @CheckSum = ''Y'', @MaxTransferSize = 131072, @CleanupTime = 72" -b';
 
 			SET @out = @JobTokenLogDir + N'\$(DatabaseName)_backup_user_tran_' + @JobTokenDateTime + N'.log';
 
@@ -517,7 +517,7 @@ BEGIN
 					@flags=2;
 
 			EXEC msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'$(DatabaseName)_backup_user_tran',  
-					@enabled=1, @freq_type=4, @freq_interval=1, @freq_subday_type=4, @freq_subday_interval=30, @active_start_time=0
+					@enabled=1, @freq_type=4, @freq_interval=1, @freq_subday_type=4, @freq_subday_interval=15, @active_start_time=0
 
 			EXEC msdb.dbo.sp_add_jobserver @job_id=@jobId, @server_name = N'(local)';
 		COMMIT TRANSACTION
@@ -534,7 +534,7 @@ BEGIN
 					@owner_login_name=N'$(DatabaseName)_sa', @job_id = @jobId OUTPUT;
 
 			SET @cmd = N'sqlcmd -E -S "' + @JobTokenServer
-						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [maintenance].[database_backup] @Databases = ''SYSTEM_DATABASES'', @BackupType = ''FULL'', @CheckSum = ''Y'', @CleanupTime = 72" -b';
+						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [$(DatabaseName)].[maintenance].[database_backup] @Databases = ''SYSTEM_DATABASES'', @BackupType = ''FULL'', @CheckSum = ''Y'', @CleanupTime = 72" -b';
 
 			SET @out = @JobTokenLogDir + N'\$(DatabaseName)_backup_system_full_' + @JobTokenDateTime + N'.log';
 
@@ -562,7 +562,7 @@ BEGIN
 					@owner_login_name=N'$(DatabaseName)_sa', @job_id = @jobId OUTPUT;
 
 			SET @cmd = N'sqlcmd -E -S "' + @JobTokenServer 
-						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [maintenance].[index_optimize] @Databases = ''USER_DATABASES'', @FragmentationLow = NULL, @FragmentationMedium = ''INDEX_REORGANIZE,INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE'', @FragmentationHigh = ''INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE'', @UpdateStatistics = ''ALL''" -b';
+						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [$(DatabaseName)].[maintenance].[index_optimize] @Databases = ''USER_DATABASES'', @FragmentationLow = NULL, @FragmentationMedium = ''INDEX_REORGANIZE,INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE'', @FragmentationHigh = ''INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE'', @UpdateStatistics = ''ALL''" -b';
 
 			SET @out = @JobTokenLogDir + N'\$(DatabaseName)_index_optimise_user_' + @JobTokenDateTime + N'.log';
 
@@ -590,7 +590,7 @@ BEGIN
 					@owner_login_name=N'$(DatabaseName)_sa', @job_id = @jobId OUTPUT;
 
 			SET @cmd = N'sqlcmd -E -S "' + @JobTokenServer
-						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [maintenance].[index_optimize] @Databases = ''SYSTEM_DATABASES'', @FragmentationLow = NULL, @FragmentationMedium = ''INDEX_REORGANIZE,INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE'', @FragmentationHigh = ''INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE'', @UpdateStatistics = ''ALL''" -b';
+						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [$(DatabaseName)].[maintenance].[index_optimize] @Databases = ''SYSTEM_DATABASES'', @FragmentationLow = NULL, @FragmentationMedium = ''INDEX_REORGANIZE,INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE'', @FragmentationHigh = ''INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE'', @UpdateStatistics = ''ALL''" -b';
 
 			SET @out = @JobTokenLogDir + N'\$(DatabaseName)_index_optimise_system_' + @JobTokenDateTime + N'.log';
 
@@ -618,7 +618,7 @@ BEGIN
 					@owner_login_name=N'$(DatabaseName)_sa', @job_id = @jobId OUTPUT;
 
 			SET @cmd = N'sqlcmd -E -S "' + @JobTokenServer 
-						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [maintenance].[integrity_check] @Databases = ''USER_DATABASES'', @CheckCommands = ''CHECKDB''" -b'
+						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [$(DatabaseName)].[maintenance].[integrity_check] @Databases = ''USER_DATABASES'', @CheckCommands = ''CHECKDB''" -b'
 
 			SET @out = @JobTokenLogDir + N'\$(DatabaseName)_integrity_check_user_' + @JobTokenDateTime + N'.log';
 
@@ -646,7 +646,7 @@ BEGIN
 					@owner_login_name=N'$(DatabaseName)_sa', @job_id = @jobId OUTPUT;
 
 			SET @cmd = N'sqlcmd -E -S "' + @JobTokenServer 
-						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [maintenance].[integrity_check] @Databases = ''SYSTEM_DATABASES'', @CheckCommands = ''CHECKDB''" -b'
+						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [$(DatabaseName)].[maintenance].[integrity_check] @Databases = ''SYSTEM_DATABASES'', @CheckCommands = ''CHECKDB''" -b'
 
 			SET @out = @JobTokenLogDir + N'\$(DatabaseName)_integrity_check_system_' + @JobTokenDateTime + N'.log';
 
@@ -675,7 +675,7 @@ BEGIN
 
 			EXEC msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Log Capacity', 
 					@step_id=1, @cmdexec_success_code=0, @on_success_action=1, @on_fail_action=2, @subsystem=N'TSQL', 
-					@command='EXEC [dbo].[log_stage_capacity];', 
+					@command='EXEC [$(DatabaseName)].[dbo].[log_stage_capacity];', 
 					@database_name=N'$(DatabaseName)', 
 					@flags=0;
 
