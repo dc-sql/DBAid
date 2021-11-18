@@ -283,6 +283,30 @@ IF NOT EXISTS(SELECT 1 FROM [checkmk].[config_perfcounter] WHERE [object_name] =
 		 VALUES(N'%:Database Replica', N'Recovery Queue', N'_Total');
 GO
 
+IF NOT EXISTS(SELECT 1 FROM [checkmk].[config_login_failures] WHERE [name] = N'_dbaid_default')
+	INSERT INTO [checkmk].[config_login_failures]([name],[failed_login_threshold],[monitoring_period_minutes])
+		 VALUES(N'_dbaid_default', N'10', N'15');
+GO
+
+
+/* #######################################################################################################################################
+#	
+#	Create login failure event session
+#
+####################################################################################################################################### */
+IF EXISTS (SELECT 1 FROM sys.server_event_sessions WHERE [name] = '_dbaid_login_failures')
+  DROP EVENT SESSION [_dbaid_login_failures] ON SERVER;
+GO
+CREATE EVENT SESSION [_dbaid_login_failures] ON SERVER 
+ADD EVENT sqlserver.error_reported(
+    ACTION(sqlserver.client_app_name,sqlserver.client_hostname,sqlserver.session_server_principal_name)
+    WHERE ([error_number]=(18456) OR [error_number]=(18452) AND [severity]=(14) AND [state]>(1)))
+ADD TARGET package0.ring_buffer
+WITH (MAX_MEMORY=4096 KB,EVENT_RETENTION_MODE=ALLOW_SINGLE_EVENT_LOSS,MAX_DISPATCH_LATENCY=30 SECONDS,MAX_EVENT_SIZE=0 KB,MEMORY_PARTITION_MODE=NONE,TRACK_CAUSALITY=OFF,STARTUP_STATE=ON)
+GO
+IF EXISTS (SELECT 1 FROM sys.server_event_sessions WHERE [name] = '_dbaid_login_failures') AND NOT EXISTS (SELECT 1 FROM sys.dm_xe_sessions WHERE [name] = '_dbaid_login_failures')
+  ALTER EVENT SESSION [_dbaid_login_failures] ON SERVER STATE = START;
+GO
 
 /* #######################################################################################################################################
 #	
@@ -909,7 +933,7 @@ BEGIN TRANSACTION
 	END
 	ELSE
 	BEGIN
-		/* Restore [dbo].[config_alwayson] data */
+		/* Restore [checkmk].[config_alwayson] data */
 		SET @backupsql = N'UPDATE [_dbaid].[checkmk].[config_alwayson]
 							SET [ag_role] = [C].[ag_role]
 								,[ag_state_alert] = [C].[ag_state_alert]
@@ -924,7 +948,7 @@ BEGIN TRANSACTION
 
 		IF (@rc <> 0) GOTO PROBLEM;
 
-		/* Restore [dbo].[config_database] data */
+		/* Restore [checkmk].[config_database] data */
 		SELECT @backupsql = N'UPDATE [_dbaid].[checkmk].[config_database]
 							SET [database_check_alert] = [C].[database_check_alert]
 								,[database_check_enabled] = [C].[database_check_enabled]
@@ -954,7 +978,7 @@ BEGIN TRANSACTION
 
 		IF (@rc <> 0) GOTO PROBLEM;
 
-		/* Restore [dbo].[config_job] data */
+		/* Restore [checkmk].[config_job] data */
 		SET @backupsql = N'UPDATE [_dbaid].[checkmk].[config_agentjob]
 							SET [state_check_alert] = [C].[state_check_alert]
 								,[state_fail_check_enabled] = [C].[state_fail_check_enabled]
@@ -989,6 +1013,28 @@ BEGIN TRANSACTION
 									ON [O].[object_name]+[O].[counter_name]+ISNULL([O].[instance_name],'''') = [C].[object_name]+[C].[counter_name]+ISNULL([C].[instance_name],'''') COLLATE Database_Default;';
 		IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_perfcounter') IS NOT NULL
 			EXEC @rc = sp_executesql @stmt = @backupsql;
+
+
+		/* Restore [checkmk].[config_login_failures] data */
+		SET @backupsql = N'INSERT INTO [_dbaid].[checkmk].[config_login_failures]
+							SELECT [name],[failed_login_threshold],[monitoring_period_minutes],[login_failure_alert]
+							FROM [tempdb].[dbo].[_dbaid_backup_config_login_failures] 
+							WHERE [name] COLLATE Database_Default NOT IN (SELECT [name] FROM [_dbaid].[checkmk].[config_login_failures]);';
+		IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_login_failures') IS NOT NULL
+			EXEC @rc = sp_executesql @stmt = @backupsql;
+
+		IF (@rc <> 0) GOTO PROBLEM;
+
+		SET @backupsql = N'UPDATE [_dbaid].[checkmk].[config_login_failures]
+							SET [failed_login_threshold] = [C].[failed_login_threshold]
+								,[monitoring_period_minutes] = [C].[monitoring_period_minutes]
+								,[login_failure_alert] = [C].[login_failure_alert]
+							FROM [_dbaid].[checkmk].[config_login_failures] [O]
+								INNER JOIN [tempdb].[dbo].[_dbaid_backup_config_login_failures] [C]
+									ON [O].[name] = [C].[name] COLLATE Database_Default;';
+		IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_login_failures') IS NOT NULL
+			EXEC @rc = sp_executesql @stmt = @backupsql;
+
 
 		/* Restore [system].[configuration] data */
 		SET @backupsql = N'UPDATE [_dbaid].[system].[configuration]
@@ -1038,6 +1084,12 @@ BEGIN
 		EXEC @rc = sp_executesql @stmt = @backupsql;
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[_dbaid_backup_config_perfcounter];';
 	IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_perfcounter') IS NOT NULL
+		EXEC @rc = sp_executesql @stmt = @backupsql;
+	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[_dbaid_backup_config_login_failures];';
+	IF OBJECT_ID('tempdb.dbo._dbaid_backup_config_login_failures') IS NOT NULL
+		EXEC @rc = sp_executesql @stmt = @backupsql;
+	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[_dbaid_backup_database_last_access];';
+	IF OBJECT_ID('tempdb.dbo._dbaid_backup_database_last_access') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt = @backupsql;
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[_dbaid_Version];';
 	IF OBJECT_ID('tempdb.dbo._dbaid_Version') IS NOT NULL

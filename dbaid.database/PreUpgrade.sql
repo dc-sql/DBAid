@@ -88,6 +88,12 @@ BEGIN
 			SET @backupsql = N'SELECT * INTO [tempdb].[dbo].[_dbaid_backup_database_last_access] FROM [_dbaid].[audit].[database_last_access]';
 			EXEC sp_executesql @stmt = @backupsql;
 		END
+
+		IF (OBJECT_ID(N'tempdb.dbo._dbaid_backup_config_login_failures') IS NULL AND OBJECT_ID(N'[_dbaid].[checkmk].[config_login_failures]') IS NOT NULL)
+		BEGIN
+			SET @backupsql = N'SELECT * INTO [tempdb].[dbo].[_dbaid_backup_config_login_failures] FROM [_dbaid].[checkmk].[config_login_failures]';
+			EXEC sp_executesql @stmt = @backupsql;
+		END
 	END
 END
 GO

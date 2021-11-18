@@ -255,6 +255,11 @@
     <Build Include="Database\checkmk\tables\config_perfcounter.sql" />
     <Build Include="Database\checkmk\procedures\chart_perfcounter.sql" />
     <Build Include="Database\checkmk\procedures\chart_capacity_combined.sql" />
+    <Build Include="Database\checkmk\procedures\check_loginfailures.sql" />
+    <Build Include="Database\checkmk\tables\config_login_failures.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <RefactorLog Include="dbaid.database.refactorlog" />
   </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>Powershell -ExecutionPolicy UnRestricted -File "$(ProjectDir)$(OutputPath)PostBuild.ps1"</PostBuildEvent>
