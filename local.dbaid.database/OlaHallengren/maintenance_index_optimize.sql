@@ -2,7 +2,7 @@
   --// Source:  https://ola.hallengren.com                                                        //--
   --// License: https://ola.hallengren.com/license.html                                           //--
   --// GitHub:  https://github.com/olahallengren/sql-server-maintenance-solution                  //--
-  --// Version: 2020-01-26 14:06:53                                                               //--
+  --// Version: 2020-12-31 18:58:56                                                               //--
   ----------------------------------------------------------------------------------------------------
 /*
 SET ANSI_NULLS ON
@@ -18,42 +18,43 @@ ALTER PROCEDURE [dbo].[IndexOptimize]
 --*/
 CREATE PROCEDURE [maintenance].[index_optimize]
 (
-  @Databases nvarchar(max) = NULL,
-  @FragmentationLow nvarchar(max) = NULL,
-  @FragmentationMedium nvarchar(max) = 'INDEX_REORGANIZE,INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE',
-  @FragmentationHigh nvarchar(max) = 'INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE',
-  @FragmentationLevel1 int = 5,
-  @FragmentationLevel2 int = 30,
-  @MinNumberOfPages int = 1000,
-  @MaxNumberOfPages int = NULL,
-  @SortInTempdb nvarchar(max) = 'N',
-  @MaxDOP int = NULL,
-  @FillFactor int = NULL,
-  @PadIndex nvarchar(max) = NULL,
-  @LOBCompaction nvarchar(max) = 'Y',
-  @UpdateStatistics nvarchar(max) = NULL,
-  @OnlyModifiedStatistics nvarchar(max) = 'N',
-  @StatisticsModificationLevel int = NULL,
-  @StatisticsSample int = NULL,
-  @StatisticsResample nvarchar(max) = 'N',
-  @PartitionLevel nvarchar(max) = 'Y',
-  @MSShippedObjects nvarchar(max) = 'N',
-  @Indexes nvarchar(max) = NULL,
-  @TimeLimit int = NULL,
-  @Delay int = NULL,
-  @WaitAtLowPriorityMaxDuration int = NULL,
-  @WaitAtLowPriorityAbortAfterWait nvarchar(max) = NULL,
-  @Resumable nvarchar(max) = 'N',
-  @AvailabilityGroups nvarchar(max) = NULL,
-  @LockTimeout int = NULL,
-  @LockMessageSeverity int = 16,
-  @StringDelimiter nvarchar(max) = ',',
-  @DatabaseOrder nvarchar(max) = NULL,
-  @DatabasesInParallel nvarchar(max) = 'N',
-  @LogToTable nvarchar(max) = 'N',
-  @Execute nvarchar(max) = 'Y'
+@Databases nvarchar(max) = NULL,
+@FragmentationLow nvarchar(max) = NULL,
+@FragmentationMedium nvarchar(max) = 'INDEX_REORGANIZE,INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE',
+@FragmentationHigh nvarchar(max) = 'INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE',
+@FragmentationLevel1 int = 5,
+@FragmentationLevel2 int = 30,
+@MinNumberOfPages int = 1000,
+@MaxNumberOfPages int = NULL,
+@SortInTempdb nvarchar(max) = 'N',
+@MaxDOP int = NULL,
+@FillFactor int = NULL,
+@PadIndex nvarchar(max) = NULL,
+@LOBCompaction nvarchar(max) = 'Y',
+@UpdateStatistics nvarchar(max) = NULL,
+@OnlyModifiedStatistics nvarchar(max) = 'N',
+@StatisticsModificationLevel int = NULL,
+@StatisticsSample int = NULL,
+@StatisticsResample nvarchar(max) = 'N',
+@PartitionLevel nvarchar(max) = 'Y',
+@MSShippedObjects nvarchar(max) = 'N',
+@Indexes nvarchar(max) = NULL,
+@TimeLimit int = NULL,
+@Delay int = NULL,
+@WaitAtLowPriorityMaxDuration int = NULL,
+@WaitAtLowPriorityAbortAfterWait nvarchar(max) = NULL,
+@Resumable nvarchar(max) = 'N',
+@AvailabilityGroups nvarchar(max) = NULL,
+@LockTimeout int = NULL,
+@LockMessageSeverity int = 16,
+@StringDelimiter nvarchar(max) = ',',
+@DatabaseOrder nvarchar(max) = NULL,
+@DatabasesInParallel nvarchar(max) = 'N',
+@ExecuteAsUser nvarchar(max) = NULL,
+@LogToTable nvarchar(max) = 'N',
+@Execute nvarchar(max) = 'Y'
 )
-WITH ENCRYPTION
+WITH ENCRYPTION 
 
 AS
 
@@ -63,7 +64,7 @@ BEGIN
   --// Source:  https://ola.hallengren.com                                                        //--
   --// License: https://ola.hallengren.com/license.html                                           //--
   --// GitHub:  https://github.com/olahallengren/sql-server-maintenance-solution                  //--
-  --// Version: 2020-01-26 14:06:53                                                               //--
+  --// Version: 2020-12-31 18:58:56                                                               //--
   ----------------------------------------------------------------------------------------------------
 
   EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
@@ -79,6 +80,7 @@ BEGIN
   DECLARE @DatabaseMessage nvarchar(max)
   DECLARE @ErrorMessage nvarchar(max)
   DECLARE @Severity int
+
   DECLARE @StartTime datetime2 = SYSDATETIME()
   DECLARE @SchemaName nvarchar(max) = OBJECT_SCHEMA_NAME(@@PROCID)
   DECLARE @ObjectName nvarchar(max) = OBJECT_NAME(@@PROCID)
@@ -97,6 +99,7 @@ BEGIN
 
   DECLARE @CurrentDatabase_sp_executesql nvarchar(max)
 
+  DECLARE @CurrentExecuteAsUserExists bit
   DECLARE @CurrentUserAccess nvarchar(max)
   DECLARE @CurrentIsReadOnly bit
   DECLARE @CurrentDatabaseState nvarchar(max)
@@ -104,6 +107,8 @@ BEGIN
   DECLARE @CurrentRecoveryModel nvarchar(max)
 
   DECLARE @CurrentIsDatabaseAccessible bit
+  DECLARE @CurrentReplicaID uniqueidentifier
+  DECLARE @CurrentAvailabilityGroupID uniqueidentifier
   DECLARE @CurrentAvailabilityGroup nvarchar(max)
   DECLARE @CurrentAvailabilityGroupRole nvarchar(max)
   DECLARE @CurrentDatabaseMirroringRole nvarchar(max)
@@ -317,6 +322,7 @@ BEGIN
   SET @Parameters += ', @StringDelimiter = ' + ISNULL('''' + REPLACE(@StringDelimiter,'''','''''') + '''','NULL')
   SET @Parameters += ', @DatabaseOrder = ' + ISNULL('''' + REPLACE(@DatabaseOrder,'''','''''') + '''','NULL')
   SET @Parameters += ', @DatabasesInParallel = ' + ISNULL('''' + REPLACE(@DatabasesInParallel,'''','''''') + '''','NULL')
+  SET @Parameters += ', @ExecuteAsUser = ' + ISNULL('''' + REPLACE(@ExecuteAsUser,'''','''''') + '''','NULL')
   SET @Parameters += ', @LogToTable = ' + ISNULL('''' + REPLACE(@LogToTable,'''','''''') + '''','NULL')
   SET @Parameters += ', @Execute = ' + ISNULL('''' + REPLACE(@Execute,'''','''''') + '''','NULL')
 
@@ -477,8 +483,8 @@ BEGIN
     SELECT databases.name,
            availability_groups.name
     FROM sys.databases databases
-    INNER JOIN sys.dm_hadr_availability_replica_states dm_hadr_availability_replica_states ON databases.replica_id = dm_hadr_availability_replica_states.replica_id
-    INNER JOIN sys.availability_groups availability_groups ON dm_hadr_availability_replica_states.group_id = availability_groups.group_id
+    INNER JOIN sys.availability_replicas availability_replicas ON databases.replica_id = availability_replicas.replica_id
+    INNER JOIN sys.availability_groups availability_groups ON availability_replicas.group_id = availability_groups.group_id
   END
 
   INSERT INTO @tmpDatabases (DatabaseName, DatabaseType, AvailabilityGroup, [Order], Selected, Completed)
@@ -1103,6 +1109,14 @@ BEGIN
 
   ----------------------------------------------------------------------------------------------------
 
+  IF LEN(@ExecuteAsUser) > 128
+  BEGIN
+    INSERT INTO @Errors ([Message], Severity, [State])
+    SELECT 'The value for the parameter @ExecuteAsUser is not supported.', 16, 1
+  END
+
+  ----------------------------------------------------------------------------------------------------
+
   IF @LogToTable NOT IN('Y','N') OR @LogToTable IS NULL
   BEGIN
     INSERT INTO @Errors ([Message], Severity, [State])
@@ -1429,6 +1443,14 @@ BEGIN
 
     SET @CurrentDatabase_sp_executesql = QUOTENAME(@CurrentDatabaseName) + '.sys.sp_executesql'
 
+    IF @ExecuteAsUser IS NOT NULL
+    BEGIN
+      SET @CurrentCommand = ''
+      SET @CurrentCommand += 'IF EXISTS(SELECT * FROM sys.database_principals database_principals WHERE database_principals.[name] = @ParamExecuteAsUser) BEGIN SET @ParamExecuteAsUserExists = 1 END ELSE BEGIN SET @ParamExecuteAsUserExists = 0 END'
+
+      EXECUTE @CurrentDatabase_sp_executesql @stmt = @CurrentCommand, @params = N'@ParamExecuteAsUser sysname, @ParamExecuteAsUserExists bit OUTPUT', @ParamExecuteAsUser = @ExecuteAsUser, @ParamExecuteAsUserExists = @CurrentExecuteAsUserExists OUTPUT
+    END
+
     BEGIN
       SET @DatabaseMessage = 'Date and time: ' + CONVERT(nvarchar,SYSDATETIME(),120)
       RAISERROR('%s',10,1,@DatabaseMessage) WITH NOWAIT
@@ -1476,12 +1498,22 @@ BEGIN
 
     IF @Version >= 11 AND SERVERPROPERTY('IsHadrEnabled') = 1
     BEGIN
-      SELECT @CurrentAvailabilityGroup = availability_groups.name,
-             @CurrentAvailabilityGroupRole = dm_hadr_availability_replica_states.role_desc
+      SELECT @CurrentReplicaID = databases.replica_id
       FROM sys.databases databases
-      INNER JOIN sys.dm_hadr_availability_replica_states dm_hadr_availability_replica_states ON databases.replica_id = dm_hadr_availability_replica_states.replica_id
-      INNER JOIN sys.availability_groups availability_groups ON dm_hadr_availability_replica_states.group_id = availability_groups.group_id
-      WHERE databases.name = @CurrentDatabaseName
+      INNER JOIN sys.availability_replicas availability_replicas ON databases.replica_id = availability_replicas.replica_id
+      WHERE databases.[name] = @CurrentDatabaseName
+
+      SELECT @CurrentAvailabilityGroupID = group_id
+      FROM sys.availability_replicas
+      WHERE replica_id = @CurrentReplicaID
+
+      SELECT @CurrentAvailabilityGroupRole = role_desc
+      FROM sys.dm_hadr_availability_replica_states
+      WHERE replica_id = @CurrentReplicaID
+
+      SELECT @CurrentAvailabilityGroup = [name]
+      FROM sys.availability_groups
+      WHERE group_id = @CurrentAvailabilityGroupID
     END
 
     IF SERVERPROPERTY('EngineEdition') <> 5
@@ -1514,9 +1546,17 @@ BEGIN
 
     RAISERROR(@EmptyLine,10,1) WITH NOWAIT
 
+    IF @CurrentExecuteAsUserExists = 0
+    BEGIN
+      SET @DatabaseMessage = 'The user ' + QUOTENAME(@ExecuteAsUser) + ' does not exist in the database ' + QUOTENAME(@CurrentDatabaseName) + '.'
+      RAISERROR('%s',16,1,@DatabaseMessage) WITH NOWAIT
+      RAISERROR(@EmptyLine,10,1) WITH NOWAIT
+    END
+
     IF @CurrentDatabaseState = 'ONLINE'
     AND NOT (@CurrentUserAccess = 'SINGLE_USER' AND @CurrentIsDatabaseAccessible = 0)
     AND DATABASEPROPERTYEX(@CurrentDatabaseName,'Updateability') = 'READ_WRITE'
+    AND (@CurrentExecuteAsUserExists = 1 OR @CurrentExecuteAsUserExists IS NULL)
     BEGIN
 
       -- Select indexes in the current database
@@ -2151,7 +2191,7 @@ BEGIN
 
           IF @CurrentAlterIndexWithClause IS NOT NULL SET @CurrentCommand += @CurrentAlterIndexWithClause
 
-          EXECUTE @CurrentCommandOutput = dbo.CommandExecute @DatabaseContext = @CurrentDatabaseName, @Command = @CurrentCommand, @CommandType = @CurrentCommandType, @Mode = 2, @Comment = @CurrentComment, @DatabaseName = @CurrentDatabaseName, @SchemaName = @CurrentSchemaName, @ObjectName = @CurrentObjectName, @ObjectType = @CurrentObjectType, @IndexName = @CurrentIndexName, @IndexType = @CurrentIndexType, @PartitionNumber = @CurrentPartitionNumber, @ExtendedInfo = @CurrentExtendedInfo, @LockMessageSeverity = @LockMessageSeverity, @LogToTable = @LogToTable, @Execute = @Execute
+          EXECUTE @CurrentCommandOutput = dbo.CommandExecute @DatabaseContext = @CurrentDatabaseName, @Command = @CurrentCommand, @CommandType = @CurrentCommandType, @Mode = 2, @Comment = @CurrentComment, @DatabaseName = @CurrentDatabaseName, @SchemaName = @CurrentSchemaName, @ObjectName = @CurrentObjectName, @ObjectType = @CurrentObjectType, @IndexName = @CurrentIndexName, @IndexType = @CurrentIndexType, @PartitionNumber = @CurrentPartitionNumber, @ExtendedInfo = @CurrentExtendedInfo, @LockMessageSeverity = @LockMessageSeverity, @ExecuteAsUser = @ExecuteAsUser, @LogToTable = @LogToTable, @Execute = @Execute
           SET @Error = @@ERROR
           IF @Error <> 0 SET @CurrentCommandOutput = @Error
           IF @CurrentCommandOutput <> 0 SET @ReturnCode = @CurrentCommandOutput
@@ -2255,7 +2295,7 @@ BEGIN
 
           IF @PartitionLevelStatistics = 1 AND @CurrentIsIncremental = 1 AND @CurrentPartitionNumber IS NOT NULL SET @CurrentCommand += ' ON PARTITIONS(' + CAST(@CurrentPartitionNumber AS nvarchar(max)) + ')'
 
-          EXECUTE @CurrentCommandOutput = dbo.CommandExecute @DatabaseContext = @CurrentDatabaseName, @Command = @CurrentCommand, @CommandType = @CurrentCommandType, @Mode = 2, @Comment = @CurrentComment, @DatabaseName = @CurrentDatabaseName, @SchemaName = @CurrentSchemaName, @ObjectName = @CurrentObjectName, @ObjectType = @CurrentObjectType, @IndexName = @CurrentIndexName, @IndexType = @CurrentIndexType, @StatisticsName = @CurrentStatisticsName, @ExtendedInfo = @CurrentExtendedInfo, @LockMessageSeverity = @LockMessageSeverity, @LogToTable = @LogToTable, @Execute = @Execute
+          EXECUTE @CurrentCommandOutput = dbo.CommandExecute @DatabaseContext = @CurrentDatabaseName, @Command = @CurrentCommand, @CommandType = @CurrentCommandType, @Mode = 2, @Comment = @CurrentComment, @DatabaseName = @CurrentDatabaseName, @SchemaName = @CurrentSchemaName, @ObjectName = @CurrentObjectName, @ObjectType = @CurrentObjectType, @IndexName = @CurrentIndexName, @IndexType = @CurrentIndexType, @StatisticsName = @CurrentStatisticsName, @ExtendedInfo = @CurrentExtendedInfo, @LockMessageSeverity = @LockMessageSeverity, @ExecuteAsUser = @ExecuteAsUser, @LogToTable = @LogToTable, @Execute = @Execute
           SET @Error = @@ERROR
           IF @Error <> 0 SET @CurrentCommandOutput = @Error
           IF @CurrentCommandOutput <> 0 SET @ReturnCode = @CurrentCommandOutput
@@ -2366,6 +2406,7 @@ BEGIN
 
     SET @CurrentDatabase_sp_executesql = NULL
 
+    SET @CurrentExecuteAsUserExists = NULL
     SET @CurrentUserAccess = NULL
     SET @CurrentIsReadOnly = NULL
     SET @CurrentDatabaseState = NULL
@@ -2373,6 +2414,8 @@ BEGIN
     SET @CurrentRecoveryModel = NULL
 
     SET @CurrentIsDatabaseAccessible = NULL
+    SET @CurrentReplicaID = NULL
+    SET @CurrentAvailabilityGroupID = NULL
     SET @CurrentAvailabilityGroup = NULL
     SET @CurrentAvailabilityGroupRole = NULL
     SET @CurrentDatabaseMirroringRole = NULL
@@ -2399,7 +2442,7 @@ BEGIN
   END
 
   ----------------------------------------------------------------------------------------------------
-REVERT;
+REVERT;       
 
 END
 

@@ -5,8 +5,8 @@
   </configSections>
   <connectionStrings>
     <clear />
-    <add name="MSSQLSERVER" connectionString="Server=HOSTNAME;Database=_dbaid;Trusted_Connection=True;" />
-    <add name="INST1" connectionString="Server=HOSTNAME\INST1;Database=_dbaid;Trusted_Connection=True;" />
+    <add name="MSSQLSERVER" connectionString="Server=HOSTNAME;Database=_dbaid;Trusted_Connection=True;Application Name=DBAid Checkmk" />
+    <add name="INST1" connectionString="Server=HOSTNAME\INST1;Database=_dbaid;Trusted_Connection=True;Application Name=DBAid Checkmk" />
   </connectionStrings>
   <appSettings>
     <add key="is_check_enabled" value="1" />

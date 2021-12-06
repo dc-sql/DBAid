@@ -227,11 +227,11 @@ BEGIN
 	INSERT INTO @results
 	SELECT '2.14','2.14 Rename the sa Login Account (Scored)' AS [Policy Name], CASE WHEN [name] = 'sa' THEN 0 ELSE 1 END AS [score], [name] AS [value] FROM [master].[sys].[server_principals] WHERE [sid] = 0x01
 	INSERT INTO @results
-	SELECT '2.15','2.15 Set the xp_cmdshell Server Configuration Option to 0 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 0 ELSE 1 END AS [pass], CAST([value_in_use] AS NVARCHAR(10)) AS [value] FROM [info].[instance] WHERE [name] = 'xp_cmdshell'
+	SELECT '2.15','2.15 Ensure ''AUTO_CLOSE OFF'' is set on contained databases (Scored)' AS [Policy Name], [pass], [value] FROM #__contained;
 	INSERT INTO @results
-	SELECT '2.16','2.16 Ensure ''AUTO_CLOSE OFF'' is set on contained databases (Scored)' AS [Policy Name], [pass], [value] FROM #__contained;
+	SELECT '2.16','2.16 Ensure no login exists with the name ''sa'' (Scored)' AS [Policy Name], CASE WHEN EXISTS(SELECT [name] FROM [master].[sys].[server_principals] WHERE [name] = 'sa') THEN '0' ELSE '1' END AS [score], CASE WHEN EXISTS(SELECT [name] FROM [master].[sys].[server_principals] WHERE [name] = 'sa') THEN CAST('sa' AS NVARCHAR(128)) ELSE '0' END AS [value]
 	INSERT INTO @results
-	SELECT '2.17','2.17 Ensure no login exists with the name ''sa'' (Scored)' AS [Policy Name], CASE WHEN EXISTS(SELECT [name] FROM [master].[sys].[server_principals] WHERE [name] = 'sa') THEN '0' ELSE '1' END AS [score], CASE WHEN EXISTS(SELECT [name] FROM [master].[sys].[server_principals] WHERE [name] = 'sa') THEN CAST('sa' AS NVARCHAR(128)) ELSE '0' END AS [value]
+	SELECT '2.17','2.17 Set ''clr strict security'' Server Configuration Option to 1 (Scored)' AS [Policy Name], CASE [value_in_use] WHEN 1 THEN 0 ELSE 1 END AS [pass], CAST([value_in_use] AS NVARCHAR(10)) AS [value] FROM [info].[instance] WHERE [name] = 'clr strict security'
 
 	--3. Authentication and Authorization
 	INSERT INTO @results

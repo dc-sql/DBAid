@@ -75,7 +75,7 @@ BEGIN
 			,[F].[file_id]
 			,[F].[type_desc]
 			,SUBSTRING([F].[physical_name],1,1) AS [drive]
-			,CAST([F].[size]/128.00 AS NUMERIC(20,2)) AS [size_used_mb]
+			,0.0 AS [size_used_mb]
 			,CAST([F].[size]/128.00 AS NUMERIC(20,2)) AS [size_reserved_mb]
 		FROM [dbo].[config_database] [C]
 			INNER JOIN [sys].[master_files] [F]
