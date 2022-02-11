@@ -345,6 +345,12 @@ BEGIN
 		FROM [msdb].[dbo].[sysjobs];
 END
 
+IF NOT EXISTS (SELECT 1 FROM [dbo].[config_login_failures] WHERE [name] = N'_dbaid_default')
+BEGIN
+	INSERT INTO [dbo].[config_login_failures] ([name], [failed_login_threshold], [monitoring_period_minutes])
+	VALUES (N'_dbaid_default', 60, 60);
+END
+
 /* Deprecated data insert start */
 IF (SELECT COUNT([parametername]) FROM [deprecated].[tbparameters] WHERE [parametername] = 'Client_name') = 0
 	INSERT INTO [deprecated].[tbparameters] ([parametername],[setting],[status],[comments])
@@ -860,6 +866,9 @@ BEGIN
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[$(DatabaseName)_backup_config_database];';
 	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_database') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
+	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[$(DatabaseName)_backup_config_login_failures];';
+	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_login_failures') IS NOT NULL
+		EXEC @rc = sp_executesql @stmt=@backupsql;
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[$(DatabaseName)_backup_config_job];';
 	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_job') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
@@ -879,3 +888,23 @@ BEGIN
 
 	PRINT 'Transaction committed.'
 END
+
+/* Create Extended Event Session for login failure audit */
+/* need to check if it exists first */
+IF EXISTS (SELECT 1 FROM sys.dm_xe_sessions WHERE [name] = N'_dbaid_login_failures')
+  ALTER EVENT SESSION [_dbaid_login_failures] ON SERVER STATE = STOP;
+GO
+IF EXISTS (SELECT 1 FROM sys.server_event_sessions WHERE [name] = N'_dbaid_login_failures')
+  DROP EVENT SESSION [_dbaid_login_failures] ON SERVER;
+GO
+
+CREATE EVENT SESSION [_dbaid_login_failures] ON SERVER 
+ADD EVENT sqlserver.error_reported(
+    ACTION(sqlserver.client_app_name,sqlserver.client_hostname,sqlserver.session_server_principal_name)
+    WHERE ([error_number]=(18456) OR [error_number]=(18452) AND [severity]=(14) AND [state]>(1)))
+ADD TARGET package0.ring_buffer
+WITH (MAX_MEMORY=4096 KB,EVENT_RETENTION_MODE=ALLOW_SINGLE_EVENT_LOSS,MAX_DISPATCH_LATENCY=30 SECONDS,MAX_EVENT_SIZE=0 KB,MEMORY_PARTITION_MODE=NONE,TRACK_CAUSALITY=OFF,STARTUP_STATE=ON)
+GO
+
+ALTER EVENT SESSION [_dbaid_login_failures] ON SERVER STATE = START;
+GO

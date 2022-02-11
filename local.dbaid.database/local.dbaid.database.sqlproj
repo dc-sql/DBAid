@@ -238,6 +238,8 @@
     <None Include="Database\Procedure\check\chart_capacity_combined.sql" />
     <Build Include="OlaHallengren\dbo_queue.sql" />
     <Build Include="OlaHallengren\dbo_queue_database.sql" />
+    <Build Include="Database\Procedure\check\check_loginfailures.sql" />
+    <Build Include="Database\Table\dbo_config_login_failures.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Database\Script.PostDeployment.sql" />
@@ -278,7 +280,7 @@
       <Value>$(SqlCmdVar__16)</Value>
     </SqlCmdVariable>
     <SqlCmdVariable Include="Version">
-      <DefaultValue>6.4.0</DefaultValue>
+      <DefaultValue>6.4.2</DefaultValue>
       <Value>$(SqlCmdVar__17)</Value>
     </SqlCmdVariable>
   </ItemGroup>
