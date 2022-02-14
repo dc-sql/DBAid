@@ -67,8 +67,7 @@
     <TreatTSqlWarningsAsErrors>False</TreatTSqlWarningsAsErrors>
     <SqlCodeAnalysisRules>-Microsoft.Rules.Data.SR0001;-Microsoft.Rules.Data.SR0004;-Microsoft.Rules.Data.SR0005;-Microsoft.Rules.Data.SR0007</SqlCodeAnalysisRules>
     <RunSqlCodeAnalysis>False</RunSqlCodeAnalysis>
-    <SuppressTSqlWarnings>
-    </SuppressTSqlWarnings>
+    <SuppressTSqlWarnings>71502,70001,71562</SuppressTSqlWarnings>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <OutputPath>bin\Debug\</OutputPath>
