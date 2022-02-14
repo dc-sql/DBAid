@@ -699,7 +699,7 @@ BEGIN
 	BEGIN TRANSACTION
 		EXEC msdb.dbo.sp_add_job @job_name=N'$(DatabaseName)_cycle_ERRORLOG', @owner_login_name=N'$(DatabaseName)_sa',
 			@enabled=0, 
-			@category_name=N'_dbaid_maintenance', 
+			@category_name=N'_dbaid maintenance', 
 			@job_id = @jobId OUTPUT;
 
 		SET @cmd = N'DBCC ERRORLOG;'
