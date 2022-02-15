@@ -33,7 +33,7 @@ BEGIN
 
 	IF (OBJECT_ID(N'tempdb.dbo.$(DatabaseName)_backup_config_login_failures') IS NULL AND OBJECT_ID(N'[$(DatabaseName)].[dbo].[config_login_failures]') IS NOT NULL)
 	BEGIN
-		SET @backupsql = N'SELECT * INTO [tempdb].[dbo].[$(DatabaseName)_backup_config_login_failures] FROM [$(DatabaseName)].[dbo].[config_failures]';
+		SET @backupsql = N'SELECT * INTO [tempdb].[dbo].[$(DatabaseName)_backup_config_login_failures] FROM [$(DatabaseName)].[dbo].[config_login_failures]';
 		EXEC sp_executesql @stmt=@backupsql;
 	END
 
