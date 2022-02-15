@@ -790,6 +790,19 @@ BEGIN TRANSACTION
 
 	IF (@rc <> 0) GOTO PROBLEM;
 
+	/* Restore [dbo].[config_login_failures] data */
+	SET @backupsql = N'UPDATE [$(DatabaseName)].[dbo].[config_login_failures]
+						SET [name] = [C].[name]
+							,[failed_login_threshold] = [C].[failed_login_threshold]
+							,[monitoring_period_minutes] = [C].[monitoring_period_minutes]
+							,[login_failure_alert] = [C].[login_failure_alert]
+						FROM [$(DatabaseName)].[dbo].[config_login_failures] [O]
+							INNER JOIN [tempdb].[dbo].[$(DatabaseName)_backup_config_login_failures] [C]
+								ON [O].[name] = [C].[name];';
+	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_login_failures') IS NOT NULL
+		EXEC @rc = sp_executesql @stmt=@backupsql;
+
+	IF (@rc <> 0) GOTO PROBLEM;
 	/* Restore [dbo].[config_perfcounter] data */
 	SET @backupsql = N'INSERT INTO [$(DatabaseName)].[dbo].[config_perfcounter]
 						SELECT [object_name],[counter_name],[instance_name],[warning_threshold],[critical_threshold]
