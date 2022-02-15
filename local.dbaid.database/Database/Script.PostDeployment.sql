@@ -791,14 +791,14 @@ BEGIN TRANSACTION
 	IF (@rc <> 0) GOTO PROBLEM;
 
 	/* Restore [dbo].[config_login_failures] data */
-	SET @backupsql = N'UPDATE [$(DatabaseName)].[dbo].[config_login_failures]
-						SET [name] = [C].[name]
-							,[failed_login_threshold] = [C].[failed_login_threshold]
-							,[monitoring_period_minutes] = [C].[monitoring_period_minutes]
-							,[login_failure_alert] = [C].[login_failure_alert]
-						FROM [$(DatabaseName)].[dbo].[config_login_failures] [O]
-							INNER JOIN [tempdb].[dbo].[$(DatabaseName)_backup_config_login_failures] [C]
-								ON [O].[name] = [C].[name];';
+	SET @backupsql = N'MERGE [$(DatabaseName)].[dbo].[config_login_failures] tgt
+					   USING (SELECT [name], [failed_login_threshold], [monitoring_period_minutes], [login_failure_alert] FROM [tempdb].[dbo].[$(DatabaseName)_backup_config_login_failures]) src ([name], [failed_login_threshold], [monitoring_period_minutes], [login_failure_alert])
+                       ON (tgt.[name] = src.[name])
+                       WHEN MATCHED THEN
+                         UPDATE SET tgt.[failed_login_threshold] = src.[failed_login_threshold], tgt.[monitoring_period_minutes] = src.[monitoring_period_minutes], tgt.[login_failure_alert] = src.[login_failure_alert]
+                       WHEN NOT MATCHED THEN
+                         INSERT ([name], [failed_login_threshold], [monitoring_period_minutes], [login_failure_alert])
+                         VALUES (src.[name], src.[failed_login_threshold], src.[monitoring_period_minutes], src.[login_failure_alert]);';
 	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_login_failures') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
 
