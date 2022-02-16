@@ -109,7 +109,7 @@ INSERT INTO [dbo].[procedure] ([procedure_id],[schema_name],[procedure_name],[de
 			WHEN 'report' THEN 'Meta data reports.'
 			WHEN 'check' THEN 'Monitoring state checks'
 			WHEN 'chart' THEN 'PnP4Nagios performance counters'
-			WHEN 'deprecated' THEN '[SQLSRVPC].[DailyChecks] procedures.'
+			WHEN 'deprecated' THEN 'Legacy DailyChecks procedures.'
 			WHEN 'fact' THEN 'configuration fact generator procedures'
 			END AS [description]
 		,1 AS [is_enabled]
@@ -343,6 +343,12 @@ BEGIN
 			,N'WARNING' AS [default_state_alert]
 			,1 AS [is_enabled]
 		FROM [msdb].[dbo].[sysjobs];
+END
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[config_login_failures] WHERE [name] = N'_dbaid_default')
+BEGIN
+	INSERT INTO [dbo].[config_login_failures] ([name], [failed_login_threshold], [monitoring_period_minutes])
+	VALUES (N'_dbaid_default', 60, 60);
 END
 
 /* Deprecated data insert start */
@@ -693,7 +699,7 @@ BEGIN
 	BEGIN TRANSACTION
 		EXEC msdb.dbo.sp_add_job @job_name=N'$(DatabaseName)_cycle_ERRORLOG', @owner_login_name=N'$(DatabaseName)_sa',
 			@enabled=0, 
-			@category_name=N'_dbaid_maintenance', 
+			@category_name=N'_dbaid maintenance', 
 			@job_id = @jobId OUTPUT;
 
 		SET @cmd = N'DBCC ERRORLOG;'
@@ -731,40 +737,40 @@ BEGIN TRANSACTION
 	DECLARE @rc INT;
 
 	/* Restore [deprecated].[tbparameters] data */
-	SET @backupsql = N'INSERT INTO [$(DatabaseName)].[deprecated].[tbparameters]
-						SELECT [parametername],[setting],[status],[comments]
-						FROM [tempdb].[dbo].[$(DatabaseName)_deprecated_tbparameters]
-						WHERE [parametername] COLLATE Database_Default NOT IN (SELECT [parametername] FROM [$(DatabaseName)].[deprecated].[tbparameters])';
+	SET @backupsql = N'MERGE [$(DatabaseName)].[deprecated].[tbparameters] tgt
+                       USING (SELECT [parametername], [setting], [status], [comments] FROM [tempdb].[dbo].[$(DatabaseName)_deprecated_tbparameters]) src ([parametername], [setting], [status], [comments])
+                       ON tgt.[parametername] = src.[parametername]
+                       WHEN MATCHED THEN 
+                         UPDATE SET tgt.[setting] = src.[setting], tgt.[status] = src.[status], tgt.[comments] = src.[comments]
+                       WHEN NOT MATCHED THEN
+                         INSERT ([parametername], [setting], [status], [comments])
+                         VALUES (src.[parametername], src.[setting], src.[status], src.[comments]);';
 	IF OBJECT_ID('[tempdb].[dbo].[$(DatabaseName)_deprecated_tbparameters]') IS NOT NULL
 	EXEC @rc = sp_executesql @stmt=@backupsql;
 
 	/* Restore [dbo].[config_alwayson] data */
-	SET @backupsql = N'UPDATE [$(DatabaseName)].[dbo].[config_alwayson]
-						SET [ag_role] = [C].[ag_role]
-							,[ag_state_alert] = [C].[ag_state_alert]
-							,[ag_state_is_enabled] = [C].[ag_state_is_enabled]
-							,[ag_role_alert] = [C].[ag_role_alert]
-							,[ag_role_is_enabled] = [C].[ag_role_is_enabled]
-						FROM [$(DatabaseName)].[dbo].[config_alwayson] [O]
-							INNER JOIN [tempdb].[dbo].[$(DatabaseName)_backup_config_alwayson] [C]
-								ON [O].[ag_id] = [C].[ag_id];';
+	SET @backupsql = N'MERGE [$(DatabaseName)].[dbo].[config_alwayson] tgt
+                       USING (SELECT [ag_id], [ag_name], [ag_state_alert], [ag_state_is_enabled], [ag_role], [ag_role_alert], [ag_role_is_enabled] FROM [tempdb].[dbo].[$(DatabaseName)_backup_config_alwayson]) src ([ag_id], [ag_name], [ag_state_alert], [ag_state_is_enabled], [ag_role], [ag_role_alert], [ag_role_is_enabled])
+                       ON tgt.[ag_id] = src.[ag_id]
+                       WHEN MATCHED THEN 
+                         UPDATE SET tgt.[ag_name] = src.[ag_name], tgt.[ag_state_alert] = src.[ag_state_alert], tgt.[ag_state_is_enabled] = src.[ag_state_is_enabled], tgt.[ag_role] = src.[ag_role], tgt.[ag_role_alert] = src.[ag_role_alert], tgt.[ag_role_is_enabled] = src.[ag_role_is_enabled]
+                       WHEN NOT MATCHED THEN
+                         INSERT ([ag_id], [ag_name], [ag_state_alert], [ag_state_is_enabled], [ag_role], [ag_role_alert], [ag_role_is_enabled])
+                         VALUES (src.[ag_id], src.[ag_name], src.[ag_state_alert], src.[ag_state_is_enabled], src.[ag_role], src.[ag_role_alert], src.[ag_role_is_enabled]);';
 	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_alwayson') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
 
 	IF (@rc <> 0) GOTO PROBLEM;
 
 	/* Restore [dbo].[config_database] data */
-	SELECT @backupsql = N'UPDATE [$(DatabaseName)].[dbo].[config_database]
-						SET [capacity_warning_percent_free] = [C].[capacity_warning_percent_free]
-							,[capacity_critical_percent_free] = [C].[capacity_critical_percent_free]
-							,[mirroring_role] = [C].[mirroring_role]
-							,[change_state_alert] = [C].[change_state_alert]
-							,[is_enabled] = [C].[is_enabled]'
-					+	CASE WHEN EXISTS (SELECT 1 FROM [tempdb].[INFORMATION_SCHEMA].[COLUMNS] WHERE [TABLE_NAME] = N'$(DatabaseName)_backup_config_database' AND [COLUMN_NAME] = N'backup_frequency_hours') THEN N',[backup_frequency_hours] = [C].[backup_frequency_hours] ' ELSE N'' END
-					+	CASE WHEN EXISTS (SELECT 1 FROM [tempdb].[INFORMATION_SCHEMA].[COLUMNS] WHERE [TABLE_NAME] = N'$(DatabaseName)_backup_config_database' AND [COLUMN_NAME] = N'checkdb_frequency_hours') THEN N',[checkdb_frequency_hours] = [C].[checkdb_frequency_hours] ' ELSE N'' END
-					+	N'FROM [$(DatabaseName)].[dbo].[config_database] [O]
-							INNER JOIN [tempdb].[dbo].[$(DatabaseName)_backup_config_database] [C]
-								ON [O].[database_id] = [C].[database_id];';
+	SELECT @backupsql = N'MERGE [$(DatabaseName)].[dbo].[config_database] tgt
+                          USING (SELECT [database_id], [db_name], [capacity_warning_percent_free], [capacity_critical_percent_free], [mirroring_role], [backup_frequency_hours], [backup_state_alert], [checkdb_frequency_hours], [checkdb_state_alert], [change_state_alert] FROM [tempdb].[dbo].[$(DatabaseName)_backup_config_database]) src ([database_id], [db_name], [capacity_warning_percent_free], [capacity_critical_percent_free], [mirroring_role], [backup_frequency_hours], [backup_state_alert], [checkdb_frequency_hours], [checkdb_state_alert], [change_state_alert])
+                          ON tgt.[database_id] = src.[database_id]
+                          WHEN MATCHED THEN 
+                            UPDATE SET tgt.[db_name] = src.[db_name], tgt.[capacity_warning_percent_free] = src.[capacity_warning_percent_free], tgt.[capacity_critical_percent_free] = src.[capacity_critical_percent_free], tgt.[mirroring_role] = src.[mirroring_role], tgt.[backup_frequency_hours] = src.[backup_frequency_hours], tgt.[backup_state_alert] = src.[backup_state_alert], tgt.[checkdb_frequency_hours] = src.[checkdb_frequency_hours], tgt.[checkdb_state_alert] = src.[checkdb_state_alert], tgt.[change_state_alert] = src.[change_state_alert]
+                          WHEN NOT MATCHED THEN
+                            INSERT ([database_id], [db_name], [capacity_warning_percent_free], [capacity_critical_percent_free], [mirroring_role], [backup_frequency_hours], [backup_state_alert], [checkdb_frequency_hours], [checkdb_state_alert], [change_state_alert])
+                            VALUES (src.[database_id], src.[db_name], src.[capacity_warning_percent_free], src.[capacity_critical_percent_free], src.[mirroring_role], src.[backup_frequency_hours], src.[backup_state_alert], src.[checkdb_frequency_hours], src.[checkdb_state_alert], src.[change_state_alert]);';
 
 	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_database') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
@@ -772,34 +778,41 @@ BEGIN TRANSACTION
 	IF (@rc <> 0) GOTO PROBLEM;
 
 	/* Restore [dbo].[config_job] data */
-	SET @backupsql = N'UPDATE [$(DatabaseName)].[dbo].[config_job]
-						SET [max_exec_time_min] = [C].[max_exec_time_min]
-							,[change_state_alert] = [C].[change_state_alert]
-							,[is_enabled] = [C].[is_enabled]
-						FROM [$(DatabaseName)].[dbo].[config_job] [O]
-							INNER JOIN [tempdb].[dbo].[$(DatabaseName)_backup_config_job] [C]
-								ON [O].[job_id] = [C].[job_id];';
+	SET @backupsql = N'MERGE [$(DatabaseName)].[dbo].[config_job] tgt
+                       USING (SELECT [job_id], [job_name], [max_exec_time_min], [change_state_alert], [is_enabled] FROM [tempdb].[dbo].[$(DatabaseName)_backup_config_job]) src ([job_id], [job_name], [max_exec_time_min], [change_state_alert], [is_enabled])
+                       ON tgt.[job_id] = src.[job_id]
+                       WHEN MATCHED THEN 
+                         UPDATE SET tgt.[job_name] = src.[job_name], tgt.[max_exec_time_min] = src.[max_exec_time_min], tgt.[change_state_alert] = src.[change_state_alert], tgt.[is_enabled] = src.[is_enabled]
+                       WHEN NOT MATCHED THEN
+                         INSERT ([job_id], [job_name], [max_exec_time_min], [change_state_alert], [is_enabled])
+                         VALUES (src.[job_id], src.[job_name], src.[max_exec_time_min], src.[change_state_alert], src.[is_enabled]);';
 	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_job') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
 
 	IF (@rc <> 0) GOTO PROBLEM;
 
-	/* Restore [dbo].[config_perfcounter] data */
-	SET @backupsql = N'INSERT INTO [$(DatabaseName)].[dbo].[config_perfcounter]
-						SELECT [object_name],[counter_name],[instance_name],[warning_threshold],[critical_threshold]
-						FROM [tempdb].[dbo].[$(DatabaseName)_backup_config_perfcounter] 
-						WHERE [object_name]+[counter_name]+[instance_name] COLLATE Database_Default NOT IN (SELECT [object_name]+[counter_name]+[instance_name] FROM [$(DatabaseName)].[dbo].[config_perfcounter]);';
-	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_perfcounter') IS NOT NULL
+	/* Restore [dbo].[config_login_failures] data */
+	SET @backupsql = N'MERGE [$(DatabaseName)].[dbo].[config_login_failures] tgt
+					   USING (SELECT [name], [failed_login_threshold], [monitoring_period_minutes], [login_failure_alert] FROM [tempdb].[dbo].[$(DatabaseName)_backup_config_login_failures]) src ([name], [failed_login_threshold], [monitoring_period_minutes], [login_failure_alert])
+                       ON (tgt.[name] = src.[name])
+                       WHEN MATCHED THEN
+                         UPDATE SET tgt.[failed_login_threshold] = src.[failed_login_threshold], tgt.[monitoring_period_minutes] = src.[monitoring_period_minutes], tgt.[login_failure_alert] = src.[login_failure_alert]
+                       WHEN NOT MATCHED THEN
+                         INSERT ([name], [failed_login_threshold], [monitoring_period_minutes], [login_failure_alert])
+                         VALUES (src.[name], src.[failed_login_threshold], src.[monitoring_period_minutes], src.[login_failure_alert]);';
+	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_login_failures') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
 
 	IF (@rc <> 0) GOTO PROBLEM;
-
-	SET @backupsql = N'UPDATE [$(DatabaseName)].[dbo].[config_perfcounter]
-						SET [warning_threshold] = [C].[warning_threshold]
-							,[critical_threshold] = [C].[critical_threshold]
-						FROM [$(DatabaseName)].[dbo].[config_perfcounter] [O]
-							INNER JOIN [tempdb].[dbo].[$(DatabaseName)_backup_config_perfcounter] [C]
-								ON [O].[object_name]+[O].[counter_name]+ISNULL([O].[instance_name],'''') = [C].[object_name]+[C].[counter_name]+ISNULL([C].[instance_name],'''') COLLATE Database_Default;';
+	/* Restore [dbo].[config_perfcounter] data */
+	SET @backupsql = N'MERGE [$(DatabaseName)].[dbo].[config_perfcounter] tgt
+                       USING (SELECT [object_name], [counter_name], [instance_name], [warning_threshold], [critical_threshold] FROM [tempdb].[dbo].[$(DatabaseName)_backup_config_perfcounter]) src ([object_name], [counter_name], [instance_name], [warning_threshold], [critical_threshold])
+                       ON tgt.[object_name] = src.[object_name] AND tgt.[counter_name] = src.[counter_name] AND (ISNULL(tgt.[instance_name], ''NUL'') = ISNULL(src.[instance_name], ''NUL''))
+                       WHEN MATCHED THEN 
+                         UPDATE SET tgt.[warning_threshold] = src.[warning_threshold], tgt.[critical_threshold] = src.[critical_threshold]
+                       WHEN NOT MATCHED THEN
+                         INSERT ([object_name], [counter_name], [instance_name], [warning_threshold], [critical_threshold])
+                       VALUES (src.[object_name], src.[counter_name], src.[instance_name], src.[warning_threshold], src.[critical_threshold]);';
 	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_perfcounter') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
 
@@ -807,12 +820,14 @@ BEGIN TRANSACTION
 
 	/* Restore [dbo].[static_parameters] data */
 
-	SET @backupsql = N'UPDATE [$(DatabaseName)].[dbo].[static_parameters]
-						SET [value] = [C].[value]
-							,[description] = [C].[description]
-						FROM [$(DatabaseName)].[dbo].[static_parameters] [O]
-							INNER JOIN [tempdb].[dbo].[$(DatabaseName)_backup_static_parameters] [C]
-								ON [O].[name] = [C].[name] COLLATE Database_Default;';
+	SET @backupsql = N'MERGE [$(DatabaseName)].[dbo].[static_parameters] tgt
+                       USING (SELECT [name], [value], [description] FROM [tempdb].[dbo].[$(DatabaseName)_backup_static_parameters]) src ([name], [value], [description])
+                       ON tgt.[name] = src.[name]
+                       WHEN MATCHED THEN 
+                         UPDATE SET tgt.[value] = src.[value], tgt.[description] = src.[description]
+                       WHEN NOT MATCHED THEN
+                         INSERT ([name], [value], [description])
+                         VALUES (src.[name], src.[value], src.[description]);';
 	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_static_parameters') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
 
@@ -860,6 +875,9 @@ BEGIN
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[$(DatabaseName)_backup_config_database];';
 	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_database') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
+	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[$(DatabaseName)_backup_config_login_failures];';
+	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_login_failures') IS NOT NULL
+		EXEC @rc = sp_executesql @stmt=@backupsql;
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[$(DatabaseName)_backup_config_job];';
 	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_job') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
@@ -879,3 +897,23 @@ BEGIN
 
 	PRINT 'Transaction committed.'
 END
+
+/* Create Extended Event Session for login failure audit */
+/* need to check if it exists first */
+IF EXISTS (SELECT 1 FROM sys.dm_xe_sessions WHERE [name] = N'_dbaid_login_failures')
+  ALTER EVENT SESSION [_dbaid_login_failures] ON SERVER STATE = STOP;
+GO
+IF EXISTS (SELECT 1 FROM sys.server_event_sessions WHERE [name] = N'_dbaid_login_failures')
+  DROP EVENT SESSION [_dbaid_login_failures] ON SERVER;
+GO
+
+CREATE EVENT SESSION [_dbaid_login_failures] ON SERVER 
+ADD EVENT sqlserver.error_reported(
+    ACTION(sqlserver.client_app_name,sqlserver.client_hostname,sqlserver.session_server_principal_name)
+    WHERE ([error_number]=(18456) OR [error_number]=(18452) AND [severity]=(14) AND [state]>(1)))
+ADD TARGET package0.ring_buffer
+WITH (MAX_MEMORY=4096 KB,EVENT_RETENTION_MODE=ALLOW_SINGLE_EVENT_LOSS,MAX_DISPATCH_LATENCY=30 SECONDS,MAX_EVENT_SIZE=0 KB,MEMORY_PARTITION_MODE=NONE,TRACK_CAUSALITY=OFF,STARTUP_STATE=ON)
+GO
+
+ALTER EVENT SESSION [_dbaid_login_failures] ON SERVER STATE = START;
+GO
