@@ -51,7 +51,7 @@
 
     Example output:
 
-    0 mssql_MSSQLSERVER - Microsoft SQL Server 2016 (SP2-CU11-GDR) (KB4535706) - 13.0.5622.0 (X64) Dec 15 2019 08:03:11 Copyright (c) Microsoft CorporationDeveloper Edition (64-bit) on Windows 10 Enterprise 10.0 <X64> (Build 18363: ) (Hypervisor)
+    0 mssql_MSSQLSERVER - Microsoft SQL Server 2016 (SP3) (KB5003279) - 13.0.6300.2 (X64)       Aug 7 2021 01:20:37 Copyright (c) Microsoft CorporationDeveloper Edition (64-bit) on Windows 10 Enterprise 10.0 <X64> (Build 18363: ) (Hypervisor)
     1 mssql_agentjob_MSSQLSERVER count=2 WARNING - job=[Fail Job 1];state=FAIL;runtime_min=0.00;runtime_check_min=200;\n job=[Fail Job 2];state=FAIL;runtime_min=0.00;runtime_check_min=200;\n 
     0 mssql_alwayson_MSSQLSERVER count=0 NA - Always-On is not available.;\n 
     1 mssql_backup_MSSQLSERVER count=7 WARNING - [master]; recovery_model=SIMPLE; last_full=2020-10-29 13:06:05; last_diff=NEVER; last_tran=NEVER;\n [model]; recovery_model=FULL; last_full=2020-10-29 13:06:06; last_diff=NEVER; last_tran=NEVER;\n [msdb]; recovery_model=SIMPLE; last_full=2020-10-29 13:06:06; last_diff=NEVER; last_tran=NEVER;\n [AdventureWorks2016]; recovery_model=SIMPLE; last_full=NEVER; last_diff=NEVER; last_tran=NEVER;\n [AdventureWorksDW2016]; recovery_model=SIMPLE; last_full=NEVER; last_diff=NEVER; last_tran=NEVER;\n [_dbaid]; recovery_model=SIMPLE; last_full=NEVER; last_diff=NEVER; last_tran=NEVER;\n [TestFG]; recovery_model=FULL; last_full=NEVER; last_diff=NEVER; last_tran=NEVER;\n 
@@ -116,7 +116,7 @@ try {
     $InventoryProcedureList = (Invoke-SqlCmd -ConnectionString $ConnectionString -Query "SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'maintenance' AND [name] LIKE N'check_config%'").proc
 
     <#  Get SQL Server version information. Pass through function to remove invalid characters and have on one line for Checkmk to handle it.  #>
-    $InstanceVersion = (Invoke-SqlCmd -ConnectionString $ConnectionString -Query "SELECT * FROM [dbo].[cleanstring](@@VERSION)").string
+    $InstanceVersion = (Invoke-SqlCmd -ConnectionString $ConnectionString -Query "SELECT * FROM [dbo].[get_instance_version](0)").string
 
     <#  Refresh check configuration (i.e. to pick up any new jobs or databases added since last check).  #>
     foreach ($iproc in $InventoryProcedureList) {
@@ -127,8 +127,9 @@ try {
     $InstanceName = (Invoke-SqlCmd -ConnectionString $ConnectionString -Query "SELECT ISNULL(SERVERPROPERTY('InstanceName'), 'MSSQLSERVER') AS [InstanceName]").InstanceName
     
     <#  Output SQL Server instance information in Checkmk format.  #>
-    Write-Host "0 mssql_$($InstanceName) - $($InstanceVersion)"
-    
+    #Write-Host "0 mssql_$($InstanceName) - $($InstanceVersion)"
+    Write-Host "$($InstanceVersion)"
+
     <#  Process each check procedure in the [checkmk] schema.  #>
     foreach ($ckproc in $CheckProcedureList) {
         <#  Pull part of procedure name to use in Checkmk service name.  #>

@@ -4,7 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 */
 
-CREATE PROCEDURE [check].[loginfailures]
+CREATE PROCEDURE [check].[loginfailures] (@show_detail bit = 0 /* Option to allow DBA to retrieve list of login failure detail */)
 WITH ENCRYPTION
 AS
 BEGIN
@@ -120,10 +120,37 @@ BEGIN
     IF (SELECT COUNT(*) FROM @Totals) = 0
       SELECT N'Total number of login failures in the last ' + CAST(@DefaultMonitoringPeriod AS nvarchar(20)) + N' minutes was 0' AS "message", N'NA' AS "state";
     ELSE IF EXISTS (SELECT 1 FROM @Totals WHERE [state] IN (N'WARNING', N'CRITICAL') AND [name] <> N'_Total')
-           SELECT TOP (1) N'Total number of login failures for a monitored login was ' + CAST([count] AS nvarchar(20)) + N', exceeding threshold of ' + CAST([failed_login_threshold] AS nvarchar(20)) + N' per ' + CAST([monitoring_period_minutes] AS nvarchar(20)) + N' minute window.' AS "message", [state] FROM @Totals WHERE [name] <> N'_Total' AND [state] IN (N'WARNING', N'CRITICAL') ORDER BY [state], ([count]) DESC;
+           SELECT TOP (1) N'Total number of login failures for a monitored login was ' + CAST([count] AS nvarchar(20)) + N', exceeding threshold of ' + CAST([failed_login_threshold] AS nvarchar(20)) + N' per ' + CAST([monitoring_period_minutes] AS nvarchar(20)) + N' minute window.' AS "message", [state] FROM @Totals WHERE [name] <> N'_Total' AND [state] IN (N'WARNING', N'CRITICAL') ORDER BY [state] ASC, [count] DESC;
          ELSE IF EXISTS (SELECT 1 FROM @Totals WHERE [state] IN (N'WARNING', N'CRITICAL') AND [name] = N'_Total')
                 SELECT N'Total number of login failures in the last ' + CAST(@DefaultMonitoringPeriod AS nvarchar(20)) + N' minutes was ' + CAST([count] AS nvarchar(20)) + N', exceeding threshold of ' + CAST([failed_login_threshold] AS nvarchar(20)) AS "message", [state] FROM @Totals WHERE [name] = N'_Total';
               ELSE 
                 SELECT N'Total number of login failures in the last ' + CAST(@DefaultMonitoringPeriod AS nvarchar(20)) + N' minutes was ' + CAST([count] AS nvarchar(20)) + N', below threshold of ' + CAST([failed_login_threshold] AS nvarchar(20)) + N' per ' + CAST([monitoring_period_minutes] AS nvarchar(20)) + N' minute window.'AS "message", N'OK' AS "state" FROM @Totals WHERE [name] = N'_Total';
+
+    IF @show_detail = 1
+    BEGIN
+      /* Using CTEs to get list of explicit login names listed first in order of alert criticality & failure count
+           then the overall total. 
+         When an alert is generated, an alert for an explicit login will override the total, so want to show the
+           detail in that order as well, to make it clear which login generated the failure. Assuming, of course, 
+           that the audit is done before the alert clears. If not, there's always the SQL ERRORLOG for auditing.
+      */
+      ;WITH [ExplicitLoginFailures] ([count], [name], [failed_login_threshold], [monitoring_period_minutes], [state]) AS
+      (
+        SELECT TOP (100) PERCENT [count], [name], [failed_login_threshold], [monitoring_period_minutes], [state]
+        FROM @Totals
+        WHERE [name] <> N'_Total'
+        ORDER BY [state] ASC, [count] DESC
+      ),
+      [TotalLoginFailures] ([count], [name], [failed_login_threshold], [monitoring_period_minutes], [state]) AS
+      (
+        SELECT [count], [name], [failed_login_threshold], [monitoring_period_minutes], [state]
+        FROM @Totals
+        WHERE [name] = N'_Total'
+      )
+      SELECT * FROM [ExplicitLoginFailures]
+      UNION
+      SELECT * FROM [TotalLoginFailures];
+    END
+
 END
 GO
