@@ -26,6 +26,7 @@
     <EnableFullTextSearch>False</EnableFullTextSearch>
     <AllowSnapshotIsolation>False</AllowSnapshotIsolation>
     <ReadCommittedSnapshot>False</ReadCommittedSnapshot>
+    <DacVersion>6.4.3</DacVersion>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -239,6 +240,7 @@
     <Build Include="OlaHallengren\dbo_queue_database.sql" />
     <Build Include="Database\Procedure\check\check_loginfailures.sql" />
     <Build Include="Database\Table\dbo_config_login_failures.sql" />
+    <Build Include="Database\Function\dbo_get_instance_version.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Database\Script.PostDeployment.sql" />
@@ -279,7 +281,7 @@
       <Value>$(SqlCmdVar__16)</Value>
     </SqlCmdVariable>
     <SqlCmdVariable Include="Version">
-      <DefaultValue>6.4.2</DefaultValue>
+      <DefaultValue>6.4.3</DefaultValue>
       <Value>$(SqlCmdVar__17)</Value>
     </SqlCmdVariable>
   </ItemGroup>

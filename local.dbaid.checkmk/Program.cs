@@ -14,7 +14,7 @@ namespace local.dbaid.checkmk
         private const string mssqlConfigCheck = "[maintenance].[check_config]";
         private const string mssqlControlCheck = "[control].[check]";
         private const string mssqlControlChart = "[control].[chart]";
-        private const string mssqlEditionCheck = "SELECT * FROM [dbo].[cleanstring](@@VERSION)";
+        private const string mssqlEditionCheck = "SELECT * FROM [dbo].[get_instance_version](0)";
         private const string isClustered = "SELECT SERVERPROPERTY('IsClustered')";
         private const string netBIOSname = "SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS')";
 
@@ -60,7 +60,7 @@ namespace local.dbaid.checkmk
                     Query.Execute(cs, mssqlConfigCheck, defaultCmdTimout);
 
                     // output service version
-                    Console.WriteLine("0 {0}_{1} - {2}", "mssql", instance, Query.Select(cs, mssqlEditionCheck, defaultCmdTimout).Rows[0][0].ToString());
+                    Console.WriteLine("{0}", Query.Select(cs, mssqlEditionCheck, defaultCmdTimout).Rows[0][0].ToString());
 
                     if (isCheck == "1")
                     {
