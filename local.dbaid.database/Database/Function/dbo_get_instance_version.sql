@@ -10,7 +10,7 @@ BEGIN
     DECLARE @edition nvarchar(4000),
             @patch_level sysname;
     SELECT @edition = CAST(SERVERPROPERTY('MachineName') AS sysname) + N'\' + ISNULL(CAST(SERVERPROPERTY('InstanceName') AS sysname), N'MSSQLSERVER') + N',Microsoft SQL Server ' + REPLACE(REPLACE(REPLACE(REPLACE(CAST(SERVERPROPERTY('Edition') AS sysname), N'(64-bit)', N'64-bit'), N': Core-based Licensing', N''), N'Edition', N''), N'  ', N' ')
-           ,@patch_level = CAST(SERVERPROPERTY('ProductLevel') AS sysname) + ISNULL(N'-' + CAST(SERVERPROPERTY('ProductUpdateLevel') AS sysname), N'') + ISNULL(N'-' + CAST(SERVERPROPERTY('ProductBuildType') AS sysname), N'');
+           ,@patch_level = CAST(SERVERPROPERTY('ProductLevel') AS sysname) + ISNULL(N'-' + CAST(SERVERPROPERTY('ProductUpdateLevel') AS sysname), N'') + ISNULL(N'-' + CAST(SERVERPROPERTY('ProductBuildType') AS sysname), N'') + N',' + CAST(SERVERPROPERTY('ProductVersion') AS sysname);
 
 	INSERT INTO @output
         SELECT N'0 mssql_' 
