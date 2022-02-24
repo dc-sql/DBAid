@@ -144,7 +144,7 @@ IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'GUID')
 
 IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'PROGRAM_NAME')
 	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
-		VALUES(N'PROGRAM_NAME','(>^,^)> (SQL Team PS Collector Agent) <(^,^<)',N'This is the program name the central collector will use. Procedure last execute dates will only be updated when an applicaiton connects using this program name.');
+		VALUES(N'PROGRAM_NAME','(>^,^)> (SQL Team PS Collector Agent) <(^,^<)',N'This is the program name the central collector will use. Procedure last execute dates will only be updated when an application connects using this program name.');
 
 IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'DEFRAG_LOG_RETENTION_DAY')
 	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
@@ -180,7 +180,7 @@ IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'DEFAULT_D
 
 		IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'DEFAULT_ALWAYSON_ROLE')
 	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
-		VALUES(N'DEFAULT_ALWAYSON_ROLE','CRITICAL',N'Default alwayson availablility group role change alert');
+		VALUES(N'DEFAULT_ALWAYSON_ROLE','WARNING',N'Default alwayson availablility group role change alert');
 
 IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'SANITIZE_DATASET')
 	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
@@ -211,6 +211,11 @@ GO
 IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'CAPACITY_CACHE_RETENTION_MONTH')
 	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
 		VALUES(N'CAPACITY_CACHE_RETENTION_MONTH',3,N'Number of months to retain capacity cache data in log.capacity');
+GO
+
+IF NOT EXISTS(SELECT 1 FROM [dbo].[static_parameters] WHERE [name] = N'TENANT_NAME')
+	INSERT INTO [dbo].[static_parameters]([name],[value],[description]) 
+		VALUES(N'TENANT_NAME',N'$(Tenant)',N'Name of site/customer being monitored.');
 GO
 
 /* General perf counters */
@@ -857,6 +862,18 @@ BEGIN TRANSACTION
 
 	IF (@rc <> 0) GOTO PROBLEM;
 
+
+	/* Restore [dbo].[static_parameters] data */
+	SET @backupsql = N'UPDATE [$(DatabaseName)].[dbo].[static_parameters]
+						SET [value] = [C].[value]
+						FROM [$(DatabaseName)].[dbo].[static_parameters] [O]
+							INNER JOIN [tempdb].[dbo].[$(DatabaseName)_backup_static_parameters] [C]
+								ON [O].[name] = [C].[name] COLLATE Database_Default;';
+	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_static_parameters') IS NOT NULL
+		EXEC @rc = sp_executesql @stmt=@backupsql;
+
+	IF (@rc <> 0) GOTO PROBLEM;
+
 PROBLEM:
 IF (@@ERROR > 0 OR @rc <> 0)
 BEGIN
@@ -870,28 +887,31 @@ BEGIN
 	IF OBJECT_ID('[tempdb].[dbo].[$(DatabaseName)_deprecated_tbparameters]') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[$(DatabaseName)_backup_config_alwayson];';
-	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_alwayson') IS NOT NULL
+	IF OBJECT_ID('tempdb.dbo.[$(DatabaseName)_backup_config_alwayson]') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[$(DatabaseName)_backup_config_database];';
-	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_database') IS NOT NULL
+	IF OBJECT_ID('tempdb.dbo.[$(DatabaseName)_backup_config_database]') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[$(DatabaseName)_backup_config_login_failures];';
-	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_login_failures') IS NOT NULL
+	IF OBJECT_ID('tempdb.dbo.[$(DatabaseName)_backup_config_login_failures]') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[$(DatabaseName)_backup_config_job];';
-	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_job') IS NOT NULL
+	IF OBJECT_ID('tempdb.dbo.[$(DatabaseName)_backup_config_job]') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[$(DatabaseName)_backup_config_perfcounter];';
-	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_config_perfcounter') IS NOT NULL
+	IF OBJECT_ID('tempdb.dbo.[$(DatabaseName)_backup_config_perfcounter]') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[$(DatabaseName)_backup_static_parameters];';
-	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_static_parameters') IS NOT NULL
+	IF OBJECT_ID('tempdb.dbo.[$(DatabaseName)_backup_static_parameters]') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[$(DatabaseName)_backup_version];';
-	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_version') IS NOT NULL
+	IF OBJECT_ID('tempdb.dbo.[$(DatabaseName)_backup_version]') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
 	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[$(DatabaseName)_backup_procedure];';
-	IF OBJECT_ID('tempdb.dbo.$(DatabaseName)_backup_procedure') IS NOT NULL
+	IF OBJECT_ID('tempdb.dbo.[$(DatabaseName)_backup_procedure]') IS NOT NULL
+		EXEC @rc = sp_executesql @stmt=@backupsql;
+	SET @backupsql = N'DROP TABLE [tempdb].[dbo].[$(DatabaseName)_backup_static_parameters];';
+	IF OBJECT_ID('tempdb.dbo.[$(DatabaseName)_backup_static_parameters]') IS NOT NULL
 		EXEC @rc = sp_executesql @stmt=@backupsql;
 	COMMIT TRANSACTION;
 

@@ -3,13 +3,14 @@
 #
 # Expected source folder structure example:
 # 
-# C:\temp\DBAid-build-6.4.0
+# C:\temp\DBAid-build-6.4.4
 #        \check_mk
 #        \database
 #        \Datacom
 #        \DBAid
 #
-# Root folder can be different, but the 4 subfolders must remain the same.
+# Root folder can be different, (just update $SourceRootFolder below), 
+#   but the 4 subfolders must remain the same.
 #
 # Not tested with clusters. Intended for standalone instances.
 #
@@ -23,10 +24,10 @@ $hostname = $env:computername                # If this is a clustered SQL instan
 $SQLInstance = "MSSQLSERVER"                 # SQL instance to deploy to. MSSQLSERVER = default instance.
 $dbaid_db_name = "_dbaid"                    # Name of database to deploy dbaid to. Best if this is left as default of _dbaid
 $SourceRootFolder = "C:\temp"                # Folder in which source DBAid folder structure is in
-$DBAid_src = "$SourceRootFolder\DBAid-build-6.4.0" # Root folder for dbaid source files.
+$DBAid_src = "$SourceRootFolder\DBAid-build-6.4.4" # Root folder for dbaid source files.
 $dest_root = "C:"                            # Root drive to deploy dbaid executables to.
 
-$checkmk_svc = "NT AUTHORITY\SYSTEM"         # Service account to use for CheckMK plugin (should be same as Check_MK_Agent Windows service)
+$checkmk_svc = "NT AUTHORITY\SYSTEM"         # Service account to use for Checkmk plugin (should be same as Check_MK_Agent Windows service)
 $collector_svc = "NT AUTHORITY\SYSTEM"       # Service account to use for dbaid.collector. Only required if not running dbaid.collector from SQL Agent.
 $client_domain = "@domain.co.nz"             # Domain name (FQDN) client machine is in
 $publickey = "<RSAKeyValue><Modulus>blahblahblah</Modulus><Exponent>KFLR</Exponent></RSAKeyValue>"
@@ -34,6 +35,7 @@ $EmailEnable = "false"                       # Collector to email files? true/fa
 $EmailSmtp = "mailhost.domain.co.nz"         # Mail relay host for sending emails
 $EmailTo = "recipient@domain.co.nz"          # Who to send collector files to
 $EmailFrom = "$hostname@domain.co.nz"        # Who the collector files came from (usually <hostname|VNN@domain.co.nz)
+$Tenant = "Tenant"                           # Customer/tenant/site being monitored. Stored in [dbo].[static_parameters] table. Used in Checkmk monitors to identify configuration items.
 
 # set standard destination folders
 $collector_dest = "$dest_root\DBAid"                       # Folder for dbaid.collector.
@@ -322,9 +324,10 @@ try{
 
   # set client domain
   # NB - looks for default values to replace. If you've changed the defaults, they won't get updated.
-  $content = ($content) -Replace(":setvar ClientDomain `"@datacom.co.nz`"",":setvar ClientDomain `"$client_domain`"")
+  $content = ($content) -Replace(":setvar ClientDomain `"@domain.co.nz`"",":setvar ClientDomain `"$client_domain`"")
   $content = ($content) -Replace(":setvar DatabaseName `"_dbaid`"",":setvar DatabaseName `"$dbaid_db_name`"")
   $content = ($content) -Replace(":setvar ServiceLoadExe `"_dbaid`"",":setvar ServiceLoadExe `"$configg_dest\dbaid.configg.exe`"")
+  $content = ($content) -Replace(":setvar Tenant `"Tenant`"",":setvar Tenant `"$Tenant`"")
 
   # update file
   $content | Set-Content $DBAid_db_src -Encoding UTF8
