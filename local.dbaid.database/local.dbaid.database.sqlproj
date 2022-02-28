@@ -280,8 +280,12 @@
       <DefaultValue>C:\Datacom\dbaid.configg.exe</DefaultValue>
       <Value>$(SqlCmdVar__16)</Value>
     </SqlCmdVariable>
+    <SqlCmdVariable Include="Tenant">
+      <DefaultValue>Tenant</DefaultValue>
+      <Value>$(SqlCmdVar__18)</Value>
+    </SqlCmdVariable>
     <SqlCmdVariable Include="Version">
-      <DefaultValue>6.4.3</DefaultValue>
+      <DefaultValue>6.4.4</DefaultValue>
       <Value>$(SqlCmdVar__17)</Value>
     </SqlCmdVariable>
   </ItemGroup>

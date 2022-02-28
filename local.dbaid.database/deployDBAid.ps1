@@ -20,6 +20,7 @@
 $deploy_collector = 1                        # deploy dbaid collector: 1 = Yes, 0 = No
 $deploy_configg = 1                          # deploy config genie: 1 = Yes, 0 = No
 $deploy_checkmk = 1                          # deploy checkmk plugin: 1 = Yes, 0 = No
+# future enhancement: option to deploy checkmk exe, vbs, or ps1 plugin (vbs or ps1 preferred)
 $hostname = $env:computername                # If this is a clustered SQL instance, change this to $hostname = "<VNN of SQL instance>"
 $SQLInstance = "MSSQLSERVER"                 # SQL instance to deploy to. MSSQLSERVER = default instance.
 $dbaid_db_name = "_dbaid"                    # Name of database to deploy dbaid to. Best if this is left as default of _dbaid

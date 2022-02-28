@@ -67,10 +67,5 @@ BEGIN
 		EXEC sp_executesql @stmt=@backupsql;
 	END
 
-	IF (OBJECT_ID(N'tempdb.dbo.[$(DatabaseName)_backup_static_parameters]') IS NULL AND OBJECT_ID(N'[$(DatabaseName)].[dbo].[static_parameters]') IS NOT NULL)
-	BEGIN
-		SET @backupsql = N'SELECT * INTO [tempdb].[dbo].[$(DatabaseName)_backup_static_parameters] FROM [$(DatabaseName)].[dbo].[static_parameters]';
-		EXEC sp_executesql @stmt = @backupsql;
-	END
 END
 GO
