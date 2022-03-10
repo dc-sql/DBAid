@@ -19,8 +19,10 @@
 # set variables
 $deploy_collector = 1                        # deploy dbaid collector: 1 = Yes, 0 = No
 $deploy_configg = 1                          # deploy config genie: 1 = Yes, 0 = No
-$deploy_checkmk = 1                          # deploy checkmk plugin: 1 = Yes, 0 = No
-# future enhancement: option to deploy checkmk exe, vbs, or ps1 plugin (vbs or ps1 preferred)
+# Choose one of the Checkmk deployment options below. NB - Executable is deprecated and will be removed in a future version.
+$deploy_checkmk_exe = 0                      # deploy checkmk Executable plugin: 1 = Yes, 0 = No
+$deploy_checkmk_vbs = 0                      # deploy checkmk VBScript plugin: 1 = Yes, 0 = No
+$deploy_checkmk_ps1 = 1                      # deploy checkmk PowerShell plugin: 1 = Yes, 0 = No
 $hostname = $env:computername                # If this is a clustered SQL instance, change this to $hostname = "<VNN of SQL instance>"
 $SQLInstance = "MSSQLSERVER"                 # SQL instance to deploy to. MSSQLSERVER = default instance.
 $dbaid_db_name = "_dbaid"                    # Name of database to deploy dbaid to. Best if this is left as default of _dbaid
@@ -45,7 +47,9 @@ $checkmk_dest = "${env:ProgramFiles(x86)}\check_mk\local"  # Folder for CheckMK 
 
 # set source files/folders
 $collector_config = "dbaid.collector.exe.config"                # Config file for dbaid.collector.
-$checkmk_config = "dbaid.checkmk.exe.config"                    # Config file for CheckMK plugin.
+$checkmk_config = "dbaid.checkmk.exe.config"                    # Config file for Checkmk plugin.
+$checkmk_vbscript = "dbaid-checkmk.vbs"                         # Checkmk plugin (VBScript format)
+$checkmk_powershell = "dbaid-checkmk.ps1"                       # Checkmk plugin (PowerShell format)
 $DBAid_collector_src = "$DBAid_src\DBAid"                       # Subfolder for dbaid.collector files.
 $DBAid_configg_src = "$DBAid_src\Datacom"                       # Subfolder for dbaid.configg files.
 $DBAid_checkmk_src = "$DBAid_src\check_mk"                      # Subfolder for dbaid.checkmk files.
@@ -113,11 +117,11 @@ else {
   $SQLService = "MSSQL$" + $SQLInstance
 }
 
-if (!(Get-Service | ? { $_.Name -ieq $SQLService })) {
+if (!(Get-Service | Where-Object { $_.Name -ieq $SQLService })) {
   Write-Host "Error! Cannot find matching SQL Server service for instance [$SQLInstance]" -ForegroundColor Red
   Exit
 }
-elseif (Get-Service | ? { $_.Name -ieq $SQLService -and $_.Status -ine "Running" }) {
+elseif (Get-Service | Where-Object { $_.Name -ieq $SQLService -and $_.Status -ine "Running" }) {
   Write-Host "Error! SQL Instance [$SQLInstance] isn't running" -ForegroundColor Red
   Exit
 }
@@ -175,7 +179,7 @@ try {
       # remove default connection strings from new config file
       $node = $config.SelectSingleNode("/configuration/connectionStrings/add")
 
-      while ($node -ne $null) {
+      while ($null -ne $node) {
         $node.ParentNode.RemoveChild($node) | Out-Null
         $node = $config.SelectSingleNode("/configuration/connectionStrings/add")
       }
@@ -243,7 +247,7 @@ Write-Host "Deploying DBAid Check_MK plugin..." -ForegroundColor Yellow
 try {
   # check if it already exists - if this is an installation to a second instance, just add new connection string.
   # if this is upgrade stuff, use the upgrade script! This script will just add connection strings to whatever config file it finds.
-  if ($deploy_checkmk -eq 1) {
+  if ($deploy_checkmk_exe -eq 1) {
     if ($SQLInstance -eq "MSSQLSERVER") {
       $connectionstring = "Server=$hostname;Database=$dbaid_db_name;Trusted_Connection=True;Application Name=Checkmk;"
     }
@@ -267,7 +271,7 @@ try {
     }
     else {
       # copy folder & files
-      Copy-Item "$DBAid_checkmk_src\*.*" $checkmk_dest -Recurse -Force
+      Copy-Item "$DBAid_checkmk_src\dbaid.checkmk.*" $checkmk_dest -Recurse -Force
 
       # pull contents of configuration file into variable
       [xml]$config = Get-Content "$checkmk_dest\$checkmk_config" -Raw
@@ -275,7 +279,7 @@ try {
       # remove default connection strings from new config file
       $node = $config.SelectSingleNode("/configuration/connectionStrings/add")
 
-      while ($node -ne $null) {
+      while ($null -ne $node) {
         $node.ParentNode.RemoveChild($node) | Out-Null
         $node = $config.SelectSingleNode("/configuration/connectionStrings/add")
       }
@@ -289,6 +293,82 @@ try {
         # save changes to new config file
         $config.Save("$checkmk_dest\$checkmk_config")
       }
+    }
+  }
+  elseif ($deploy_checkmk_vbs -eq 1) {
+    if ($SQLInstance -eq "MSSQLSERVER") {
+      $servername = -join("`"",$hostname,"`"")
+    }
+    else {
+      $servername = -join("`"",$hostname,"\",$SQLInstance,"`"")
+    }
+
+    if (Test-Path -Path $checkmk_dest\$checkmk_vbscript) {
+      # read existing plugin script
+      $content = Get-Content "$checkmk_dest\$checkmk_vbscript" -Raw
+
+      # add new connection string. Find by looking for declaration at top of script, capturing existing instances specified, appending new one.
+      $startcurrentserverlistindex = ($content).IndexOf("v_SQLInstances = Array(`"") + 23
+      $endcurrentserverlistindex = ($content).IndexOf("`")")
+      $currentserverlistlength = $endcurrentserverlistindex - $startcurrentserverlistindex + 1
+      $currentserverliststring = ($content).Substring($startcurrentserverlistindex, $currentserverlistlength)
+      $newserverliststring = -join ($currentserverliststring, ",", $servername)
+      $content = ($content).Replace($currentserverliststring, $newserverliststring)
+
+      # save changes to plugin script
+      $content | Set-Content "$checkmk_dest\$checkmk_vbscript" -Encoding UTF8
+    }
+    else {
+      # copy plugin script
+      Copy-Item "$DBAid_checkmk_src\$checkmk_vbscript" $checkmk_dest -Recurse -Force
+
+      # read plugin script
+      $content = Get-Content "$checkmk_dest\$checkmk_vbscript" -Raw
+
+      # add connection string to plugin script
+      $content = ($content).Replace("v_SQLInstances = Array(`"localhost`")","v_SQLInstances = Array($servername)")
+      
+      # save changes to plugin script
+      $content | Set-Content "$checkmk_dest\$checkmk_vbscript" -Encoding UTF8
+      
+    }
+    
+  }
+  elseif ($deploy_checkmk_ps1 -eq 1) {
+    if ($SQLInstance -eq "MSSQLSERVER") {
+      $connectionstring = "$hostname;"
+    }
+    else {
+      $connectionstring = "$hostname\$SQLInstance;"
+    }
+
+    if (Test-Path -Path $checkmk_dest\$checkmk_powershell) {
+      # read existing plugin script
+      $content = Get-Content "$checkmk_dest\$checkmk_powershell" -Raw
+
+      # add new connection string. Find by looking for declaration at top of script, capturing existing instances specified, appending new one.
+      $startcurrentserverlistindex = ($content).LastIndexOf('[string[]]$SqlServer = @(') + 25
+      $endcurrentserverlistindex = ($content).IndexOf('") # Add more as required.')
+      $currentserverlistlength = $endcurrentserverlistindex - $startcurrentserverlistindex + 1
+      $currentserverliststring = ($content).Substring($startcurrentserverlistindex, $currentserverlistlength)
+      $newserverliststring = -join ($currentserverliststring, ",", "`"Data Source=",$connectionstring,"`"")
+      $content = ($content).Replace("$currentserverliststring", "$newserverliststring")
+
+      # save changes to plugin script
+      $content | Set-Content "$checkmk_dest\$checkmk_powershell" -Encoding UTF8
+    }
+    else {
+      # copy plugin script
+      Copy-Item "$DBAid_checkmk_src\$checkmk_powershell" $checkmk_dest -Recurse -Force
+
+      # read plugin script
+      $content = Get-Content "$checkmk_dest\$checkmk_powershell" -Raw
+
+      # add connection string to plugin script
+      $content = ($content).Replace("[string[]]`$SqlServer = @(`"Data Source=localhost;`")","[string[]]`$SqlServer = @(`"Data Source=$connectionstring`") # Add more as required.")
+      
+      # save changes to plugin script
+      $content | Set-Content "$checkmk_dest\$checkmk_powershell" -Encoding UTF8
     }
   }
 }

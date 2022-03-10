@@ -1,7 +1,7 @@
 Sub Main()
     ' define list of instances to connect to. Array elements should take the form of "MachineName" or "MachineName\InstanceName" (default & named instances respectively) where MachineName can be the hostname or IP address of the server . Optionally, add ",<TCPPort>".
     Dim v_SQLInstances
-    v_SQLInstances = Array("127.0.0.1", "127.0.0.1\SQL2017,49999", "127.0.0.1,49998")
+    v_SQLInstances = Array("localhost")
 
     ' declare variables
     Dim v_DB_Connect_String

@@ -69,7 +69,7 @@
 #>
 Param(
     [parameter(Mandatory=$false)]
-    [string[]]$SqlServer = @("Data Source=127.0.0.1;","Data Source=127.0.0.1,49999;")
+    [string[]]$SqlServer = @("Data Source=localhost;")
 )
 Set-Location $PSScriptRoot
 
