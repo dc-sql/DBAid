@@ -20,9 +20,6 @@
     -->
   </checkCache>
   <startup>
-    <supportedRuntime version="v4.8" />
-    <supportedRuntime version="v4.7" />
-	<supportedRuntime version="v4.5" />
 	<supportedRuntime version="v4.0" />
   </startup>
 </configuration>
