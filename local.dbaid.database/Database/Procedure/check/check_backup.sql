@@ -146,8 +146,9 @@ SET NOCOUNT ON;
 		)
 		INSERT INTO @check
 		SELECT @tenant
-				+ N',' + CAST(SERVERPROPERTY('MachineName') AS sysname) + N'\' + ISNULL(CAST(SERVERPROPERTY('InstanceName') AS sysname), N'MSSQLSERVER')
-				+ N',' + QUOTENAME([D].[db_name])
+				+ N',' + CAST(SERVERPROPERTY('MachineName') AS sysname) 
+				+ N'\' + ISNULL(CAST(SERVERPROPERTY('InstanceName') AS sysname), N'MSSQLSERVER')
+				+ N'\' + [D].[db_name]
 				+ N',' + ISNULL(CONVERT(NVARCHAR(20), [B].[backup_finish_date], 23), N'1900-01-01')
 				+ N',' + CASE [type] WHEN 'D' THEN 'FULL' WHEN 'I' THEN 'DIFFERENTIAL' ELSE 'UNKNOWN' END
 				,[S].[state]
