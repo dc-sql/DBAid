@@ -252,6 +252,10 @@ try {
             $row++
         }
 
+        if ($State = "") {
+            $State = "OK"
+        }
+
         <#  Write output for Checkmk agent to consume.  #>
         Write-Host "$Status mssql_$($ServiceName)_$($InstanceName) $StatusDetails $State"
     }

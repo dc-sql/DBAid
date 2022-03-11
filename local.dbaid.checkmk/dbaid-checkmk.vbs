@@ -265,6 +265,10 @@ Sub Main()
                     v_SQLChecks_RecordSet.MoveNext
                 Loop
 
+				If v_SQLChecks_StateCheck = "" Then
+					v_SQLChecks_StateCheck = "OK"
+				End If
+				
                 ' Write output for Checkmk agent to consume.
                 WScript.Echo v_SQLChecks_Status & " mssql_" & v_SQLChecks_CheckName & "_" & v_InstanceName & " " & v_SQLChecks_Message & " " & v_SQLChecks_StateCheck
 
