@@ -45,8 +45,9 @@ Sub Main()
         ' open conection to database
         v_SQL_Conn.Open v_DB_Connect_String
 
-        ' query to check if SQL is clustered
-        v_SQL_Query = "SELECT CAST(SERVERPROPERTY('IsClustered') AS bit) AS [IsClustered]"
+        ' query to check if SQL is clustered. Have to CAST to tinyint rather than bit as VBS doesn't understand bit
+        ' NB - Machine account for each node needs to have its own login in SQL Server and rights to _dbaid database (admin & monitor roles).
+        v_SQL_Query = "SELECT CAST(SERVERPROPERTY('IsClustered') AS tinyint) AS [IsClustered]"
 
         ' populate recordset
         ' parameters 3 & 4: 0=forward-only cursor (moot if only 1 row returned), 1=read-only records
@@ -71,7 +72,7 @@ Sub Main()
         v_RecordSet.Close
 
         ' If computer name & NetBIOS name don't match and SQL instance is clustered, this script is running on the passive node for this SQL instance; so don't run the SQL checks, they'll be run on the active node.
-        If UCase(v_NetBiosName) <> UCase(v_HostName) AND ABS(v_IsClustered) = 1 Then
+        If UCase(v_NetBiosName) <> UCase(v_HostName) AND v_IsClustered = 1 Then
             Exit Sub
         End If
 
