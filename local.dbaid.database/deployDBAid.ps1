@@ -316,7 +316,7 @@ try {
       $content = ($content).Replace($currentserverliststring, $newserverliststring)
 
       # save changes to plugin script
-      $content | Set-Content "$checkmk_dest\$checkmk_vbscript" -Encoding UTF8
+      $content | Set-Content "$checkmk_dest\$checkmk_vbscript" -Encoding ASCII
     }
     else {
       # copy plugin script
@@ -329,7 +329,7 @@ try {
       $content = ($content).Replace("v_SQLInstances = Array(`"localhost`")","v_SQLInstances = Array($servername)")
       
       # save changes to plugin script
-      $content | Set-Content "$checkmk_dest\$checkmk_vbscript" -Encoding UTF8
+      $content | Set-Content "$checkmk_dest\$checkmk_vbscript" -Encoding ASCII
       
     }
     
