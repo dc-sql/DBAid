@@ -71,7 +71,7 @@ Sub Main()
         v_RecordSet.Close
 
         ' If computer name & NetBIOS name don't match and SQL instance is clustered, this script is running on the passive node for this SQL instance; so don't run the SQL checks, they'll be run on the active node.
-        If UCase(v_NetBiosName) <> UCase(v_HostName) AND v_IsClustered = 1 Then
+        If UCase(v_NetBiosName) <> UCase(v_HostName) AND ABS(v_IsClustered) = 1 Then
             Exit Sub
         End If
 
