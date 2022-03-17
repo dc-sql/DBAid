@@ -84,6 +84,7 @@
     <FileAlignment>8192</FileAlignment>
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
     <SuppressTSqlWarnings>71502,70001,71562</SuppressTSqlWarnings>
+    <SqlTargetName>dbaid_debug</SqlTargetName>
   </PropertyGroup>
   <!-- VS10 without SP1 will not have VisualStudioVersion set, so do that here -->
   <PropertyGroup />
