@@ -137,12 +137,18 @@ Sub Main()
                 End Select
 
                 Do While (Not v_SQLChecks_RecordSet.EOF)
-                    ' this loop concatenates row message data into one line. 
-                    ' E.g., when there are multiple databases that have missed backups, the procedure returns a multi-row table, not just a single row like some others.
+                    ' this loop concatenates row message data into one message. 
                     ' also capture the number of rows via incrementing count (since RecordSet.RecordCount doesn't work properly and returns -1)
-                    v_SQLChecks_Message = v_SQLChecks_Message & v_SQLChecks_RecordSet.Fields.Item("message") & ";\n "
-                    v_SQLChecks_Count = v_SQLChecks_Count + 1
-                    v_SQLChecks_RecordSet.MoveNext
+                    ' NB - for backups, need to have data on one line otherwise it can't be pulled into DOME (only the first line comes through).
+                    If v_RecordSet.Fields.Item("proc") = "[check].[backup]" Then
+                        v_SQLChecks_Message = v_SQLChecks_Message & v_SQLChecks_RecordSet.Fields.Item("message") & "|"
+                        v_SQLChecks_Count = v_SQLChecks_Count + 1
+                        v_SQLChecks_RecordSet.MoveNext
+                    Else
+                        v_SQLChecks_Message = v_SQLChecks_Message & v_SQLChecks_RecordSet.Fields.Item("message") & ";\n "
+                        v_SQLChecks_Count = v_SQLChecks_Count + 1
+                        v_SQLChecks_RecordSet.MoveNext
+                    End If
                 Loop
                 
                 ' If the top row returned has [state] value of "NA", then set count=0 (i.e. monitor doesn't apply, nothing wrong detected). If there's more than one row returned, there's probably a fault.

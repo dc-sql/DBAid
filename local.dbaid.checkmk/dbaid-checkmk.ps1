@@ -150,9 +150,19 @@ try {
         [string]$StatusDetails = ""
         [string]$State = ""
 
-        foreach ($ckrow in $ckDataSet.Tables[0].Rows) {
-            $StatusDetails += $ckrow.message + ";\n "
-            $State = $ckrow.state
+        <# this loop concatenates row message data into one message. #>
+        <# NB - for backups, need to have data on one line otherwise it can't be pulled into DOME (only the first line comes through). #>
+        if ($ckproc -eq "[check].[backup]") {
+            foreach ($ckrow in $ckDataSet.Tables[0].Rows) {
+                $StatusDetails += $ckrow.message + "| "
+                $State = $ckrow.state
+            }
+        }
+        else {
+            foreach ($ckrow in $ckDataSet.Tables[0].Rows) {
+                $StatusDetails += $ckrow.message + ";\n "
+                $State = $ckrow.state
+            }
         }
 
         <#  Write output for Checkmk agent to consume.  #>
