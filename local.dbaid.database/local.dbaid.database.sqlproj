@@ -242,6 +242,7 @@
     <Build Include="Database\Procedure\check\check_loginfailures.sql" />
     <Build Include="Database\Table\dbo_config_login_failures.sql" />
     <Build Include="Database\Function\dbo_get_instance_version.sql" />
+    <Build Include="Database\Procedure\check\check_inventory.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Database\Script.PostDeployment.sql" />
