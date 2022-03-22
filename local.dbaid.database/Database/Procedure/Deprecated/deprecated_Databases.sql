@@ -23,7 +23,7 @@ select @client as 'Client', Getdate() as 'Checkdate',db.[name], CAST(ROUND(SUM(C
    db.[compatibility_level] as Compatailiity_level 
      from sys.databases db join sys.master_files mf on mf.database_id = db.database_id
      INNER JOIN [_dbaid].[dbo].[config_database] c ON db.database_id = c.database_id
-     WHERE c.[is_enabled] = 1
+     WHERE db.[state_desc] <> 'OFFLINE'
      group by db.name, db.owner_sid, db.database_id, db.create_date, db.state_desc, db.is_read_only, db.[recovery_model_desc], db.[collation_name],  db.[compatibility_level]
      
 	IF (SELECT [value] FROM [dbo].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME()
