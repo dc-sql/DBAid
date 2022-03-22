@@ -9,7 +9,7 @@ AS
 BEGIN
     DECLARE @edition nvarchar(4000),
             @patch_level sysname;
-    SELECT @edition = CAST([Value] AS sysname) 
+    SELECT @edition = CAST([value] AS sysname) 
            + N',' 
            + CAST(SERVERPROPERTY('MachineName') AS sysname) 
            + N'\' 

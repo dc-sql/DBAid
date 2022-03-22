@@ -139,8 +139,8 @@ Sub Main()
                 Do While (Not v_SQLChecks_RecordSet.EOF)
                     ' this loop concatenates row message data into one message. 
                     ' also capture the number of rows via incrementing count (since RecordSet.RecordCount doesn't work properly and returns -1)
-                    ' NB - for backups, need to have data on one line otherwise it can't be pulled into DOME (only the first line comes through).
-                    If v_RecordSet.Fields.Item("proc") = "[check].[backup]" Then
+                    ' NB - for backups & inventory, need to have data on one line otherwise it can't be pulled into DOME (only the first line comes through).
+                    If (v_RecordSet.Fields.Item("proc") = "[check].[backup]") Or (v_RecordSet.Fields.Item("proc") = "[check].[inventory]") Then
                         v_SQLChecks_Message = v_SQLChecks_Message & v_SQLChecks_RecordSet.Fields.Item("message") & "|"
                         v_SQLChecks_Count = v_SQLChecks_Count + 1
                         v_SQLChecks_RecordSet.MoveNext
