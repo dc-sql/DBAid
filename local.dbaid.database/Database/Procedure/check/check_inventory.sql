@@ -10,7 +10,7 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 	
-	EXECUTE AS LOGIN = N'$(DatabaseName)';
+	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
 
 	DECLARE @check TABLE([message] NVARCHAR(4000)
 						,[state] NVARCHAR(8));
@@ -39,10 +39,12 @@ BEGIN
             + ISNULL(N'-' + CAST(SERVERPROPERTY('ProductUpdateLevel') AS sysname), N'') 
             + ISNULL(N'-' + CAST(SERVERPROPERTY('ProductBuildType') AS sysname), N'') 
             , N'OK'
-    FROM [dbo].[static_parameters] s, sys.databases D 
+    FROM [$(DatabaseName)].[dbo].[static_parameters] s, sys.databases D 
+      INNER JOIN [$(DatabaseName)].[dbo].[config_database] c ON D.[database_id] = c.[database_id]
     WHERE s.[name] = N'TENANT_NAME'
-    /* exclude system databases & _dbaid as none of these are loaded into CMDB */
-    AND D.[name] NOT IN ('_dbaid', 'master', 'model', 'msdb', 'tempdb');
+      /* exclude system databases & _dbaid as none of these are loaded into CMDB */
+      AND D.[name] NOT IN (N'_dbaid', N'master', N'model', N'msdb', N'tempdb')
+      AND ((D.[state_desc] NOT IN (N'OFFLINE')) OR (D.[state_desc] IN (N'OFFLINE') AND c.[is_enabled] = 1));
 
     SELECT [message], [state] FROM @check;
 

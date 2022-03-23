@@ -39,8 +39,8 @@ BEGIN
         If database is NOT OFFLINE and monitoring [is_enabled] is False, include as it is assumed planned outage or similar to prevent alerts. It should still appear for CMDB reconciliation. If not, set CI to Non Discoverable in CMDB.
         If database id NOT OFFLINE and monitoring [is_enabled] is True, include it as this is the status quo for normal operation.
     */
-    WHERE (db.[state_desc] IN ('OFFLINE') AND c.[is_enabled] = 1)
-       OR (db.[state_desc] NOT IN ('OFFLINE'))
+    WHERE (db.[state_desc] IN (N'OFFLINE') AND c.[is_enabled] = 1)
+       OR (db.[state_desc] NOT IN (N'OFFLINE'))
     GROUP BY db.[name], db.[owner_sid], db.[database_id], db.[create_date], db.[state_desc], db.[is_read_only], db.[recovery_model_desc], db.[collation_name], db.[compatibility_level];
      
     IF (SELECT [value] FROM [$(DatabaseName)].[dbo].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME()
