@@ -46,6 +46,9 @@ BEGIN
       AND D.[name] NOT IN (N'_dbaid', N'master', N'model', N'msdb', N'tempdb')
       AND ((D.[state_desc] NOT IN (N'OFFLINE')) OR (D.[state_desc] IN (N'OFFLINE') AND c.[is_enabled] = 1));
 
+    IF (SELECT COUNT(*) FROM @check) = 0
+        INSERT INTO @check ([message], [state]) VALUES (N'No user databases found.', N'NA');
+
     SELECT [message], [state] FROM @check;
 
 	REVERT;

@@ -149,12 +149,20 @@ try {
         <#  Initialize variables for storing state & status detail strings.  #>
         [string]$StatusDetails = ""
         [string]$State = ""
+        [bool]$IsMultiRow = 0
+
+        if ($ckproc -eq "[check].[backup]") || ($ckproc -eq "[check].[inventory]"){
+            $IsMultiRow = 1
+        }
+        else {
+            $IsMultiRow = 0
+        }
 
         <# this loop concatenates row message data into one message. #>
         <# NB - for backups, need to have data on one line otherwise it can't be pulled into DOME (only the first line comes through). #>
-        if ($ckproc -eq "[check].[backup]") || ($ckproc -eq "[check].[inventory]"){
+        if ($IsMultiRow){
             foreach ($ckrow in $ckDataSet.Tables[0].Rows) {
-                $StatusDetails += $ckrow.message + "| "
+                $StatusDetails += $ckrow.message + "~"
                 $State = $ckrow.state
             }
         }
@@ -163,6 +171,10 @@ try {
                 $StatusDetails += $ckrow.message + ";\n "
                 $State = $ckrow.state
             }
+        }
+
+        if ($IsMultiRow) && ($StatusDetails.Substring($StatusDetails.Length - 1, 1)) -eq "~") {
+            $StatusDetails = $StatusDetails.Substring(1, $StatusDetails.Length - 1)
         }
 
         <#  Write output for Checkmk agent to consume.  #>

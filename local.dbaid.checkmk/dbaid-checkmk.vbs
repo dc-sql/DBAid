@@ -126,6 +126,7 @@ Sub Main()
                 v_SQLChecks_Query = "EXEC [" & v_DBAid_Database & "]." & v_RecordSet.Fields.Item("proc")
                 v_SQLChecks_RecordSet.Open v_SQLChecks_Query, v_SQL_Conn, 0, 1
                 v_SQLChecks_StateCheck = v_SQLChecks_RecordSet.Fields.Item("state")
+                v_SQLChecks_IsMultiRow = 0
 
                 ' convert literal status to numeric value that Checkmk understands. This conversion could also be done in the stored procedure instead.
                 Select Case v_SQLChecks_StateCheck
@@ -136,11 +137,17 @@ Sub Main()
                     Case Else v_SQLChecks_Status = "3"
                 End Select
 
+				If (v_RecordSet.Fields.Item("proc") = "[check].[backup]") Or (v_RecordSet.Fields.Item("proc") = "[check].[inventory]") Then
+					v_SQLChecks_IsMultiRow = 1
+				Else
+					v_SQLChecks_IsMultiRow = 0
+				End If
+
                 Do While (Not v_SQLChecks_RecordSet.EOF)
                     ' this loop concatenates row message data into one message. 
                     ' also capture the number of rows via incrementing count (since RecordSet.RecordCount doesn't work properly and returns -1)
-                    ' NB - for backups & inventory, need to have data on one line otherwise it can't be pulled into DOME (only the first line comes through).
-                    If (v_RecordSet.Fields.Item("proc") = "[check].[backup]") Or (v_RecordSet.Fields.Item("proc") = "[check].[inventory]") Then
+                    ' NB - for backups & inventory, need to have data on one line otherwise it can't be pulled into DOME (only the first line comes through).  Use ~ as row delimiter.
+                    If v_SQLChecks_IsMultiRow = 1 Then
                         v_SQLChecks_Message = v_SQLChecks_Message & v_SQLChecks_RecordSet.Fields.Item("message") & "|"
                         v_SQLChecks_Count = v_SQLChecks_Count + 1
                         v_SQLChecks_RecordSet.MoveNext
@@ -150,6 +157,11 @@ Sub Main()
                         v_SQLChecks_RecordSet.MoveNext
                     End If
                 Loop
+
+				' Remove final row delimiter
+				If (v_SQLChecks_IsMultiRow = 1) And Right(v_SQLChecks_Message, 1) = "~" Then
+					v_SQLChecks_Message = Left(v_SQLChecks_Message, LEN(v_SQLChecks_Message) - 1)
+				End If
                 
                 ' If the top row returned has [state] value of "NA", then set count=0 (i.e. monitor doesn't apply, nothing wrong detected). If there's more than one row returned, there's probably a fault.
                 Select Case v_SQLChecks_StateCheck
