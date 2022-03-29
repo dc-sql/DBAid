@@ -1,8 +1,14 @@
 ﻿<#
 .SYNOPSIS
+    DBAid Version 6.4.4
     This script is for use as a Checkmk plugin. It requires minimum SQL PowerShell module v5 and minimum .NET 4.0.
     
 .DESCRIPTION
+
+    Copyright (C) 2015 Datacom
+    GNU GENERAL PUBLIC LICENSE
+    Version 3, 29 June 2007
+
     This script is part of the DBAid toolset.
 
     This script connects to the specified SQL Server instance(s) and runs stored procedures in the [check] and [chart] schemas of the [_dbaid] database.
