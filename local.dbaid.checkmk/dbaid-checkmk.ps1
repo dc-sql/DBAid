@@ -180,7 +180,7 @@ try {
         }
 
         if (($IsMultiRow) -And ($StatusDetails.Substring($StatusDetails.Length - 1, 1)) -eq "~") {
-            $StatusDetails = $StatusDetails.Substring(1, $StatusDetails.Length - 1)
+            $StatusDetails = $StatusDetails.Substring(0, $StatusDetails.Length - 1)
         }
 
         <#  Write output for Checkmk agent to consume.  #>
