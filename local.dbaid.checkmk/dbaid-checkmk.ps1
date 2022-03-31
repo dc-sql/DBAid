@@ -157,7 +157,7 @@ try {
         [string]$State = ""
         [bool]$IsMultiRow = 0
 
-        if ($ckproc -eq "[check].[backup]") || ($ckproc -eq "[check].[inventory]"){
+        if (($ckproc -eq "[check].[backup]") -Or ($ckproc -eq "[check].[inventory]")) {
             $IsMultiRow = 1
         }
         else {
@@ -166,7 +166,7 @@ try {
 
         <# this loop concatenates row message data into one message. #>
         <# NB - for backups, need to have data on one line otherwise it can't be pulled into DOME (only the first line comes through). #>
-        if ($IsMultiRow){
+        if ($IsMultiRow) {
             foreach ($ckrow in $ckDataSet.Tables[0].Rows) {
                 $StatusDetails += $ckrow.message + "~"
                 $State = $ckrow.state
@@ -179,7 +179,7 @@ try {
             }
         }
 
-        if ($IsMultiRow) && ($StatusDetails.Substring($StatusDetails.Length - 1, 1)) -eq "~") {
+        if (($IsMultiRow) -And ($StatusDetails.Substring($StatusDetails.Length - 1, 1)) -eq "~") {
             $StatusDetails = $StatusDetails.Substring(1, $StatusDetails.Length - 1)
         }
 
