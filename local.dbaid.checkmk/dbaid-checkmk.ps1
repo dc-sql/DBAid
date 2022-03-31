@@ -281,7 +281,7 @@ try {
             $row++
         }
 
-        if ($State = "") {
+        if ($State -eq "") {
             $State = "OK"
         }
 
