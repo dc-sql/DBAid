@@ -16,7 +16,7 @@ BEGIN
 						,[state] NVARCHAR(8));
 
     INSERT INTO @check
-    SELECT CAST(s.[Value] AS sysname) 
+    SELECT CAST(s.[value] AS sysname) 
             + N',' 
             + CAST(SERVERPROPERTY('MachineName') AS sysname) 
             + N'\' 
