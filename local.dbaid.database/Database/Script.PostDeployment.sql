@@ -27,6 +27,9 @@ GO
 ALTER DATABASE [$(DatabaseName)] SET MULTI_USER WITH NO_WAIT;
 GO
 
+ALTER DATABASE [$(DatabaseName)] SET AUTO_CLOSE OFF WITH NO_WAIT;
+GO
+
 IF NOT EXISTS (SELECT 1 FROM [sys].[server_principals] WHERE LOWER([type]) IN ('u','s') AND LOWER(name) = LOWER('$(CollectorServiceAccount)')) 
 BEGIN
 	CREATE LOGIN [$(CollectorServiceAccount)] FROM WINDOWS WITH DEFAULT_DATABASE=[master];
