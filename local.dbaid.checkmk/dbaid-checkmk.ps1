@@ -1,7 +1,7 @@
 ﻿<#
 .SYNOPSIS
     DBAid Version 6.4.4
-    This script is for use as a Checkmk plugin. It requires minimum SQL PowerShell module v5 and minimum .NET 4.0.
+    This script is for use as a Checkmk plugin. It requires minimum .NET 4.0.
     
 .DESCRIPTION
 
@@ -15,7 +15,7 @@
 
     It is intended that the script connects to SQL Server instance(s) on the machine it is running from, not remote SQL Server instances.
 
-    Copy this file into [C:\Program Files (x86)\check_mk\local]. 
+    Copy this file into [C:\ProgramData\checkmk\agent\local] (Checkmk agent 1.6 or newer) or [C:\Program Files (x86)\check_mk\local]
     
     (NB - this is the default plugin folder location)
     
@@ -24,19 +24,19 @@
 
     The entries use standard .NET connection string format. For example:
 
-    [string[]]$SqlServer = @("Data Source=Server1;")
-    [string[]]$SqlServer = @("Data Source=Server1\Instance1;")
-    [string[]]$SqlServer = @("Data Source=192.168.1.2,1435;")
-    [string[]]$SqlServer = @("Data Source=Server1;", "Data Source=Server1\Instance1;", "Data Source=Server1,1435;")
+    [string[]]$SqlServer = @("Server1")
+    [string[]]$SqlServer = @("Server1\Instance1")
+    [string[]]$SqlServer = @("192.168.1.2,1435")
+    [string[]]$SqlServer = @("Server1", "Server1\Instance1", "Server1,1435")
 
     Or if for some reason you are passing the parameter in when running the script (which you wouldn't be doing under normal circumstances):
 
-    $servers = @("Data Source=Server1;","Data Source=Server1\Instance1;","Data Source=Server1,1435;")
+    $servers = @("Server1","Server1\Instance1","Server1,1435")
     .\dbaid-checkmk.ps1 -SqlServer $servers
     
     As these are standard .NET connection strings, you can include additional parameters (for example, Encrypt, MultiSubnetFailover, ConnectionTimeout) separated by semi-colons. For example:
     
-    [string[]]$SqlServer = @("Data Source=Server1;MultiSubnetFailover=True;", "Data Source=Server1\Instance1;Encrypt=True;", "Data Source=Server1,1435;Encrypt=True;TrustServerCertificate=True;")
+    [string[]]$SqlServer = @("Server1;MultiSubnetFailover=True", "Server1\Instance1;Encrypt=True", "Server1,1435;Encrypt=True;TrustServerCertificate=True")
     
 
 .LINK
@@ -57,16 +57,17 @@
 
     Example output:
 
-    0 mssql_MSSQLSERVER - Microsoft SQL Server 2016 (SP3) (KB5003279) - 13.0.6300.2 (X64)       Aug 7 2021 01:20:37 Copyright (c) Microsoft CorporationDeveloper Edition (64-bit) on Windows 10 Enterprise 10.0 <X64> (Build 18363: ) (Hypervisor)
+    0 mssql_MSSQLSERVER - Customer3,MYSERVER\MSSQLSERVER,Microsoft SQL Server 2019 Developer 64-bit,RTM-CU15,15.0.4198.2
     1 mssql_agentjob_MSSQLSERVER count=2 WARNING - job=[Fail Job 1];state=FAIL;runtime_min=0.00;runtime_check_min=200;\n job=[Fail Job 2];state=FAIL;runtime_min=0.00;runtime_check_min=200;\n 
     0 mssql_alwayson_MSSQLSERVER count=0 NA - Always-On is not available.;\n 
-    1 mssql_backup_MSSQLSERVER count=7 WARNING - [master]; recovery_model=SIMPLE; last_full=2020-10-29 13:06:05; last_diff=NEVER; last_tran=NEVER;\n [model]; recovery_model=FULL; last_full=2020-10-29 13:06:06; last_diff=NEVER; last_tran=NEVER;\n [msdb]; recovery_model=SIMPLE; last_full=2020-10-29 13:06:06; last_diff=NEVER; last_tran=NEVER;\n [AdventureWorks2016]; recovery_model=SIMPLE; last_full=NEVER; last_diff=NEVER; last_tran=NEVER;\n [AdventureWorksDW2016]; recovery_model=SIMPLE; last_full=NEVER; last_diff=NEVER; last_tran=NEVER;\n [_dbaid]; recovery_model=SIMPLE; last_full=NEVER; last_diff=NEVER; last_tran=NEVER;\n [TestFG]; recovery_model=FULL; last_full=NEVER; last_diff=NEVER; last_tran=NEVER;\n 
+    0 mssql_inventory_MSSQLSERVER count=2 OK - Customer3,MYSERVER\MSSQLSERVER\Dummy2019_01,Microsoft SQL Server 2019 Developer 64-bit,RTM-CU15~Customer3,MYSERVER\MSSQLSERVER\Dummy2019_02,Microsoft SQL Server 2019 Developer 64-bit,RTM-CU15
+    1 mssql_backup_MSSQLSERVER count=6 WARNING - Customer3,MYSERVER\MSSQLSERVER\_dbaid,1900-01-01,UNKNOWN~Customer3,MYSERVER\MSSQLSERVER\Dummy2019_01,1900-01-01,UNKNOWN~Customer3,MYSERVER\MSSQLSERVER\Dummy2019_02,1900-01-01,UNKNOWN~Customer3,MYSERVER\MSSQLSERVER\master,2022-02-23,FULL~Customer3,MYSERVER\MSSQLSERVER\model,2022-02-23,FULL~Customer3,MYSERVER\MSSQLSERVER\msdb,2022-02-23,FULL
     0 mssql_database_MSSQLSERVER count=0 NA - 8 online; 0 restoring; 0 recovering;\n 
+    0 mssql_loginfailures_MSSQLSERVER count=0 NA - Total number of login failures in the last 60 minutes was 0;\n
     1 mssql_integrity_MSSQLSERVER count=6 WARNING - database=[master]; last_checkdb=2020-05-27 10:40:28;\n database=[model]; last_checkdb=2020-05-27 10:40:29;\n database=[msdb]; last_checkdb=2020-05-27 10:40:29;\n database=[AdventureWorks2016]; last_checkdb=2019-08-02 17:13:47;\n database=[AdventureWorksDW2016]; last_checkdb=2019-08-02 17:13:49;\n database=[TestFG]; last_checkdb=NEVER;\n 
     0 mssql_logshipping_MSSQLSERVER count=0 NA - Logshipping is currently not configured.;\n 
     0 mssql_mirroring_MSSQLSERVER count=0 NA - Mirroring is currently not configured.;\n 
-    0 mssql_capacity_combined_MSSQLSERVER 'C'=360003.00;549504.00;248727728.00;0;261164114.40 
-    0 mssql_capacity_fg_MSSQLSERVER _dbaid_LOG; used=0.79; reserved=8.00; max=26161.00|_dbaid_ROWS_PRIMARY; used=5.25; reserved=8.00; max=26161.00|AdventureWorks2016_LOG; used=0.70; reserved=2.00; max=26155.00|AdventureWorks2016_ROWS_PRIMARY; used=205.44; reserved=207.63; max=26360.63
+    0 mssql_capacity_MSSQLSERVER 'master_LOG_used'=1216348.16;137689772851.20;154900994457.60;0;172112216064.00|'master_LOG_reserved'=2097152.00;;;;|'master_ROWS_PRIMARY_used'=4257218.56;137692604006.40;154904182128.64;0;172115760250.88|'master_ROWS_PRIMARY_reserved'=5641338.88;;;;|'tempdb_LOG_used'=2212495.36;137694806016.00;154906656768.00;0;172118507520.00|'tempdb_LOG_reserved'=8388608.00;;;;|'tempdb_ROWS_PRIMARY_used'=5630853.12;137714938675.20;154929306009.60;0;172143673344.00|'tempdb_ROWS_PRIMARY_reserved'=33554432.00;;;;|'model_LOG_used'=1310720.00;137694806016.00;154906656768.00;0;172118507520.00|'model_LOG_reserved'=8388608.00;;;;|'model_ROWS_PRIMARY_used'=2946498.56;137694806016.00;154906656768.00;0;172118507520.00|'model_ROWS_PRIMARY_reserved'=8388608.00;;;;|'msdb_LOG_used'=1436549.12;137703037337.60;154915915694.08;0;172128794050.56|'msdb_LOG_reserved'=18675138.56;;;;|'msdb_ROWS_PRIMARY_used'=16714301.44;137701726617.60;154914447687.68;0;172127158272.00|'msdb_ROWS_PRIMARY_reserved'=17039360.00;;;;|'_dbaid_LOG_used'=3166699.52;137694806016.00;154906656768.00;0;172118507520.00|'_dbaid_LOG_reserved'=8388608.00;;;;|'_dbaid_ROWS_PRIMARY_used'=6029312.00;137694806016.00;154906656768.00;0;172118507520.00|'_dbaid_ROWS_PRIMARY_reserved'=8388608.00;;;;|'Dummy2019_01_LOG_used'=566231.04;137694806016.00;154906656768.00;0;172118507520.00|'Dummy2019_01_LOG_reserved'=8388608.00;;;;|'Dummy2019_01_ROWS_PRIMARY_used'=3208642.56;137694806016.00;154906656768.00;0;172118507520.00|'Dummy2019_01_ROWS_PRIMARY_reserved'=8388608.00;;;;|'Dummy2019_02_LOG_used'=566231.04;137694806016.00;154906656768.00;0;172118507520.00|'Dummy2019_02_LOG_reserved'=8388608.00;;;;|'Dummy2019_02_ROWS_PRIMARY_used'=3208642.56;137694806016.00;154906656768.00;0;172118507520.00|'Dummy2019_02_ROWS_PRIMARY_reserved'=8388608.00;;;; OK
 
 #>
 
@@ -75,7 +76,7 @@
 #>
 Param(
     [parameter(Mandatory=$false)]
-    [string[]]$SqlServer = @("Data Source=localhost;")
+    [string[]]$SqlServer = @("localhost")
 )
 Set-Location $PSScriptRoot
 
@@ -92,7 +93,10 @@ try {
     [string]$ConnectionString = ''
 
     <##### Set connection string #####>
-    $ConnectionString = -join ($Instance, ';Initial Catalog=', $Database, ';Application Name=Checkmk;Integrated Security=SSPI;')
+    $ConnectionString = -join ("Data Source=", $Instance, ';Initial Catalog=', $Database, ';Application Name=Checkmk;Integrated Security=SSPI;')
+    $Connection = New-Object System.Data.SqlClient.SqlConnection($ConnectionString)
+    $Connection.Open()
+    $Query = $Connection.CreateCommand()
 
     <#
         The next bit will get tripped up if you are trying to run this script on one machine but connecting to a SQL instance running on another machine.
@@ -103,10 +107,18 @@ try {
     #>
 
     <#  Check if this is a clustered SQL instance. #>
-    $IsClustered = Invoke-SqlCmd -ConnectionString $ConnectionString -Query "SELECT CAST(SERVERPROPERTY('IsClustered') AS tinyint) AS [IsClustered]"
+    $Query.CommandText = "SELECT CAST(SERVERPROPERTY('IsClustered') AS tinyint) AS [IsClustered]"
+    $DataSet = New-Object System.Data.DataSet
+    $QueryResult = New-Object System.Data.SqlClient.SqlDataAdapter $Query
+    $QueryResult.Fill($DataSet) | Out-Null
+    $IsClustered = $DataSet.Tables[0]
         
     <#  Get NetBIOS name according to SQL Server. I.e. computer name that SQL instance is running on.  #>
-    $NetBIOSName = Invoke-SqlCmd -ConnectionString $ConnectionString -Query "SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS [NetBIOSName]"
+    $Query.CommandText = "SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS [NetBIOSName]"
+    $DataSet = New-Object System.Data.DataSet
+    $QueryResult = New-Object System.Data.SqlClient.SqlDataAdapter $Query
+    $QueryResult.Fill($DataSet) | Out-Null
+    $NetBIOSName = $DataSet.Tables[0]
 
     <#  Get computer name according to PowerShell. This may be different than what SQL Server thinks if SQL Server is clustered.  #>
     $ComputerName = $env:computername
@@ -118,46 +130,76 @@ try {
     }
 
     <#  Get list of procedures to run for checks. All should be in the [checkmk] schema.  #>
-    $CheckProcedureList = (Invoke-SqlCmd -ConnectionString $ConnectionString -Query "SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'check'").proc
-    $ChartProcedureList = (Invoke-SqlCmd -ConnectionString $ConnectionString -Query "SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'chart'").proc
-    $InventoryProcedureList = (Invoke-SqlCmd -ConnectionString $ConnectionString -Query "SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'maintenance' AND [name] LIKE N'check_config%'").proc
+    $Query.CommandText = "SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'check'"
+    $DataSet = New-Object System.Data.DataSet
+    $QueryResult = New-Object System.Data.SqlClient.SqlDataAdapter $Query
+    $QueryResult.Fill($DataSet) | Out-Null
+    $CheckProcedureList = $DataSet.Tables[0]
+    
+    $Query.CommandText = "SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'chart'"
+    $DataSet = New-Object System.Data.DataSet
+    $QueryResult = New-Object System.Data.SqlClient.SqlDataAdapter $Query
+    $QueryResult.Fill($DataSet) | Out-Null
+    $ChartProcedureList = $DataSet.Tables[0]
+
+    $Query.CommandText = "SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'maintenance' AND [name] LIKE N'check_config%'"
+    $DataSet = New-Object System.Data.DataSet
+    $QueryResult = New-Object System.Data.SqlClient.SqlDataAdapter $Query
+    $QueryResult.Fill($DataSet) | Out-Null
+    $InventoryProcedureList = $DataSet.Tables[0]
 
     <#  Get SQL Server version information. Pass through function to remove invalid characters and have on one line for Checkmk to handle it.  #>
-    $InstanceVersion = (Invoke-SqlCmd -ConnectionString $ConnectionString -Query "SELECT * FROM [dbo].[get_instance_version](0)").string
+    $Query.CommandText = "SELECT [string] FROM [dbo].[get_instance_version](0)"
+    $DataSet = New-Object System.Data.DataSet
+    $QueryResult = New-Object System.Data.SqlClient.SqlDataAdapter $Query
+    $QueryResult.Fill($DataSet) | Out-Null
+    $InstanceVersion = ($DataSet.Tables[0]).string
 
     <#  Refresh check configuration (i.e. to pick up any new jobs or databases added since last check).  #>
     foreach ($iproc in $InventoryProcedureList) {
-        Invoke-SqlCmd -ConnectionString $ConnectionString -Query "EXEC $iproc" -OutputAs DataSet
+        $procname = $iproc.proc
+        $Query.CommandText = "EXEC $procname"
+        $DataSet = New-Object System.Data.DataSet
+        $QueryResult = New-Object System.Data.SqlClient.SqlDataAdapter $Query
+        $QueryResult.Fill($DataSet) | Out-Null
     }
     
     <#  Get SQL instance name. Used in output as part of Checkmk service name.  #>
-    $InstanceName = (Invoke-SqlCmd -ConnectionString $ConnectionString -Query "SELECT ISNULL(SERVERPROPERTY('InstanceName'), 'MSSQLSERVER') AS [InstanceName]").InstanceName
+    $Query.CommandText = "SELECT ISNULL(SERVERPROPERTY('InstanceName'), 'MSSQLSERVER') AS [InstanceName]"
+    $DataSet = New-Object System.Data.DataSet
+    $QueryResult = New-Object System.Data.SqlClient.SqlDataAdapter $Query
+    $QueryResult.Fill($DataSet) | Out-Null
+    $InstanceName = ($DataSet.Tables[0]).InstanceName
     
     <#  Output SQL Server instance information in Checkmk format.  #>
-    #Write-Host "0 mssql_$($InstanceName) - $($InstanceVersion)"
     Write-Host "$($InstanceVersion)"
 
     <#  Process each check procedure in the [checkmk] schema.  #>
     foreach ($ckproc in $CheckProcedureList) {
+        $procname = ($ckproc.proc)
+
         <#  Pull part of procedure name to use in Checkmk service name.  #>
-        $ServiceName = $ckproc.Substring($ckproc.IndexOf('.') + 2).Replace(']','')
+        $ServiceName = $procname.Substring($procname.IndexOf('.') + 2).Replace(']','')
 
         <#  Execute procedure, store results in dataset variable (i.e. PowerShell table equivalent).  #>
-        $ckDataSet = Invoke-SqlCmd -ConnectionString $ConnectionString -Query "EXEC $ckproc" -OutputAs DataSet
+        $Query.CommandText = "EXEC $procname"
+        $DataSet = New-Object System.Data.DataSet
+        $QueryResult = New-Object System.Data.SqlClient.SqlDataAdapter $Query
+        $QueryResult.Fill($DataSet) | Out-Null
 
         <#  Get rowcount of dataset variable. If the top row returned has [state] value of 'NA', then set count=0 (i.e. monitor doesn't apply, nothing wrong detected). If there's more than one row returned, there's probably a fault.  #>
-        $Count = $ckDataSet.Tables[0].Rows.Count
-        $Count = Switch($ckDataSet.Tables[0].Rows[0].state){'NA'{0} default{$Count}}
+        $Count = $DataSet.Tables[0].Rows.Count
+        $Count = Switch($DataSet.Tables[0].Rows[0].state){'NA'{0} default{$Count}}
 
         <#  Get status for the monitor as indicated by value in [state] column.  #>
-        $Status = Switch($ckDataSet.Tables[0].Rows[0].state){ 'NA'{0} 'OK'{0} 'WARNING'{1} 'CRITICAL'{2} default{3}}
+        $Status = Switch($DataSet.Tables[0].Rows[0].state){ 'NA'{0} 'OK'{0} 'WARNING'{1} 'CRITICAL'{2} default{3}}
 
         <#  Initialize variables for storing state & status detail strings.  #>
         [string]$StatusDetails = ""
         [string]$State = ""
         [bool]$IsMultiRow = 0
 
-        if (($ckproc -eq "[check].[backup]") -Or ($ckproc -eq "[check].[inventory]")) {
+        if (($procname -eq "[check].[backup]") -Or ($procname -eq "[check].[inventory]")) {
             $IsMultiRow = 1
         }
         else {
@@ -167,13 +209,13 @@ try {
         <# this loop concatenates row message data into one message. #>
         <# NB - for backups, need to have data on one line otherwise it can't be pulled into DOME (only the first line comes through). #>
         if ($IsMultiRow) {
-            foreach ($ckrow in $ckDataSet.Tables[0].Rows) {
+            foreach ($ckrow in $DataSet.Tables[0].Rows) {
                 $StatusDetails += $ckrow.message + "~"
                 $State = $ckrow.state
             }
         }
         else {
-            foreach ($ckrow in $ckDataSet.Tables[0].Rows) {
+            foreach ($ckrow in $DataSet.Tables[0].Rows) {
                 $StatusDetails += $ckrow.message + ";\n "
                 $State = $ckrow.state
             }
@@ -189,6 +231,8 @@ try {
 
     <#  Process each chart procedure in the [checkmk] schema.  #>
     foreach ($ctproc in $ChartProcedureList) {
+        $procname = $ctproc.proc
+
         <#  Variables to manage pnp chart data. Initialize for each row of data being processed (i.e. per procedure call).  #>
         [string]$pnpData = ""
         [int]$row = 0
@@ -197,12 +241,15 @@ try {
         [string]$StatusDetails = ""
     
         <#  Pull part of procedure name to use in Checkmk service name.  #>
-        $ServiceName = $ctproc.Substring($ctproc.IndexOf('.') + 2).Replace(']','')
+        $ServiceName = $procname.Substring($procname.IndexOf('.') + 2).Replace(']','')
 
         <#  Execute procedure, store results in dataset variable (i.e. PowerShell table equivalent).  #>
-        $ctDataSet = Invoke-SqlCmd -ConnectionString $ConnectionString -Query "EXEC $ctproc" -As DataSet
+        $Query.CommandText = "EXEC $procname"
+        $DataSet = New-Object System.Data.DataSet
+        $QueryResult = New-Object System.Data.SqlClient.SqlDataAdapter $Query
+        $QueryResult.Fill($DataSet) | Out-Null
 
-        foreach ($ctrow in $ctDataset.Tables[0].Rows) {
+        foreach ($ctrow in $Dataset.Tables[0].Rows) {
             <#  Variables to manage pnp chart data. Initialize for each row of data being processed (i.e. each database or performance monitor counter).  #>
             [bool]$WarnExist = 0
             [bool]$CritExist = 0
@@ -309,34 +356,42 @@ catch {
     #>
 }
 finally {
+    <# Close connection. NB - because connection pooling is in use, SQL Server connection remains and will get reused.  #>
+    $Connection.Close()
     <#  Clean up the variables rather than waiting for .NET garbage collector.  #>
-    If (Test-Path variable:local:ConnectionString) { Remove-Variable ConnectionString }
-    If (Test-Path variable:local:Database) { Remove-Variable Database }
-    If (Test-Path variable:local:ConnectionString) { Remove-Variable ConnectionString }
-    If (Test-Path variable:local:SQLQuery) { Remove-Variable SQLQuery }
-    If (Test-Path variable:local:CheckProcedureList) { Remove-Variable CheckProcedureList }
     If (Test-Path variable:local:ChartProcedureList) { Remove-Variable ChartProcedureList }
-    If (Test-Path variable:local:InventoryProcedureList) { Remove-Variable InventoryProcedureList }
-    If (Test-Path variable:local:IsClustered) { Remove-Variable IsClustered }
-    If (Test-Path variable:local:NetBIOSName) { Remove-Variable NetBIOSName }
+    If (Test-Path variable:local:CheckProcedureList) { Remove-Variable CheckProcedureList }
+    If (Test-Path variable:local:ckproc) { Remove-Variable ckproc }
+    If (Test-Path variable:local:ckrow) { Remove-Variable ckrow }
     If (Test-Path variable:local:ComputerName) { Remove-Variable ComputerName }
+    If (Test-Path variable:local:Connection) { Remove-Variable Connection }
+    If (Test-Path variable:local:ConnectionString) { Remove-Variable ConnectionString }
+    If (Test-Path variable:local:Count) { Remove-Variable Count }
+    If (Test-Path variable:local:crit) { Remove-Variable crit }
+    If (Test-Path variable:local:CritExist) { Remove-Variable CritExist }
+    If (Test-Path variable:local:ctproc) { Remove-Variable ctproc }
+    If (Test-Path variable:local:Database) { Remove-Variable Database }
+    If (Test-Path variable:local:DataSet) { Remove-Variable DataSet }
+    If (Test-Path variable:local:Instance) { Remove-Variable Instance }
     If (Test-Path variable:local:InstanceName) { Remove-Variable InstanceName }
     If (Test-Path variable:local:InstanceVersion) { Remove-Variable InstanceVersion }
+    If (Test-Path variable:local:InventoryProcedureList) { Remove-Variable InventoryProcedureList }
+    If (Test-Path variable:local:iproc) { Remove-Variable iproc }
+    If (Test-Path variable:local:IsClustered) { Remove-Variable IsClustered }
+    If (Test-Path variable:local:IsMultiRow) { Remove-Variable IsMultiRow }
+    If (Test-Path variable:local:NetBIOSName) { Remove-Variable NetBIOSName }
+    If (Test-Path variable:local:pnpData) { Remove-Variable pnpData }
+    If (Test-Path variable:local:procname) { Remove-Variable procname }
+    If (Test-Path variable:local:Query) { Remove-Variable Query }
+    If (Test-Path variable:local:QueryResult) { Remove-Variable QueryResult }
+    If (Test-Path variable:local:row) { Remove-Variable row }
     If (Test-Path variable:local:ServiceName) { Remove-Variable ServiceName }
-    If (Test-Path variable:local:Count) { Remove-Variable Count }
+    If (Test-Path variable:local:SqlServer) { Remove-Variable SqlServer }
+    If (Test-Path variable:local:State) { Remove-Variable State }
     If (Test-Path variable:local:Status) { Remove-Variable Status }
     If (Test-Path variable:local:StatusDetails) { Remove-Variable StatusDetails }
-    If (Test-Path variable:local:State) { Remove-Variable State }
-    If (Test-Path variable:local:ckrow) { Remove-Variable ckrow }
-    If (Test-Path variable:local:ctrow) { Remove-Variable ctrow }
-    If (Test-Path variable:local:ckDataSet) { Remove-Variable ckDataSet }
-    If (Test-Path variable:local:ctDataSet) { Remove-Variable ctDataSet }
     If (Test-Path variable:local:val) { Remove-Variable val }
     If (Test-Path variable:local:warn) { Remove-Variable warn }
-    If (Test-Path variable:local:crit) { Remove-Variable crit }
-    If (Test-Path variable:local:pnpData) { Remove-Variable pnpData }
-    If (Test-Path variable:local:row) { Remove-Variable row }
     If (Test-Path variable:local:WarnExist) { Remove-Variable WarnExist }
-    If (Test-Path variable:local:CritExist) { Remove-Variable CritExist }
 }
 }
