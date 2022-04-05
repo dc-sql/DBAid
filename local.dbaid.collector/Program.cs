@@ -31,7 +31,7 @@ namespace local.dbaid.collector
 
             if (Array.IndexOf(args, @"/?") >= 0)
             {
-                Console.WriteLine("See https://github.com/dc-sql/DBAid for more details");
+                Console.WriteLine("See https://github.com/dc-sql/DBAid for more details.");
 
                 return;
             }
