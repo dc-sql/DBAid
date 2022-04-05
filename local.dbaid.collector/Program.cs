@@ -249,7 +249,6 @@ namespace local.dbaid.collector
 
             Log.message(LogEntryType.INFO, "DBAidCollector", "Completed DBAid Collection", logFile);
 
-            //System.Threading.Thread.Sleep(10000);
         }
     }
 }
