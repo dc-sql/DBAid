@@ -60,20 +60,23 @@ namespace server.dbaid.extractor
                             attach.Load();
                             FileStream file = null;
 
-                            try
+                            if (attach.Name.Contains("encrypted"))
                             {
-                                file = new System.IO.FileStream(Path.Combine(outfolder, attach.Name), FileMode.Create);
-                                file.Write(attach.Content, 0, attach.Content.Length);
-                            }
-                            catch (Exception ex)
-                            {
-                                Log.message(LogEntryType.WARNING, "DBAidExtractor", ex.Message + (logVerbose ? " - " + ex.StackTrace : ""), logFile);
-                                continue;
-                            }
-                            finally
-                            {
-                                file.Flush();
-                                file.Close();
+                                try
+                                {
+                                    file = new System.IO.FileStream(Path.Combine(outfolder, attach.Name), FileMode.Create);
+                                    file.Write(attach.Content, 0, attach.Content.Length);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Log.message(LogEntryType.WARNING, "DBAidExtractor", ex.Message + (logVerbose ? " - " + ex.StackTrace : ""), logFile);
+                                    continue;
+                                }
+                                finally
+                                {
+                                    file.Flush();
+                                    file.Close();
+                                }
                             }
 
                             Log.message(LogEntryType.INFO, "DBAidExtractor", "Downloaded Attachment:" + outfolder + "\\" + attach.Name, logFile);

@@ -77,7 +77,7 @@ BEGIN
 			,SUBSTRING([F].[physical_name],1,1) AS [drive]
 			,0.0 AS [size_used_mb]
 			,CAST([F].[size]/128.00 AS NUMERIC(20,2)) AS [size_reserved_mb]
-		FROM [dbo].[config_database] [C]
+		FROM [$(DatabaseName)].[dbo].[config_database] [C]
 			INNER JOIN [sys].[master_files] [F]
 				ON [C].[database_id] = [F].[database_id]
 		WHERE [F].[database_id] NOT IN (SELECT [database_id] FROM @file_info)
@@ -209,7 +209,7 @@ BEGIN
 				ELSE (SUM([F].[size_used_mb]) + MAX([S].[fg_size_available_mb]))
 				END AS [max]
 			,MAX([S].[fg_size_available_mb]) AS [fg_size_available_mb]
-		FROM [dbo].[config_database] [C]
+		FROM [$(DatabaseName)].[dbo].[config_database] [C]
 			INNER JOIN [sys].[databases] [DB]
 				ON [C].[database_id] = [DB].[database_id] AND [C].[is_enabled] = 1
 			INNER JOIN @file_info [F]
@@ -244,28 +244,33 @@ BEGIN
 			,[C].[capacity_critical_percent_free]
 			,[C].[capacity_warning_percent_free]
 	)
+    /* 
+       Convert output values from MB to bytes. 
+	   This allows combined graphs in Checkmk as Checkmk disk space monitor returns bytes. 
+	   Combined graphs allow you to map data space used against disk size for capacity reporting/estimates. 
+    */
 	SELECT	
-		CAST([used] AS NUMERIC(20,2)) AS [val]
-		,CASE WHEN CAST([warning] AS NUMERIC(20,2)) < 1 THEN NULL ELSE CAST([warning] AS NUMERIC(20,2)) END AS [warn]
-		,CASE WHEN CAST([critical] AS NUMERIC(20,2)) < 1 THEN NULL ELSE CAST([critical] AS NUMERIC(20,2)) END AS [crit]
+		CAST([used] AS NUMERIC(20,2)) * 1024 * 1024 AS [val]
+		,CASE WHEN CAST([warning] AS NUMERIC(20,2)) < 1 THEN NULL ELSE CAST([warning] AS NUMERIC(20,2)) * 1024 * 1024 END AS [warn]
+		,CASE WHEN CAST([critical] AS NUMERIC(20,2)) < 1 THEN NULL ELSE CAST([critical] AS NUMERIC(20,2)) * 1024 * 1024 END AS [crit]
 		,N''''
 		+ REPLACE([db_name],N' ',N'_')
 		+ N'_'
 		+ REPLACE([data_space],N' ',N'_')
 		+ N'_used''='
-		+ CAST([used] AS VARCHAR(20))
+		+ CAST(CAST([used] AS NUMERIC(20,2)) * 1024 * 1024 AS VARCHAR(20))
 		+ N';'
-		+ ISNULL(CAST([warning] AS VARCHAR(20)),'')
+		+ ISNULL(CAST(CAST([warning] AS NUMERIC(20,2)) * 1024 * 1024 AS VARCHAR(20)),'')
 		+ N';'
-		+ ISNULL(CAST([critical] AS VARCHAR(20)),'')
+		+ ISNULL(CAST(CAST([critical] AS NUMERIC(20,2)) * 1024 * 1024 AS VARCHAR(20)),'')
 		+ N';0;'
-		+ CAST([max] AS VARCHAR(20))
+		+ CAST(CAST([max] AS NUMERIC(20,2)) * 1024 * 1024 AS VARCHAR(20))
 		+ N'|'''
 		+ REPLACE([db_name],N' ',N'_')
 		+ N'_'
 		+ REPLACE([data_space],N' ',N'_')
 		+ N'_reserved''='
-		+ CAST([reserved] AS VARCHAR(20))
+		+ CAST(CAST([reserved] AS NUMERIC(20,2)) * 1024 * 1024 AS VARCHAR(20))
 		+ N';;;;' AS [pnp]
 	FROM Dataset
 	ORDER BY [database_id], [data_space];

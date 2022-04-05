@@ -1,7 +1,12 @@
 Sub Main()
+    ' Copyright (C) 2015 Datacom
+    ' GNU GENERAL PUBLIC LICENSE
+    ' Version 3, 29 June 2007
+    
+    ' DBAid Version 6.4.4
     ' define list of instances to connect to. Array elements should take the form of "MachineName" or "MachineName\InstanceName" (default & named instances respectively) where MachineName can be the hostname or IP address of the server . Optionally, add ",<TCPPort>".
     Dim v_SQLInstances
-    v_SQLInstances = Array("127.0.0.1", "127.0.0.1\SQL2017,49999", "127.0.0.1,49998")
+    v_SQLInstances = Array("localhost")
 
     ' declare variables
     Dim v_DB_Connect_String
@@ -45,8 +50,9 @@ Sub Main()
         ' open conection to database
         v_SQL_Conn.Open v_DB_Connect_String
 
-        ' query to check if SQL is clustered
-        v_SQL_Query = "SELECT CAST(SERVERPROPERTY('IsClustered') AS bit) AS [IsClustered]"
+        ' query to check if SQL is clustered. Have to CAST to tinyint rather than bit as VBS doesn't understand bit
+        ' NB - Machine account for each node needs to have its own login in SQL Server and rights to _dbaid database (admin & monitor roles).
+        v_SQL_Query = "SELECT CAST(SERVERPROPERTY('IsClustered') AS tinyint) AS [IsClustered]"
 
         ' populate recordset
         ' parameters 3 & 4: 0=forward-only cursor (moot if only 1 row returned), 1=read-only records
@@ -125,6 +131,7 @@ Sub Main()
                 v_SQLChecks_Query = "EXEC [" & v_DBAid_Database & "]." & v_RecordSet.Fields.Item("proc")
                 v_SQLChecks_RecordSet.Open v_SQLChecks_Query, v_SQL_Conn, 0, 1
                 v_SQLChecks_StateCheck = v_SQLChecks_RecordSet.Fields.Item("state")
+                v_SQLChecks_IsMultiRow = 0
 
                 ' convert literal status to numeric value that Checkmk understands. This conversion could also be done in the stored procedure instead.
                 Select Case v_SQLChecks_StateCheck
@@ -135,14 +142,31 @@ Sub Main()
                     Case Else v_SQLChecks_Status = "3"
                 End Select
 
+				If (v_RecordSet.Fields.Item("proc") = "[check].[backup]") Or (v_RecordSet.Fields.Item("proc") = "[check].[inventory]") Then
+					v_SQLChecks_IsMultiRow = 1
+				Else
+					v_SQLChecks_IsMultiRow = 0
+				End If
+
                 Do While (Not v_SQLChecks_RecordSet.EOF)
-                    ' this loop concatenates row message data into one line. 
-                    ' E.g., when there are multiple databases that have missed backups, the procedure returns a multi-row table, not just a single row like some others.
+                    ' this loop concatenates row message data into one message. 
                     ' also capture the number of rows via incrementing count (since RecordSet.RecordCount doesn't work properly and returns -1)
-                    v_SQLChecks_Message = v_SQLChecks_Message & v_SQLChecks_RecordSet.Fields.Item("message") & ";\n "
-                    v_SQLChecks_Count = v_SQLChecks_Count + 1
-                    v_SQLChecks_RecordSet.MoveNext
+                    ' NB - for backups & inventory, need to have data on one line otherwise it can't be pulled into DOME (only the first line comes through).  Use ~ as row delimiter.
+                    If v_SQLChecks_IsMultiRow = 1 Then
+                        v_SQLChecks_Message = v_SQLChecks_Message & v_SQLChecks_RecordSet.Fields.Item("message") & "~"
+                        v_SQLChecks_Count = v_SQLChecks_Count + 1
+                        v_SQLChecks_RecordSet.MoveNext
+                    Else
+                        v_SQLChecks_Message = v_SQLChecks_Message & v_SQLChecks_RecordSet.Fields.Item("message") & ";\n "
+                        v_SQLChecks_Count = v_SQLChecks_Count + 1
+                        v_SQLChecks_RecordSet.MoveNext
+                    End If
                 Loop
+
+				' Remove final row delimiter
+				If (v_SQLChecks_IsMultiRow = 1) And Right(v_SQLChecks_Message, 1) = "~" Then
+					v_SQLChecks_Message = Left(v_SQLChecks_Message, LEN(v_SQLChecks_Message) - 1)
+				End If
                 
                 ' If the top row returned has [state] value of "NA", then set count=0 (i.e. monitor doesn't apply, nothing wrong detected). If there's more than one row returned, there's probably a fault.
                 Select Case v_SQLChecks_StateCheck
@@ -265,6 +289,10 @@ Sub Main()
                     v_SQLChecks_RecordSet.MoveNext
                 Loop
 
+				If v_SQLChecks_StateCheck = "" Then
+					v_SQLChecks_StateCheck = "OK"
+				End If
+				
                 ' Write output for Checkmk agent to consume.
                 WScript.Echo v_SQLChecks_Status & " mssql_" & v_SQLChecks_CheckName & "_" & v_InstanceName & " " & v_SQLChecks_Message & " " & v_SQLChecks_StateCheck
 

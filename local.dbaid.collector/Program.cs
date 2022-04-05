@@ -31,7 +31,7 @@ namespace local.dbaid.collector
 
             if (Array.IndexOf(args, @"/?") >= 0)
             {
-                Console.WriteLine("See https://github.com/dc-sql/DBAid for more details");
+                Console.WriteLine("See https://github.com/dc-sql/DBAid for more details.");
 
                 return;
             }
@@ -249,7 +249,6 @@ namespace local.dbaid.collector
 
             Log.message(LogEntryType.INFO, "DBAidCollector", "Completed DBAid Collection", logFile);
 
-            //System.Threading.Thread.Sleep(10000);
         }
     }
 }
