@@ -46,9 +46,6 @@
     Official Checkmk site: https://checkmk.com
 
 .LINK
-    Invoke-Sqlcmd command: https://docs.microsoft.com/en-us/powershell/module/sqlserver/invoke-Sqlcmd?view=sqlserver-ps
-
-.LINK
     .NET ConnectionString keywords: https://docs.microsoft.com/en-us/dotnet/api/system.data.sqlclient.sqlconnection.connectionstring?view=dotnet-plat-ext-5.0
 
 .EXAMPLE
