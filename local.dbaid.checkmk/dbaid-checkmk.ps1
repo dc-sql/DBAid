@@ -127,13 +127,13 @@ try {
     }
 
     <#  Get list of procedures to run for checks. All should be in the [checkmk] schema.  #>
-    $Query.CommandText = "SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'check'"
+    $Query.CommandText = "EXEC [control].[check]"
     $DataSet = New-Object System.Data.DataSet
     $QueryResult = New-Object System.Data.SqlClient.SqlDataAdapter $Query
     $QueryResult.Fill($DataSet) | Out-Null
     $CheckProcedureList = $DataSet.Tables[0]
     
-    $Query.CommandText = "SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'chart'"
+    $Query.CommandText = "EXEC [control].[chart]"
     $DataSet = New-Object System.Data.DataSet
     $QueryResult = New-Object System.Data.SqlClient.SqlDataAdapter $Query
     $QueryResult.Fill($DataSet) | Out-Null
@@ -173,7 +173,7 @@ try {
 
     <#  Process each check procedure in the [checkmk] schema.  #>
     foreach ($ckproc in $CheckProcedureList) {
-        $procname = ($ckproc.proc)
+        $procname = ($ckproc.cmd)
 
         <#  Pull part of procedure name to use in Checkmk service name.  #>
         $ServiceName = $procname.Substring($procname.IndexOf('.') + 2).Replace(']','')
@@ -228,7 +228,7 @@ try {
 
     <#  Process each chart procedure in the [checkmk] schema.  #>
     foreach ($ctproc in $ChartProcedureList) {
-        $procname = $ctproc.proc
+        $procname = $ctproc.cmd
 
         <#  Variables to manage pnp chart data. Initialize for each row of data being processed (i.e. per procedure call).  #>
         [string]$pnpData = ""

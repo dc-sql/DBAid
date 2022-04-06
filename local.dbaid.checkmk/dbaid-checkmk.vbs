@@ -82,13 +82,13 @@ Sub Main()
         End If
 
         ' Refresh check configuration (i.e. to pick up any new jobs or databases added since last check).
-        v_SQL_Query = "SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [" & v_DBAid_Database & "].[sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'maintenance' AND [name] LIKE N'check_config%'"
+        v_SQL_Query = "SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'maintenance' AND [name] LIKE N'check_config%'"
         v_RecordSet.Open v_SQL_Query, v_SQL_Conn, 0, 1
         If v_RecordSet.EOF Then
             WScript.Echo "3 mssql_" & v_InstanceName & " - Error occurred refreshing check configuration."
         Else
             Do While (Not v_RecordSet.EOF)
-                v_SQLChecks_Query = "EXEC [" & v_DBAid_Database & "]." & v_RecordSet.Fields.Item("proc")
+                v_SQLChecks_Query = "EXEC " & v_RecordSet.Fields.Item("proc")
                 ' using Conn.Execute method here rather than RecordSet.Open because the inventory procedures don't return a recordset; they just refresh configuration metadata
                 v_SQL_Conn.Execute(v_SQLChecks_Query)
                 v_RecordSet.MoveNext
@@ -118,7 +118,7 @@ Sub Main()
 
 
         ' get list of check procedures to loop through
-        v_SQL_Query = "SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [" & v_DBAid_Database & "].[sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'check'"
+        v_SQL_Query = "EXEC [control].[check]"
         v_RecordSet.Open v_SQL_Query, v_SQL_Conn, 0, 1
         If v_RecordSet.EOF Then
             WScript.Echo "3 mssql_" & v_InstanceName & " - Error occurred looping through checks."
@@ -127,8 +127,8 @@ Sub Main()
                 ' this loop executes each procedure in the [check] schema
                 v_SQLChecks_Message = ""
                 v_SQLChecks_Count = 0
-                v_SQLChecks_CheckName = Replace(Mid(v_RecordSet.Fields.Item("proc"), 10), "]", "") ' gets procedure name sans schema & [] characters. E.g., final output is mssql_Instance_ValueFromThisVariablev_SQLChecks_CheckName
-                v_SQLChecks_Query = "EXEC [" & v_DBAid_Database & "]." & v_RecordSet.Fields.Item("proc")
+                v_SQLChecks_CheckName = Replace(Mid(v_RecordSet.Fields.Item("cmd"), 10), "]", "") ' gets procedure name sans schema & [] characters. E.g., final output is mssql_Instance_ValueFromThisVariablev_SQLChecks_CheckName
+                v_SQLChecks_Query = "EXEC " & v_RecordSet.Fields.Item("cmd")
                 v_SQLChecks_RecordSet.Open v_SQLChecks_Query, v_SQL_Conn, 0, 1
                 v_SQLChecks_StateCheck = v_SQLChecks_RecordSet.Fields.Item("state")
                 v_SQLChecks_IsMultiRow = 0
@@ -142,7 +142,7 @@ Sub Main()
                     Case Else v_SQLChecks_Status = "3"
                 End Select
 
-				If (v_RecordSet.Fields.Item("proc") = "[check].[backup]") Or (v_RecordSet.Fields.Item("proc") = "[check].[inventory]") Then
+				If (v_RecordSet.Fields.Item("cmd") = "[check].[backup]") Or (v_RecordSet.Fields.Item("cmd") = "[check].[inventory]") Then
 					v_SQLChecks_IsMultiRow = 1
 				Else
 					v_SQLChecks_IsMultiRow = 0
@@ -186,7 +186,7 @@ Sub Main()
 
 
         ' get list of chart procedures to loop through
-        v_SQL_Query = "SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [" & v_DBAid_Database & "].[sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'chart'"
+        v_SQL_Query = "EXEC [control].[chart]"
         v_RecordSet.Open v_SQL_Query, v_SQL_Conn, 0, 1
         If v_RecordSet.EOF Then
             WScript.Echo "3 mssql_" & v_InstanceName & " - Error occurred looping through charts."
@@ -199,8 +199,8 @@ Sub Main()
                 v_SQLChecks_StateCheck = ""
                 v_SQLChecks_Status = 0
                 v_SQLChecks_Message = ""
-                v_SQLChecks_CheckName = Replace(Mid(v_RecordSet.Fields.Item("proc"), 10), "]", "") ' gets procedure name sans schema & [] characters. E.g., final output is mssql_Instance_ValueFromThisVariablev_SQLChecks_CheckName
-                v_SQLChecks_Query = "EXEC [" & v_DBAid_Database & "]." & v_RecordSet.Fields.Item("proc")
+                v_SQLChecks_CheckName = Replace(Mid(v_RecordSet.Fields.Item("cmd"), 10), "]", "") ' gets procedure name sans schema & [] characters. E.g., final output is mssql_Instance_ValueFromThisVariablev_SQLChecks_CheckName
+                v_SQLChecks_Query = "EXEC " & v_RecordSet.Fields.Item("cmd")
                 v_SQLChecks_RecordSet.Open v_SQLChecks_Query, v_SQL_Conn, 0, 1
                 Do While (Not v_SQLChecks_RecordSet.EOF)
                     ' this loop manages the multiple rows of chart data
