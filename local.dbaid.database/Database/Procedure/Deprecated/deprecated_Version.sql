@@ -7,22 +7,27 @@ Version 3, 29 June 2007
 CREATE PROCEDURE [deprecated].[Version]
 WITH ENCRYPTION
 AS
+BEGIN
+	SET NOCOUNT ON;
 
-SET NOCOUNT ON;
+	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
 
-EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+	DECLARE @sender VARCHAR(228);
+	DECLARE @subjectname VARCHAR(128);
 
-Declare @sender varchar(228)
-Declare @subjectname varchar(128)
+	SELECT @sender = CAST(SERVERPROPERTY('Servername') AS VARCHAR(128)) + [setting] 
+	FROM [deprecated].[tbparameters] 
+	WHERE [parametername] = 'Client_domain';
 
-select @sender = CAST(serverproperty('servername') as varchar(128)) + [setting] from [deprecated].[tbparameters] where [parametername] = 'Client_domain'
-select @subjectname = replace(replace(replace (@sender, '@','_'),'.','_'),'\','#')
+	SELECT @subjectname = REPLACE(REPLACE(REPLACE(@sender, '@','_'),'.','_'),'\','#');
 
-select @subjectname as 'Servername',getdate() as 'Checkdate',@@version as 'Version'
+	SELECT @subjectname AS 'Servername'
+			,getdate() AS 'Checkdate'
+			,@@version AS 'Version';
 
 	IF (SELECT [value] FROM [dbo].[static_parameters] WHERE [name] = 'PROGRAM_NAME') = PROGRAM_NAME()
 		UPDATE [dbo].[procedure] SET [last_execution_datetime] = GETDATE() WHERE [procedure_id] = @@PROCID;
 
-REVERT;
-
+	REVERT;
+END
 GO

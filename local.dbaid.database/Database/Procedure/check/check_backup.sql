@@ -8,7 +8,7 @@ CREATE PROCEDURE [check].[backup]
 WITH ENCRYPTION
 AS
 BEGIN
-SET NOCOUNT ON;
+	SET NOCOUNT ON;
 
 	DECLARE @check TABLE([message] NVARCHAR(4000)
 						,[state] NVARCHAR(8));
@@ -17,9 +17,9 @@ SET NOCOUNT ON;
 	DECLARE @not_backup INT;
 	DECLARE @tenant NVARCHAR(256);
   
-  SELECT @tenant = CAST([value] AS nvarchar(256)) FROM [$(DatabaseName)].[dbo].[static_parameters] WHERE [name] = N'TENANT_NAME';
+	SELECT @tenant = CAST([value] AS nvarchar(256)) FROM [$(DatabaseName)].[dbo].[static_parameters] WHERE [name] = N'TENANT_NAME';
 
-  EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
 
 	IF SERVERPROPERTY('IsHadrEnabled') = 1
 	BEGIN

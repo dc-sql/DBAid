@@ -287,7 +287,7 @@
       <Value>$(SqlCmdVar__18)</Value>
     </SqlCmdVariable>
     <SqlCmdVariable Include="Version">
-      <DefaultValue>6.4.4</DefaultValue>
+      <DefaultValue>6.4.5</DefaultValue>
       <Value>$(SqlCmdVar__17)</Value>
     </SqlCmdVariable>
   </ItemGroup>

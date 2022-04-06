@@ -15,7 +15,6 @@ BEGIN
 
 	IF SERVERPROPERTY('IsHadrEnabled') = 1
 	BEGIN
-
 		EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
 
 		INSERT INTO @check

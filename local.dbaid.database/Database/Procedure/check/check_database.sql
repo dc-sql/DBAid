@@ -59,5 +59,5 @@ BEGIN
 
 		SELECT [message], [state] FROM @check
 
-		REVERT;
+	REVERT;
 END
