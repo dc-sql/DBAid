@@ -3,7 +3,7 @@ Sub Main()
     ' GNU GENERAL PUBLIC LICENSE
     ' Version 3, 29 June 2007
     
-    ' DBAid Version 6.4.4
+    ' DBAid Version 6.4.5
     ' define list of instances to connect to. Array elements should take the form of "MachineName" or "MachineName\InstanceName" (default & named instances respectively) where MachineName can be the hostname or IP address of the server . Optionally, add ",<TCPPort>".
     Dim v_SQLInstances
     v_SQLInstances = Array("localhost")
@@ -82,13 +82,13 @@ Sub Main()
         End If
 
         ' Refresh check configuration (i.e. to pick up any new jobs or databases added since last check).
-        v_SQL_Query = "SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [" & v_DBAid_Database & "].[sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'maintenance' AND [name] LIKE N'check_config%'"
+        v_SQL_Query = "SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'maintenance' AND [name] LIKE N'check_config%'"
         v_RecordSet.Open v_SQL_Query, v_SQL_Conn, 0, 1
         If v_RecordSet.EOF Then
             WScript.Echo "3 mssql_" & v_InstanceName & " - Error occurred refreshing check configuration."
         Else
             Do While (Not v_RecordSet.EOF)
-                v_SQLChecks_Query = "EXEC [" & v_DBAid_Database & "]." & v_RecordSet.Fields.Item("proc")
+                v_SQLChecks_Query = "EXEC " & v_RecordSet.Fields.Item("proc")
                 ' using Conn.Execute method here rather than RecordSet.Open because the inventory procedures don't return a recordset; they just refresh configuration metadata
                 v_SQL_Conn.Execute(v_SQLChecks_Query)
                 v_RecordSet.MoveNext
@@ -118,188 +118,180 @@ Sub Main()
 
 
         ' get list of check procedures to loop through
-        v_SQL_Query = "SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [" & v_DBAid_Database & "].[sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'check'"
+        v_SQL_Query = "EXEC [control].[check]"
         v_RecordSet.Open v_SQL_Query, v_SQL_Conn, 0, 1
-        If v_RecordSet.EOF Then
-            WScript.Echo "3 mssql_" & v_InstanceName & " - Error occurred looping through checks."
-        Else
-            Do While (Not v_RecordSet.EOF)
-                ' this loop executes each procedure in the [check] schema
-                v_SQLChecks_Message = ""
-                v_SQLChecks_Count = 0
-                v_SQLChecks_CheckName = Replace(Mid(v_RecordSet.Fields.Item("proc"), 10), "]", "") ' gets procedure name sans schema & [] characters. E.g., final output is mssql_Instance_ValueFromThisVariablev_SQLChecks_CheckName
-                v_SQLChecks_Query = "EXEC [" & v_DBAid_Database & "]." & v_RecordSet.Fields.Item("proc")
-                v_SQLChecks_RecordSet.Open v_SQLChecks_Query, v_SQL_Conn, 0, 1
-                v_SQLChecks_StateCheck = v_SQLChecks_RecordSet.Fields.Item("state")
-                v_SQLChecks_IsMultiRow = 0
+        Do While (Not v_RecordSet.EOF)
+            ' this loop executes each procedure in the [check] schema
+            v_SQLChecks_Message = ""
+            v_SQLChecks_Count = 0
+            v_SQLChecks_CheckName = Replace(Mid(v_RecordSet.Fields.Item("cmd"), 10), "]", "") ' gets procedure name sans schema & [] characters. E.g., final output is mssql_Instance_ValueFromThisVariablev_SQLChecks_CheckName
+            v_SQLChecks_Query = "EXEC " & v_RecordSet.Fields.Item("cmd")
+            v_SQLChecks_RecordSet.Open v_SQLChecks_Query, v_SQL_Conn, 0, 1
+            v_SQLChecks_StateCheck = v_SQLChecks_RecordSet.Fields.Item("state")
+            v_SQLChecks_IsMultiRow = 0
 
-                ' convert literal status to numeric value that Checkmk understands. This conversion could also be done in the stored procedure instead.
-                Select Case v_SQLChecks_StateCheck
-                    Case "NA" v_SQLChecks_Status = "0"
-                    Case "OK" v_SQLChecks_Status = "0"
-                    Case "WARNING" v_SQLChecks_Status = "1"
-                    Case "CRITICAL" v_SQLChecks_Status = "2"
-                    Case Else v_SQLChecks_Status = "3"
-                End Select
+            ' convert literal status to numeric value that Checkmk understands. This conversion could also be done in the stored procedure instead.
+            Select Case v_SQLChecks_StateCheck
+                Case "NA" v_SQLChecks_Status = "0"
+                Case "OK" v_SQLChecks_Status = "0"
+                Case "WARNING" v_SQLChecks_Status = "1"
+                Case "CRITICAL" v_SQLChecks_Status = "2"
+                Case Else v_SQLChecks_Status = "3"
+            End Select
 
-				If (v_RecordSet.Fields.Item("proc") = "[check].[backup]") Or (v_RecordSet.Fields.Item("proc") = "[check].[inventory]") Then
-					v_SQLChecks_IsMultiRow = 1
-				Else
-					v_SQLChecks_IsMultiRow = 0
-				End If
+			If (v_RecordSet.Fields.Item("cmd") = "[check].[backup]") Or (v_RecordSet.Fields.Item("cmd") = "[check].[inventory]") Then
+				v_SQLChecks_IsMultiRow = 1
+			Else
+				v_SQLChecks_IsMultiRow = 0
+			End If
 
-                Do While (Not v_SQLChecks_RecordSet.EOF)
-                    ' this loop concatenates row message data into one message. 
-                    ' also capture the number of rows via incrementing count (since RecordSet.RecordCount doesn't work properly and returns -1)
-                    ' NB - for backups & inventory, need to have data on one line otherwise it can't be pulled into DOME (only the first line comes through).  Use ~ as row delimiter.
-                    If v_SQLChecks_IsMultiRow = 1 Then
-                        v_SQLChecks_Message = v_SQLChecks_Message & v_SQLChecks_RecordSet.Fields.Item("message") & "~"
-                        v_SQLChecks_Count = v_SQLChecks_Count + 1
-                        v_SQLChecks_RecordSet.MoveNext
-                    Else
-                        v_SQLChecks_Message = v_SQLChecks_Message & v_SQLChecks_RecordSet.Fields.Item("message") & ";\n "
-                        v_SQLChecks_Count = v_SQLChecks_Count + 1
-                        v_SQLChecks_RecordSet.MoveNext
-                    End If
-                Loop
-
-				' Remove final row delimiter
-				If (v_SQLChecks_IsMultiRow = 1) And Right(v_SQLChecks_Message, 1) = "~" Then
-					v_SQLChecks_Message = Left(v_SQLChecks_Message, LEN(v_SQLChecks_Message) - 1)
-				End If
-                
-                ' If the top row returned has [state] value of "NA", then set count=0 (i.e. monitor doesn't apply, nothing wrong detected). If there's more than one row returned, there's probably a fault.
-                Select Case v_SQLChecks_StateCheck
-                    Case "NA" v_SQLChecks_Count = 0
-                    Case Else v_SQLChecks_Count = v_SQLChecks_Count
-                End Select
-
-                ' Write output for Checkmk agent to consume.
-                WScript.Echo v_SQLChecks_Status & " mssql_" & v_SQLChecks_CheckName & "_" & v_InstanceName & " count=" & CStr(v_SQLChecks_Count) & " " & v_SQLChecks_StateCheck & " - " & v_SQLChecks_Message
-
-                v_SQLChecks_RecordSet.Close
-                v_RecordSet.MoveNext
+            Do While (Not v_SQLChecks_RecordSet.EOF)
+                ' this loop concatenates row message data into one message. 
+                ' also capture the number of rows via incrementing count (since RecordSet.RecordCount doesn't work properly and returns -1)
+                ' NB - for backups & inventory, need to have data on one line otherwise it can't be pulled into DOME (only the first line comes through).  Use ~ as row delimiter.
+                If v_SQLChecks_IsMultiRow = 1 Then
+                    v_SQLChecks_Message = v_SQLChecks_Message & v_SQLChecks_RecordSet.Fields.Item("message") & "~"
+                    v_SQLChecks_Count = v_SQLChecks_Count + 1
+                    v_SQLChecks_RecordSet.MoveNext
+                Else
+                    v_SQLChecks_Message = v_SQLChecks_Message & v_SQLChecks_RecordSet.Fields.Item("message") & ";\n "
+                    v_SQLChecks_Count = v_SQLChecks_Count + 1
+                    v_SQLChecks_RecordSet.MoveNext
+                End If
             Loop
-        End If
+
+			' Remove final row delimiter
+			If (v_SQLChecks_IsMultiRow = 1) And Right(v_SQLChecks_Message, 1) = "~" Then
+				v_SQLChecks_Message = Left(v_SQLChecks_Message, LEN(v_SQLChecks_Message) - 1)
+			End If
+                
+            ' If the top row returned has [state] value of "NA", then set count=0 (i.e. monitor doesn't apply, nothing wrong detected). If there's more than one row returned, there's probably a fault.
+            Select Case v_SQLChecks_StateCheck
+                Case "NA" v_SQLChecks_Count = 0
+                Case Else v_SQLChecks_Count = v_SQLChecks_Count
+            End Select
+
+            ' Write output for Checkmk agent to consume.
+            WScript.Echo v_SQLChecks_Status & " mssql_" & v_SQLChecks_CheckName & "_" & v_InstanceName & " count=" & CStr(v_SQLChecks_Count) & " " & v_SQLChecks_StateCheck & " - " & v_SQLChecks_Message
+
+            v_SQLChecks_RecordSet.Close
+            v_RecordSet.MoveNext
+        Loop
         v_RecordSet.Close
 
 
 
         ' get list of chart procedures to loop through
-        v_SQL_Query = "SELECT [proc]=QUOTENAME(SCHEMA_NAME([schema_id])) + N'.' + QUOTENAME([name]) FROM [" & v_DBAid_Database & "].[sys].[objects] WHERE [type] = 'P' AND SCHEMA_NAME([schema_id]) = 'chart'"
+        v_SQL_Query = "EXEC [control].[chart]"
         v_RecordSet.Open v_SQL_Query, v_SQL_Conn, 0, 1
-        If v_RecordSet.EOF Then
-            WScript.Echo "3 mssql_" & v_InstanceName & " - Error occurred looping through charts."
-        Else
-            Do While (Not v_RecordSet.EOF)
-                ' this loop executes each procedure in the [chart] schema
-                ' Variables to manage pnp chart data. Initialize for each row of data being processed (i.e. per procedure call).
-                v_SQLChecks_pnpData = ""
-                v_SQLChecks_Row = 0
-                v_SQLChecks_StateCheck = ""
-                v_SQLChecks_Status = 0
-                v_SQLChecks_Message = ""
-                v_SQLChecks_CheckName = Replace(Mid(v_RecordSet.Fields.Item("proc"), 10), "]", "") ' gets procedure name sans schema & [] characters. E.g., final output is mssql_Instance_ValueFromThisVariablev_SQLChecks_CheckName
-                v_SQLChecks_Query = "EXEC [" & v_DBAid_Database & "]." & v_RecordSet.Fields.Item("proc")
-                v_SQLChecks_RecordSet.Open v_SQLChecks_Query, v_SQL_Conn, 0, 1
-                Do While (Not v_SQLChecks_RecordSet.EOF)
-                    ' this loop manages the multiple rows of chart data
-                    ' Variables to manage pnp chart data. Initialize for each row of data being processed (i.e. each database or performance monitor counter).
+        Do While (Not v_RecordSet.EOF)
+            ' this loop executes each procedure in the [chart] schema
+            ' Variables to manage pnp chart data. Initialize for each row of data being processed (i.e. per procedure call).
+            v_SQLChecks_pnpData = ""
+            v_SQLChecks_Row = 0
+            v_SQLChecks_StateCheck = ""
+            v_SQLChecks_Status = 0
+            v_SQLChecks_Message = ""
+            v_SQLChecks_CheckName = Replace(Mid(v_RecordSet.Fields.Item("cmd"), 10), "]", "") ' gets procedure name sans schema & [] characters. E.g., final output is mssql_Instance_ValueFromThisVariablev_SQLChecks_CheckName
+            v_SQLChecks_Query = "EXEC " & v_RecordSet.Fields.Item("cmd")
+            v_SQLChecks_RecordSet.Open v_SQLChecks_Query, v_SQL_Conn, 0, 1
+            Do While (Not v_SQLChecks_RecordSet.EOF)
+                ' this loop manages the multiple rows of chart data
+                ' Variables to manage pnp chart data. Initialize for each row of data being processed (i.e. each database or performance monitor counter).
+                v_SQLCharts_WarnExist = 0
+                v_SQLCharts_CritExist = 0
+                v_SQLCharts_Val = 0.0
+                v_SQLCharts_Warn = 0.0
+                v_SQLCharts_Crit = 0.0
+
+                ' Check for current value, warning threshold, critical threshold, pnp chart data.
+                ' chart.capacity has different columns returned compared to anything else, so has its own code to handle data.
+                If IsNull(v_SQLChecks_RecordSet.Fields.Item("val")) Then
+                    v_SQLCharts_Val = -1.0
+                Else
+                    v_SQLCharts_Val = v_SQLChecks_RecordSet.Fields.Item("val")
+                End If
+
+                If IsNull(v_SQLChecks_RecordSet.Fields.Item("warn")) Then
                     v_SQLCharts_WarnExist = 0
+                    v_SQLCharts_Warn = -1.0
+                Else
+                    v_SQLCharts_WarnExist = 1
+                    v_SQLCharts_Warn = v_SQLChecks_RecordSet.Fields.Item("warn")
+                End If
+
+                If IsNull(v_SQLChecks_RecordSet.Fields.Item("crit")) Then
                     v_SQLCharts_CritExist = 0
-                    v_SQLCharts_Val = 0.0
-                    v_SQLCharts_Warn = 0.0
-                    v_SQLCharts_Crit = 0.0
+                    v_SQLCharts_Crit = -1.0
+                Else
+                    v_SQLCharts_CritExist = 1
+                    v_SQLCharts_Crit = v_SQLChecks_RecordSet.Fields.Item("crit")
+                End If
 
-                    ' Check for current value, warning threshold, critical threshold, pnp chart data.
-                    ' chart.capacity has different columns returned compared to anything else, so has its own code to handle data.
-                    If IsNull(v_SQLChecks_RecordSet.Fields.Item("val")) Then
-                        v_SQLCharts_Val = -1.0
-                    Else
-                        v_SQLCharts_Val = v_SQLChecks_RecordSet.Fields.Item("val")
-                    End If
+                If IsNull(v_SQLChecks_RecordSet.Fields.Item("pnp")) Then
+                    v_SQLChecks_pnpData = ""
+                Else
+                    v_SQLChecks_pnpData = v_SQLChecks_RecordSet.Fields.Item("pnp")
+                End If
 
-                    If IsNull(v_SQLChecks_RecordSet.Fields.Item("warn")) Then
-                        v_SQLCharts_WarnExist = 0
-                        v_SQLCharts_Warn = -1.0
-                    Else
-                        v_SQLCharts_WarnExist = 1
-                        v_SQLCharts_Warn = v_SQLChecks_RecordSet.Fields.Item("warn")
-                    End If
+                ' If there is no chart data, skip the rest and move to next row in the data set.
+                If v_SQLChecks_pnpData = "" Then
+                    v_SQLChecks_RecordSet.MoveNext
+                    Exit Do
+                End If
 
-                    If IsNull(v_SQLChecks_RecordSet.Fields.Item("crit")) Then
-                        v_SQLCharts_CritExist = 0
-                        v_SQLCharts_Crit = -1.0
-                    Else
-                        v_SQLCharts_CritExist = 1
-                        v_SQLCharts_Crit = v_SQLChecks_RecordSet.Fields.Item("crit")
-                    End If
-
-                    If IsNull(v_SQLChecks_RecordSet.Fields.Item("pnp")) Then
-                        v_SQLChecks_pnpData = ""
-                    Else
-                        v_SQLChecks_pnpData = v_SQLChecks_RecordSet.Fields.Item("pnp")
-                    End If
-
-                    ' If there is no chart data, skip the rest and move to next row in the data set.
-                    If v_SQLChecks_pnpData = "" Then
-                        v_SQLChecks_RecordSet.MoveNext
-                        Exit Do
-                    End If
-
-                    ' Check to see if warning and critical thresholds are defined, then check current value v_SQLCharts_Val against threshold values for warning v_SQLCharts_Warn and critical v_SQLCharts_Crit.
-                    If v_SQLCharts_CritExist = 1 AND v_SQLCharts_WarnExist = 1 Then
-                        If CDbl(v_SQLCharts_Crit) >= CDbl(v_SQLCharts_Warn) Then
-                            If CDbl(v_SQLCharts_Val) >= CDbl(v_SQLCharts_Crit) Then
-                                ' Split the pnp data at the '=' character to form a new array, take the first element of the new array [0] which amounts to the object exceeding a threshold (e.g. dbname_ROWS_used) and remove the single quote characters.
-                                v_SQLCharts_AlertValue = Split(v_SQLChecks_pnpData, "=")
-                                v_SQLCharts_AlertValue(0) = Replace(v_SQLCharts_AlertValue(0), "'", "")
-
-                                v_SQLChecks_StateCheck = v_SQLChecks_StateCheck + "CRITICAL - " & v_SQLCharts_AlertValue & "; "
-                                v_SQLChecks_Status = "2"
-                            ElseIf CDbl(v_SQLCharts_Val) >= CDbl(v_SQLCharts_Warn) AND v_SQLChecks_Status < 2 Then
-                                v_SQLCharts_AlertValue = Split(v_SQLChecks_pnpData, "=")
-                                v_SQLCharts_AlertValue(0) = Replace(v_SQLCharts_AlertValue(0), "'", "")
-                                v_SQLChecks_StateCheck = v_SQLChecks_StateCheck + "WARNING - " & v_SQLCharts_AlertValue & "; "
-                                v_SQLChecks_Status = "1"
-                            End If
-                        End If
-                    ElseIf CDbl(v_SQLCharts_Crit) < CDbl(v_SQLCharts_Warn) Then
-                        If CDbl(v_SQLCharts_Val) <= CDbl(v_SQLCharts_Crit) Then
+                ' Check to see if warning and critical thresholds are defined, then check current value v_SQLCharts_Val against threshold values for warning v_SQLCharts_Warn and critical v_SQLCharts_Crit.
+                If v_SQLCharts_CritExist = 1 AND v_SQLCharts_WarnExist = 1 Then
+                    If CDbl(v_SQLCharts_Crit) >= CDbl(v_SQLCharts_Warn) Then
+                        If CDbl(v_SQLCharts_Val) >= CDbl(v_SQLCharts_Crit) Then
+                            ' Split the pnp data at the '=' character to form a new array, take the first element of the new array [0] which amounts to the object exceeding a threshold (e.g. dbname_ROWS_used) and remove the single quote characters.
                             v_SQLCharts_AlertValue = Split(v_SQLChecks_pnpData, "=")
                             v_SQLCharts_AlertValue(0) = Replace(v_SQLCharts_AlertValue(0), "'", "")
+
                             v_SQLChecks_StateCheck = v_SQLChecks_StateCheck + "CRITICAL - " & v_SQLCharts_AlertValue & "; "
                             v_SQLChecks_Status = "2"
-                        ElseIf CDbl(v_SQLCharts_Val) <= CDbl(v_SQLCharts_Warn) AND v_SQLChecks_Status < 2 Then
+                        ElseIf CDbl(v_SQLCharts_Val) >= CDbl(v_SQLCharts_Warn) AND v_SQLChecks_Status < 2 Then
                             v_SQLCharts_AlertValue = Split(v_SQLChecks_pnpData, "=")
                             v_SQLCharts_AlertValue(0) = Replace(v_SQLCharts_AlertValue(0), "'", "")
                             v_SQLChecks_StateCheck = v_SQLChecks_StateCheck + "WARNING - " & v_SQLCharts_AlertValue & "; "
                             v_SQLChecks_Status = "1"
                         End If
-                    End If 
-
-                    ' Concatenate all the pnp data into one text string for Checkmk to consume. Use pipe separator for subsequent rows being concatenated.
-                    If v_SQLChecks_Row = 0 Then
-                        v_SQLChecks_Message = v_SQLChecks_Message & v_SQLChecks_pnpData
-                    Else
-                        v_SQLChecks_Message = v_SQLChecks_Message & "|" & v_SQLChecks_pnpData
                     End If
+                ElseIf CDbl(v_SQLCharts_Crit) < CDbl(v_SQLCharts_Warn) Then
+                    If CDbl(v_SQLCharts_Val) <= CDbl(v_SQLCharts_Crit) Then
+                        v_SQLCharts_AlertValue = Split(v_SQLChecks_pnpData, "=")
+                        v_SQLCharts_AlertValue(0) = Replace(v_SQLCharts_AlertValue(0), "'", "")
+                        v_SQLChecks_StateCheck = v_SQLChecks_StateCheck + "CRITICAL - " & v_SQLCharts_AlertValue & "; "
+                        v_SQLChecks_Status = "2"
+                    ElseIf CDbl(v_SQLCharts_Val) <= CDbl(v_SQLCharts_Warn) AND v_SQLChecks_Status < 2 Then
+                        v_SQLCharts_AlertValue = Split(v_SQLChecks_pnpData, "=")
+                        v_SQLCharts_AlertValue(0) = Replace(v_SQLCharts_AlertValue(0), "'", "")
+                        v_SQLChecks_StateCheck = v_SQLChecks_StateCheck + "WARNING - " & v_SQLCharts_AlertValue & "; "
+                        v_SQLChecks_Status = "1"
+                    End If
+                End If 
 
-                    v_SQLChecks_Row = v_SQLChecks_Row + 1
-                    v_SQLChecks_RecordSet.MoveNext
-                Loop
+                ' Concatenate all the pnp data into one text string for Checkmk to consume. Use pipe separator for subsequent rows being concatenated.
+                If v_SQLChecks_Row = 0 Then
+                    v_SQLChecks_Message = v_SQLChecks_Message & v_SQLChecks_pnpData
+                Else
+                    v_SQLChecks_Message = v_SQLChecks_Message & "|" & v_SQLChecks_pnpData
+                End If
 
-				If v_SQLChecks_StateCheck = "" Then
-					v_SQLChecks_StateCheck = "OK"
-				End If
-				
-                ' Write output for Checkmk agent to consume.
-                WScript.Echo v_SQLChecks_Status & " mssql_" & v_SQLChecks_CheckName & "_" & v_InstanceName & " " & v_SQLChecks_Message & " " & v_SQLChecks_StateCheck
-
-                v_SQLChecks_RecordSet.Close
-                v_RecordSet.MoveNext
+                v_SQLChecks_Row = v_SQLChecks_Row + 1
+                v_SQLChecks_RecordSet.MoveNext
             Loop
-        End If
+
+			If v_SQLChecks_StateCheck = "" Then
+				v_SQLChecks_StateCheck = "OK"
+			End If
+				
+            ' Write output for Checkmk agent to consume.
+            WScript.Echo v_SQLChecks_Status & " mssql_" & v_SQLChecks_CheckName & "_" & v_InstanceName & " " & v_SQLChecks_Message & " " & v_SQLChecks_StateCheck
+
+            v_SQLChecks_RecordSet.Close
+            v_RecordSet.MoveNext
+        Loop
         v_RecordSet.Close
         v_SQL_Conn.Close
     Next

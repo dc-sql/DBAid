@@ -9,6 +9,9 @@ WITH ENCRYPTION
 AS
 BEGIN
     SET NOCOUNT ON;
+
+	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
+
     DECLARE @ExtendedEventsSessionName sysname = N'_dbaid_login_failures',
             @StartTime datetimeoffset,
             @EndTime datetimeoffset,
@@ -151,6 +154,8 @@ BEGIN
       UNION
       SELECT * FROM [TotalLoginFailures];
     END
+
+	REVERT;
 
 END
 GO

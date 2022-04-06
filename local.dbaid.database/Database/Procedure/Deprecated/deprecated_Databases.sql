@@ -12,23 +12,23 @@ BEGIN
 
     EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
 
-    DECLARE @client varchar(128);
+    DECLARE @client VARCHAR(128);
 
-    SELECT @client = REPLACE(REPLACE(REPLACE(CAST(SERVERPROPERTY('Servername') AS varchar(128)) + [setting], '@', '_'), '.', '_'), '\', '#')
+    SELECT @client = REPLACE(REPLACE(REPLACE(CAST(SERVERPROPERTY('Servername') AS VARCHAR(128)) + [setting], '@', '_'), '.', '_'), '\', '#')
     FROM [$(DatabaseName)].[deprecated].[tbparameters] 
     WHERE [parametername] = 'Client_domain';
 
     SELECT @client AS [Client]
             ,GETDATE() AS [Checkdate]
             ,db.[name]
-            ,CAST(ROUND(SUM(CAST([size] AS bigint))/128.00, 2) AS NUMERIC(20,2)) AS [size]
+            ,CAST(ROUND(SUM(CAST([size] AS BIGINT))/128.00, 2) AS NUMERIC(20,2)) AS [size]
             ,ISNULL(SUSER_SNAME(db.[owner_sid]), '~~UNKNOWN~~') AS [owner]
             ,db.[database_id] AS [dbid]
             ,db.[create_date] AS [Created]
-            ,'Status =' + CONVERT(sysname, db.[state_desc]) 
+            ,'Status =' + CONVERT(SYSNAME, db.[state_desc]) 
                 + '| Updateability=' + CASE db.[is_read_only] WHEN 0 THEN 'READ_WRITE' ELSE 'READ_ONLY' END 
-                + '| Recovery=' + CONVERT(sysname, db.[recovery_model_desc] )
-                + '| Collation=' + CONVERT(sysname, ISNULL(db.[collation_name], CONVERT(sysname, SERVERPROPERTY('Collation')))) COLLATE DATABASE_DEFAULT AS [Status]
+                + '| Recovery=' + CONVERT(SYSNAME, db.[recovery_model_desc] )
+                + '| Collation=' + CONVERT(SYSNAME, ISNULL(db.[collation_name], CONVERT(SYSNAME, SERVERPROPERTY('Collation')))) COLLATE DATABASE_DEFAULT AS [Status]
             ,db.[compatibility_level] AS [Compatailiity_level]
     FROM sys.databases db 
       INNER JOIN sys.master_files mf ON mf.database_id = db.database_id

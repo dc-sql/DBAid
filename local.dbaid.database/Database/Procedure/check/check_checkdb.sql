@@ -32,14 +32,14 @@ BEGIN
 
 	EXECUTE AS LOGIN = N'$(DatabaseName)_sa';
 
-		EXECUTE [dbo].[foreachdb] N'USE [?];
-									INSERT #dbccinfo
-										(ParentObject, 
-										Object, 
-										Field, 
-										Value)
-									EXEC (''DBCC DBINFO() WITH TABLERESULTS, NO_INFOMSGS'');
-									UPDATE #dbccinfo SET [DbName] = N''?'' WHERE [DbName] IS NULL;';
+	EXECUTE [dbo].[foreachdb] N'USE [?];
+								INSERT #dbccinfo
+									(ParentObject, 
+									Object, 
+									Field, 
+									Value)
+								EXEC (''DBCC DBINFO() WITH TABLERESULTS, NO_INFOMSGS'');
+								UPDATE #dbccinfo SET [DbName] = N''?'' WHERE [DbName] IS NULL;';
 
 	;WITH [CheckDB] AS
 	(
@@ -76,13 +76,13 @@ BEGIN
 			AND [D].[is_enabled] = 1
 		ORDER BY [CheckDB].[DbName]
 
-		IF (SELECT COUNT(*) FROM @check) < 1
-			INSERT INTO @check 
-			VALUES(CAST(@dbcheckdb AS NVARCHAR(10)) + N' database(s) monitored, ' + CAST(@dbnotcheckdb AS NVARCHAR(10)) + N' database(s) opted-out'
-				,N'NA');
+	IF (SELECT COUNT(*) FROM @check) < 1
+		INSERT INTO @check 
+		VALUES(CAST(@dbcheckdb AS NVARCHAR(10)) + N' database(s) monitored, ' + CAST(@dbnotcheckdb AS NVARCHAR(10)) + N' database(s) opted-out'
+			,N'NA');
 
-		SELECT [message], [state] 
-		FROM @check
+	SELECT [message], [state] 
+	FROM @check
 
-		REVERT;
-	END
+	REVERT;
+END
