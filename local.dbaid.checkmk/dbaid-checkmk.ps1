@@ -207,13 +207,13 @@ try {
         <# NB - for backups, need to have data on one line otherwise it can't be pulled into DOME (only the first line comes through). #>
         if ($IsMultiRow) {
             foreach ($ckrow in $DataSet.Tables[0].Rows) {
-                $StatusDetails += $ckrow.message + "~"
+                $StatusDetails = -join ($StatusDetails, $ckrow.message, "~")
                 $State = $ckrow.state
             }
         }
         else {
             foreach ($ckrow in $DataSet.Tables[0].Rows) {
-                $StatusDetails += $ckrow.message + ";\n "
+                $StatusDetails = -join ($StatusDetails, $ckrow.message, ";\n ")
                 $State = $ckrow.state
             }
         }
@@ -295,32 +295,32 @@ try {
                 if ($crit -ge $warn) {
                     if ($val -ge $crit) {
 `                            <#  Split the pnp data at the '=' character to form a new array, take the first element of the new array [0] which amounts to the object exceeding a threshold (e.g. dbname_ROWS_used) and remove the single quote characters.  #>
-                        $State += "CRITICAL - " + ($ctrow.pnp).Split('=')[0].Replace("'", "") + "; "
+                        $State = -join ($State, "CRITICAL - ", ($ctrow.pnp).Split('=')[0].Replace("'", ""), "; ")
                         $Status = 2
                     }
                     elseif ($val -ge $warn -and $Status -lt 2) {
-                        $State += "WARNING - " + ($ctrow.pnp).Split('=')[0].Replace("'", "") + "; "
+                        $State = -join ($State, "WARNING - ", ($ctrow.pnp).Split('=')[0].Replace("'", ""), "; ")
                         $Status = 1
                     }
                 }
             }
             elseif ($crit -lt $warn) {
                 if ($val -le $crit) {
-                    $State += "CRITICAL - " + ($ctrow.pnp).Split('=')[0].Replace("'", "") + "; "
+                    $State = -join ($State, "CRITICAL - ", ($ctrow.pnp).Split('=')[0].Replace("'", ""), "; ")
                     $Status = 2
                 }
                 elseif ($val -le $warn -and $Status -lt 2) {
-                    $State += "WARNING - " + ($ctrow.pnp).Split('=')[0].Replace("'", "") + "; "
+                    $State = -join ($State, "WARNING - ", ($ctrow.pnp).Split('=')[0].Replace("'", ""), "; ")
                     $Status = 1
                 }
             }
 
             <#  Concatenate all the pnp data into one text string for Checkmk to consume. Use pipe separator for subsequent rows being concatenated.  #>
             if ($row -eq 0) {
-                $StatusDetails += $ctrow.pnp
+                $StatusDetails = -join ($StatusDetails, $ctrow.pnp)
             }
             else {
-                $StatusDetails += "|" + $ctrow.pnp
+                $StatusDetails = -join ($StatusDetails, "|", $ctrow.pnp)
             }
             $row++
         }
