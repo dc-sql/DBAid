@@ -286,6 +286,10 @@ Sub Main()
 				v_SQLChecks_StateCheck = "OK"
 			End If
 				
+            ' Checkmk 2.x doesn't like : or / characters in output (something to do with Python 3)
+            ' We could replace them in the stored procedure code, but doing it here gives more flexibility/ability to change characters used.
+            v_SQLChecks_Message = Replace(Replace(v_SQLChecks_Message, ":", "_"), "/", "_")
+
             ' Write output for Checkmk agent to consume.
             WScript.Echo v_SQLChecks_Status & " mssql_" & v_SQLChecks_CheckName & "_" & v_InstanceName & " " & v_SQLChecks_Message & " " & v_SQLChecks_StateCheck
 

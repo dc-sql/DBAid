@@ -329,6 +329,11 @@ try {
             $State = "OK"
         }
 
+        <# Checkmk 2.x doesn't like : or / characters in output (something to do with Python 3)
+           We could replace them in the stored procedure code, but doing it here gives more flexibility/ability to change characters used.
+        #>
+        (($StatusDetails).Replace(':', '_')).Replace('/', '_')
+
         <#  Write output for Checkmk agent to consume.  #>
         Write-Host "$Status mssql_$($ServiceName)_$($InstanceName) $StatusDetails $State"
     }
