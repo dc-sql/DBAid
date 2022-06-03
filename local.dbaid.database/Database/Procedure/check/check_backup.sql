@@ -144,11 +144,15 @@ BEGIN
 			WHERE [D].[state] = 0
 				AND [D].[is_in_standby] = 0
 		)
+		/* Using # as separator for ServerName\InstanceName\DatabaseName as an instance or database with [lower case?] "n" as first character
+			 leads to a "\n" combination that Checkmk interprets as a newline character. Does not seem to be possible to escape this combination
+			 to stop it happening.
+		*/
 		INSERT INTO @check
 		SELECT @tenant
 				+ N',' + CAST(SERVERPROPERTY('MachineName') AS sysname) 
-				+ N'\' + ISNULL(CAST(SERVERPROPERTY('InstanceName') AS sysname), N'MSSQLSERVER')
-				+ N'\' + [D].[db_name]
+				+ N'#' + ISNULL(CAST(SERVERPROPERTY('InstanceName') AS sysname), N'MSSQLSERVER')
+				+ N'#' + [D].[db_name]
 				+ N',' + ISNULL(CONVERT(NVARCHAR(20), [B].[backup_finish_date], 23), N'1900-01-01')
 				+ N',' + CASE [type] WHEN 'D' THEN 'FULL' WHEN 'I' THEN 'DIFFERENTIAL' ELSE 'UNKNOWN' END
 				,[S].[state]
