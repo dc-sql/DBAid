@@ -3,7 +3,7 @@
 #
 # Expected source folder structure example:
 # 
-# C:\temp\DBAid-build-6.4.5
+# C:\temp\DBAid-build-6.4.6
 #        \check_mk
 #        \database
 #        \Datacom
@@ -19,14 +19,14 @@
 # set variables
 $deploy_collector = 1                        # deploy dbaid collector: 1 = Yes, 0 = No
 $deploy_configg = 1                          # deploy config genie: 1 = Yes, 0 = No
-# Choose one of the Checkmk deployment options below. NB - Executable is deprecated and will be removed in a future version.
-$deploy_checkmk_vbs = 0                      # deploy checkmk VBScript plugin: 1 = Yes, 0 = No
-$deploy_checkmk_ps1 = 1                      # deploy checkmk PowerShell plugin: 1 = Yes, 0 = No
+# Choose one of the Checkmk deployment options below. VBS is default as per advice at https://docs.checkmk.com/latest/en/dev_guidelines.html#_agent_plug_ins
+$deploy_checkmk_vbs = 1                      # deploy checkmk VBScript plugin: 1 = Yes, 0 = No
+$deploy_checkmk_ps1 = 0                      # deploy checkmk PowerShell plugin: 1 = Yes, 0 = No
 $hostname = $env:computername                # If this is a clustered SQL instance, change this to $hostname = "<VNN of SQL instance>"
 $SQLInstance = "MSSQLSERVER"                 # SQL instance to deploy to. MSSQLSERVER = default instance.
 $dbaid_db_name = "_dbaid"                    # Name of database to deploy dbaid to. Best if this is left as default of _dbaid
 $SourceRootFolder = "C:\temp"                # Folder in which source DBAid folder structure is in
-$DBAid_src = "$SourceRootFolder\DBAid-build-6.4.5" # Root folder for dbaid source files.
+$DBAid_src = "$SourceRootFolder\DBAid-build-6.4.6" # Root folder for dbaid source files.
 $dest_root = "C:"                            # Root drive to deploy dbaid executables to.
 
 $checkmk_svc = "NT AUTHORITY\SYSTEM"         # Service account to use for Checkmk plugin (should be same as Check_MK_Agent Windows service)

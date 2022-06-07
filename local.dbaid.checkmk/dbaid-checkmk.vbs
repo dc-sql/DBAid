@@ -3,7 +3,7 @@ Sub Main()
     ' GNU GENERAL PUBLIC LICENSE
     ' Version 3, 29 June 2007
     
-    ' DBAid Version 6.4.5
+    ' DBAid Version 6.4.6
     ' define list of instances to connect to. Array elements should take the form of "MachineName" or "MachineName\InstanceName" (default & named instances respectively) where MachineName can be the hostname or IP address of the server . Optionally, add ",<TCPPort>".
     Dim v_SQLInstances
     v_SQLInstances = Array("localhost")
