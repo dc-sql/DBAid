@@ -248,12 +248,12 @@ Sub Main()
                             v_SQLCharts_AlertValue = Split(v_SQLChecks_pnpData, "=")
                             v_SQLCharts_AlertValue(0) = Replace(v_SQLCharts_AlertValue(0), "'", "")
 
-                            v_SQLChecks_StateCheck = v_SQLChecks_StateCheck + "CRITICAL - " & v_SQLCharts_AlertValue & "; "
+                            v_SQLChecks_StateCheck = v_SQLChecks_StateCheck + "CRITICAL - " & v_SQLCharts_AlertValue(0) & "; "
                             v_SQLChecks_Status = "2"
                         ElseIf CDbl(v_SQLCharts_Val) >= CDbl(v_SQLCharts_Warn) AND v_SQLChecks_Status < 2 Then
                             v_SQLCharts_AlertValue = Split(v_SQLChecks_pnpData, "=")
                             v_SQLCharts_AlertValue(0) = Replace(v_SQLCharts_AlertValue(0), "'", "")
-                            v_SQLChecks_StateCheck = v_SQLChecks_StateCheck + "WARNING - " & v_SQLCharts_AlertValue & "; "
+                            v_SQLChecks_StateCheck = v_SQLChecks_StateCheck + "WARNING - " & v_SQLCharts_AlertValue(0) & "; "
                             v_SQLChecks_Status = "1"
                         End If
                     End If
@@ -261,12 +261,12 @@ Sub Main()
                     If CDbl(v_SQLCharts_Val) <= CDbl(v_SQLCharts_Crit) Then
                         v_SQLCharts_AlertValue = Split(v_SQLChecks_pnpData, "=")
                         v_SQLCharts_AlertValue(0) = Replace(v_SQLCharts_AlertValue(0), "'", "")
-                        v_SQLChecks_StateCheck = v_SQLChecks_StateCheck + "CRITICAL - " & v_SQLCharts_AlertValue & "; "
+                        v_SQLChecks_StateCheck = v_SQLChecks_StateCheck + "CRITICAL - " & v_SQLCharts_AlertValue(0) & "; "
                         v_SQLChecks_Status = "2"
                     ElseIf CDbl(v_SQLCharts_Val) <= CDbl(v_SQLCharts_Warn) AND v_SQLChecks_Status < 2 Then
                         v_SQLCharts_AlertValue = Split(v_SQLChecks_pnpData, "=")
                         v_SQLCharts_AlertValue(0) = Replace(v_SQLCharts_AlertValue(0), "'", "")
-                        v_SQLChecks_StateCheck = v_SQLChecks_StateCheck + "WARNING - " & v_SQLCharts_AlertValue & "; "
+                        v_SQLChecks_StateCheck = v_SQLChecks_StateCheck + "WARNING - " & v_SQLCharts_AlertValue(0) & "; "
                         v_SQLChecks_Status = "1"
                     End If
                 End If 
