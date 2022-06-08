@@ -30,6 +30,10 @@ BEGIN
 		DECLARE @to_backup INT;
 		DECLARE @not_backup INT;
 
+		DECLARE @tenant NVARCHAR(256);
+
+		SELECT @tenant = CAST([value] AS nvarchar(256)) FROM [_dbaid].[dbo].[static_parameters] WHERE [name] = N''TENANT_NAME'';
+
 		DECLARE @ag_table AS TABLE (
 			[ag_id] UNIQUEIDENTIFIER,
 			[name] SYSNAME, 
@@ -89,14 +93,12 @@ BEGIN
 				AND [D].[is_in_standby] = 0
 		)
 		INSERT INTO @check
-		SELECT N''database='' 
-			+ QUOTENAME([D].[db_name])
-			+ N''; last_backup='' 
-			+ ISNULL(REPLACE(CONVERT(NVARCHAR(20), [B].[backup_finish_date], 120), N'' '', N''T''), N''NEVER'')
-			+ N''; type='' 
-			+ CASE [type] WHEN ''D'' THEN ''FULL'' WHEN ''I'' THEN ''DIFFERENTIAL'' ELSE ''UNKNOWN'' END
-			+ N''; backups_missed='' 
-			+ ISNULL(CAST(CAST(DATEDIFF(HOUR, [B].[backup_finish_date], GETDATE()) / [D].[backup_frequency_hours] AS INT) AS VARCHAR(5)), ''ALL'')
+		SELECT @tenant
+			+ N'','' + CAST(SERVERPROPERTY(''MachineName'') AS sysname)
+			+ N''#'' + ISNULL(CAST(SERVERPROPERTY(''InstanceName'') AS sysname), N''MSSQLSERVER'')
+			+ N''#'' + [D].[db_name]
+			+ N'','' + ISNULL(CONVERT(NVARCHAR(20), [B].[backup_finish_date], 23), N''1900-01-01'')
+			+ N'','' + CASE [type] WHEN ''D'' THEN ''FULL'' WHEN ''I'' THEN ''DIFFERENTIAL'' ELSE ''UNKNOWN'' END
 			,[S].[state]
 		FROM Backups [B]
 			INNER JOIN [$(DatabaseName)].[dbo].[config_database] [D]
@@ -108,17 +110,17 @@ BEGIN
 			CROSS APPLY (SELECT CASE WHEN ([B].[backup_finish_date] IS NULL OR DATEDIFF(HOUR, [B].[backup_finish_date], GETDATE()) > ([D].[backup_frequency_hours])) THEN [D].[backup_state_alert] ELSE N''OK'' END AS [state]) [S]
 		WHERE [B].[row] = 1
 			AND [D].[backup_frequency_hours] > 0
-			AND DATEDIFF(HOUR, [B].[create_date], GETDATE()) > [D].[backup_frequency_hours]
+			/* AND DATEDIFF(HOUR, [B].[create_date], GETDATE()) > [D].[backup_frequency_hours] */
 			AND LOWER([D].[db_name]) NOT IN (N''tempdb'')
 			AND ISNULL([AGT].[automated_backup_preference],0) = 0
 			AND ISNULL([AGT].[role],1) = 1
-			AND DATEDIFF(HOUR, [ca].[ag_role_change_datetime], GETDATE()) > [D].[backup_frequency_hours]
-			AND [S].[state] NOT IN (N''OK'')
+			AND ((DATEDIFF(HOUR, [ca].[ag_role_change_datetime], GETDATE()) > [D].[backup_frequency_hours]) OR ([ca].[ag_role_change_datetime] IS NULL))
+			/* AND [S].[state] NOT IN (N''OK'') */
 			AND [D].[is_enabled] = 1
 		ORDER BY [D].[db_name]
 
 		IF (SELECT COUNT(*) FROM @check) < 1
-		INSERT INTO @check VALUES(CAST(@to_backup AS NVARCHAR(10)) + N'' database(s) monitored, '' + CAST(@not_backup AS NVARCHAR(10)) + N'' database(s) opted-out'', N''NA'');
+			INSERT INTO @check VALUES(CAST(@to_backup AS NVARCHAR(10)) + N'' database(s) monitored, '' + CAST(@not_backup AS NVARCHAR(10)) + N'' database(s) opted-out'', N''NA'');
 
 		SELECT [message], [state] 
 		FROM @check;'
