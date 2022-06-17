@@ -12,7 +12,7 @@ BEGIN
     SELECT @edition = CAST([value] AS sysname) 
            + N',' 
            + CAST(SERVERPROPERTY('MachineName') AS sysname) 
-           + N'\' 
+           + N'#' 
            + ISNULL(CAST(SERVERPROPERTY('InstanceName') AS sysname), N'MSSQLSERVER') 
            + N',Microsoft SQL Server '
            + CASE LEFT(CAST(SERVERPROPERTY('ProductVersion') AS sysname), 4)
@@ -24,9 +24,9 @@ BEGIN
                WHEN N'10.5' THEN N'2008 R2 '
                WHEN N'10.0' THEN N'2008 '
                WHEN N'9.0.' THEN N'2005 '
-               WHEN N'8.0.' THEN N'2000 '
+               WHEN N'8.00' THEN N'2000 '
              END
-           + REPLACE(REPLACE(REPLACE(REPLACE(CAST(SERVERPROPERTY('Edition') AS sysname), N'(64-bit)', N'64-bit'), N': Core-based Licensing', N''), N'Edition', N''), N'  ', N' ')
+           + RTRIM(REPLACE(REPLACE(REPLACE(CAST(SERVERPROPERTY('Edition') AS sysname), N': Core-based Licensing', N''), N'Edition', N''), N'  ', N' '))
            ,@patch_level = CAST(SERVERPROPERTY('ProductLevel') AS sysname) 
            + ISNULL(N'-' + CAST(SERVERPROPERTY('ProductUpdateLevel') AS sysname), N'') 
            + ISNULL(N'-' + CAST(SERVERPROPERTY('ProductBuildType') AS sysname), N'') + N',' 
@@ -37,9 +37,9 @@ BEGIN
         SELECT N'0 mssql_' 
                + ISNULL(CAST(SERVERPROPERTY('InstanceName') AS sysname), N'MSSQLSERVER') 
                + N' - ' 
-               + CASE RIGHT(@edition, 3)
-                   WHEN N'bit' THEN @edition
-                   ELSE @edition + N'32-bit'
+               + CASE RIGHT(@edition, 8)
+                   WHEN N'(64-bit)' THEN REPLACE(@edition, N' (64-bit)', N'')
+                   ELSE @edition + N' 32-bit'
                  END
                + N',' 
                + @patch_level;	

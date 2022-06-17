@@ -3,7 +3,7 @@ Sub Main()
     ' GNU GENERAL PUBLIC LICENSE
     ' Version 3, 29 June 2007
     
-    ' DBAid Version 6.4.5
+    ' DBAid Version 6.4.6
     ' define list of instances to connect to. Array elements should take the form of "MachineName" or "MachineName\InstanceName" (default & named instances respectively) where MachineName can be the hostname or IP address of the server . Optionally, add ",<TCPPort>".
     Dim v_SQLInstances
     v_SQLInstances = Array("localhost")
@@ -37,6 +37,8 @@ Sub Main()
     Set v_WSH_Shell = CreateObject("WScript.Shell")
 
     ' build base connection string; instance name will be appended
+    ' NB - SQLOLEDB IS DEPRECATED. IT MAY WORK FOR OLDER MACHINES BUT FOR NEWER MACHINES, REPLACE SQLOLEDB.1 WITH MSOLEDBSQL
+    '      YOU WILL NEED TO DO IT WHEN YOU GET THIS ERROR: Microsoft OLE DB Provider for SQL Server: [DBNETLIB][ConnectionOpen (SECDoClientHandshake()).]SSL Security error.
     v_DBAid_Database = "_dbaid"
     v_DB_Connect_String_Base = "Provider=SQLOLEDB.1;Initial Catalog=" & v_DBAid_Database & ";Integrated Security=SSPI;Application Name=Checkmk;Data Source="
 
@@ -248,12 +250,12 @@ Sub Main()
                             v_SQLCharts_AlertValue = Split(v_SQLChecks_pnpData, "=")
                             v_SQLCharts_AlertValue(0) = Replace(v_SQLCharts_AlertValue(0), "'", "")
 
-                            v_SQLChecks_StateCheck = v_SQLChecks_StateCheck + "CRITICAL - " & v_SQLCharts_AlertValue & "; "
+                            v_SQLChecks_StateCheck = v_SQLChecks_StateCheck & "CRITICAL - " & v_SQLCharts_AlertValue(0) & "; "
                             v_SQLChecks_Status = "2"
                         ElseIf CDbl(v_SQLCharts_Val) >= CDbl(v_SQLCharts_Warn) AND v_SQLChecks_Status < 2 Then
                             v_SQLCharts_AlertValue = Split(v_SQLChecks_pnpData, "=")
                             v_SQLCharts_AlertValue(0) = Replace(v_SQLCharts_AlertValue(0), "'", "")
-                            v_SQLChecks_StateCheck = v_SQLChecks_StateCheck + "WARNING - " & v_SQLCharts_AlertValue & "; "
+                            v_SQLChecks_StateCheck = v_SQLChecks_StateCheck & "WARNING - " & v_SQLCharts_AlertValue(0) & "; "
                             v_SQLChecks_Status = "1"
                         End If
                     End If
@@ -261,12 +263,12 @@ Sub Main()
                     If CDbl(v_SQLCharts_Val) <= CDbl(v_SQLCharts_Crit) Then
                         v_SQLCharts_AlertValue = Split(v_SQLChecks_pnpData, "=")
                         v_SQLCharts_AlertValue(0) = Replace(v_SQLCharts_AlertValue(0), "'", "")
-                        v_SQLChecks_StateCheck = v_SQLChecks_StateCheck + "CRITICAL - " & v_SQLCharts_AlertValue & "; "
+                        v_SQLChecks_StateCheck = v_SQLChecks_StateCheck & "CRITICAL - " & v_SQLCharts_AlertValue(0) & "; "
                         v_SQLChecks_Status = "2"
                     ElseIf CDbl(v_SQLCharts_Val) <= CDbl(v_SQLCharts_Warn) AND v_SQLChecks_Status < 2 Then
                         v_SQLCharts_AlertValue = Split(v_SQLChecks_pnpData, "=")
                         v_SQLCharts_AlertValue(0) = Replace(v_SQLCharts_AlertValue(0), "'", "")
-                        v_SQLChecks_StateCheck = v_SQLChecks_StateCheck + "WARNING - " & v_SQLCharts_AlertValue & "; "
+                        v_SQLChecks_StateCheck = v_SQLChecks_StateCheck & "WARNING - " & v_SQLCharts_AlertValue(0) & "; "
                         v_SQLChecks_Status = "1"
                     End If
                 End If 
@@ -286,6 +288,10 @@ Sub Main()
 				v_SQLChecks_StateCheck = "OK"
 			End If
 				
+            ' Checkmk 2.x doesn't like : or / characters in output (something to do with Python 3)
+            ' We could replace them in the stored procedure code, but doing it here gives more flexibility/ability to change characters used.
+            v_SQLChecks_Message = Replace(Replace(v_SQLChecks_Message, ":", "_"), "/", "_")
+
             ' Write output for Checkmk agent to consume.
             WScript.Echo v_SQLChecks_Status & " mssql_" & v_SQLChecks_CheckName & "_" & v_InstanceName & " " & v_SQLChecks_Message & " " & v_SQLChecks_StateCheck
 
