@@ -37,6 +37,8 @@ Sub Main()
     Set v_WSH_Shell = CreateObject("WScript.Shell")
 
     ' build base connection string; instance name will be appended
+    ' NB - SQLOLEDB IS DEPRECATED. IT MAY WORK FOR OLDER MACHINES BUT FOR NEWER MACHINES, REPLACE SQLOLEDB.1 WITH MSOLEDBSQL
+    '      YOU WILL NEED TO DO IT WHEN YOU GET THIS ERROR: Microsoft OLE DB Provider for SQL Server: [DBNETLIB][ConnectionOpen (SECDoClientHandshake()).]SSL Security error.
     v_DBAid_Database = "_dbaid"
     v_DB_Connect_String_Base = "Provider=SQLOLEDB.1;Initial Catalog=" & v_DBAid_Database & ";Integrated Security=SSPI;Application Name=Checkmk;Data Source="
 
