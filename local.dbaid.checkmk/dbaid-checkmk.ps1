@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-    DBAid Version 6.4.6
+    DBAid Version 6.4.7
     This script is for use as a Checkmk plugin. It requires minimum PowerShell 4.0.
     
 .DESCRIPTION

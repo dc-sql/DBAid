@@ -3,7 +3,7 @@
 #
 # Expected source folder structure example:
 # 
-# C:\temp\DBAid-build-6.4.6
+# C:\temp\DBAid-build-6.4.7
 #        \check_mk
 #        \database
 #        \Datacom

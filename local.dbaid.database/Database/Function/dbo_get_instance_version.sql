@@ -16,6 +16,7 @@ BEGIN
            + ISNULL(CAST(SERVERPROPERTY('InstanceName') AS sysname), N'MSSQLSERVER') 
            + N',Microsoft SQL Server '
            + CASE LEFT(CAST(SERVERPROPERTY('ProductVersion') AS sysname), 4)
+               WHEN N'16.0' THEN N'2022 '
                WHEN N'15.0' THEN N'2019 '
                WHEN N'14.0' THEN N'2017 '
                WHEN N'13.0' THEN N'2016 '
@@ -25,6 +26,7 @@ BEGIN
                WHEN N'10.0' THEN N'2008 '
                WHEN N'9.0.' THEN N'2005 '
                WHEN N'8.00' THEN N'2000 '
+               ELSE N'xxxx '
              END
            + RTRIM(REPLACE(REPLACE(REPLACE(CAST(SERVERPROPERTY('Edition') AS sysname), N': Core-based Licensing', N''), N'Edition', N''), N'  ', N' '))
            ,@patch_level = CAST(SERVERPROPERTY('ProductLevel') AS sysname) 
