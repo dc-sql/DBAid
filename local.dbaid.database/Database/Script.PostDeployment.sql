@@ -612,7 +612,7 @@ BEGIN
 					@owner_login_name=N'$(DatabaseName)_sa', @job_id = @jobId OUTPUT;
 
 			SET @cmd = N'sqlcmd -E -S "' + @JobTokenServer
-						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [$(DatabaseName)].[maintenance].[index_optimize] @Databases = ''SYSTEM_DATABASES'', @FragmentationLow = NULL, @FragmentationMedium = ''INDEX_REORGANIZE,INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE'', @FragmentationHigh = ''INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE'', @UpdateStatistics = ''ALL''" -b';
+						+ N'" -d "$(DatabaseName)" -Q "EXECUTE [$(DatabaseName)].[maintenance].[index_optimize] @Databases = ''SYSTEM_DATABASES'', @FragmentationLow = NULL, @FragmentationMedium = ''INDEX_REORGANIZE,INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE'', @FragmentationHigh = ''INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE'', @MSShippedObjects = ''Y'', @UpdateStatistics = ''ALL''" -b';
 
 			SET @out = @JobTokenLogDir + N'\$(DatabaseName)_index_optimise_system_' + @JobTokenDateTime + N'.log';
 
