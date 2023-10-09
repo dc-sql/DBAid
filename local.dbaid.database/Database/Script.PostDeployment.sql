@@ -69,8 +69,8 @@ GRANT EXECUTE ON [dbo].[instance_tag] TO [admin];
 GRANT EXECUTE ON [dbo].[insert_service] TO [monitor];
 GO
 
-EXEC sp_addrolemember 'admin', '$(CollectorServiceAccount)';
-EXEC sp_addrolemember 'monitor', '$(CheckServiceAccount)';
+ALTER ROLE [admin] ADD MEMBER [$(CollectorServiceAccount)];
+ALTER ROLE [monitor] ADD MEMBER [$(CheckServiceAccount)];
 GO
 
 
