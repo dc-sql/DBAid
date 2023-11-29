@@ -3,7 +3,7 @@
 #
 # Expected source folder structure example:
 # 
-# C:\temp\DBAid-build-6.4.9
+# C:\temp\DBAid-build-6.5.0
 #        \check_mk
 #        \database
 #        \Datacom
@@ -26,7 +26,7 @@ $hostname = $env:computername                # If this is a clustered SQL instan
 $SQLInstance = "MSSQLSERVER"                 # SQL instance to deploy to. MSSQLSERVER = default instance.
 $dbaid_db_name = "_dbaid"                    # Name of database to deploy dbaid to. Best if this is left as default of _dbaid
 $SourceRootFolder = "C:\temp"                # Folder in which source DBAid folder structure is in
-$DBAid_src = "$SourceRootFolder\DBAid-build-6.4.9" # Root folder for dbaid source files.
+$DBAid_src = "$SourceRootFolder\DBAid-build-6.5.0" # Root folder for dbaid source files.
 $dest_root = "C:"                            # Root drive to deploy dbaid executables to.
 
 $checkmk_svc = "NT AUTHORITY\SYSTEM"         # Service account to use for Checkmk plugin (should be same as Check_MK_Agent Windows service)

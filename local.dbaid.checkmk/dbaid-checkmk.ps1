@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-    DBAid Version 6.4.9
+    DBAid Version 6.5.0
     This script is for use as a Checkmk plugin. It requires minimum PowerShell 4.0.
     
 .DESCRIPTION
@@ -208,13 +208,21 @@ try {
         if ($IsMultiRow) {
             foreach ($ckrow in $DataSet.Tables[0].Rows) {
                 $StatusDetails = -join ($StatusDetails, $ckrow.message, "~")
-                $State = $ckrow.state
+                if ($State -eq 'OK' -or $State -eq '') {
+                    $State = $ckrow.state
+                    $Status = Switch($ckrow.state){ 'NA'{0} 'OK'{0} 'WARNING'{1} 'CRITICAL'{2} default{3}}
+                }
+                elseif ($State -eq 'WARNING' -and ($ckrow.state -eq 'CRITICAL')) { 
+                    $State = $ckrow.state
+                    $Status = Switch($ckrow.state){ 'NA'{0} 'OK'{0} 'WARNING'{1} 'CRITICAL'{2} default{3}}
+                }
             }
         }
         else {
             foreach ($ckrow in $DataSet.Tables[0].Rows) {
                 $StatusDetails = -join ($StatusDetails, $ckrow.message, ";\n ")
                 $State = $ckrow.state
+                $Status = Switch($ckrow.state){ 'NA'{0} 'OK'{0} 'WARNING'{1} 'CRITICAL'{2} default{3}}
             }
         }
 

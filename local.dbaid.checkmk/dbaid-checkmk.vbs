@@ -3,7 +3,7 @@ Sub Main()
     ' GNU GENERAL PUBLIC LICENSE
     ' Version 3, 29 June 2007
     
-    ' DBAid Version 6.4.9
+    ' DBAid Version 6.5.0
     ' define list of instances to connect to. Array elements should take the form of "MachineName" or "MachineName\InstanceName" (default & named instances respectively) where MachineName can be the hostname or IP address of the server . Optionally, add ",<TCPPort>".
     Dim v_SQLInstances
     v_SQLInstances = Array("localhost")
@@ -159,10 +159,37 @@ Sub Main()
                     ' NB - for backups & inventory, need to have data on one line otherwise it can't be pulled into DOME (only the first line comes through).  Use ~ as row delimiter.
                     If v_SQLChecks_IsMultiRow = 1 Then
                         v_SQLChecks_Message = v_SQLChecks_Message & v_SQLChecks_RecordSet.Fields.Item("message") & "~"
+                        If (v_SQLChecks_StateCheck = "OK" Or v_SQLChecks_StateCheck = "") Then
+                            v_SQLChecks_StateCheck = v_SQLChecks_RecordSet.Fields.Item("state")
+                            Select Case v_SQLChecks_StateCheck
+                                Case "NA" v_SQLChecks_Status = "0"
+                                Case "OK" v_SQLChecks_Status = "0"
+                                Case "WARNING" v_SQLChecks_Status = "1"
+                                Case "CRITICAL" v_SQLChecks_Status = "2"
+                                Case Else v_SQLChecks_Status = "3"
+                            End Select
+                        ElseIf (v_SQLChecks_StateCheck = "WARNING") And (v_SQLChecks_RecordSet.Fields.Item("state") = "CRITICAL") Then
+                            v_SQLChecks_StateCheck = v_SQLChecks_RecordSet.Fields.Item("state")
+                            Select Case v_SQLChecks_StateCheck
+                                Case "NA" v_SQLChecks_Status = "0"
+                                Case "OK" v_SQLChecks_Status = "0"
+                                Case "WARNING" v_SQLChecks_Status = "1"
+                                Case "CRITICAL" v_SQLChecks_Status = "2"
+                                Case Else v_SQLChecks_Status = "3"
+                            End Select
+                        End If
                         v_SQLChecks_Count = v_SQLChecks_Count + 1
                         v_SQLChecks_RecordSet.MoveNext
                     Else
                         v_SQLChecks_Message = v_SQLChecks_Message & v_SQLChecks_RecordSet.Fields.Item("message") & ";\n "
+                        v_SQLChecks_StateCheck = v_SQLChecks_RecordSet.Fields.Item("state")
+                        Select Case v_SQLChecks_StateCheck
+                            Case "NA" v_SQLChecks_Status = "0"
+                            Case "OK" v_SQLChecks_Status = "0"
+                            Case "WARNING" v_SQLChecks_Status = "1"
+                            Case "CRITICAL" v_SQLChecks_Status = "2"
+                            Case Else v_SQLChecks_Status = "3"
+                        End Select                    
                         v_SQLChecks_Count = v_SQLChecks_Count + 1
                         v_SQLChecks_RecordSet.MoveNext
                     End If
