@@ -103,6 +103,12 @@
     <None Include="App.config">
       <SubType>Designer</SubType>
     </None>
+    <None Include="dbaid.extractor.decryptor.ps1">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="dbaid.extractor.ps1">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="move.xsd">
       <SubType>Designer</SubType>
     </None>
